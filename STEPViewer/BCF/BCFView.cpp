@@ -69,12 +69,16 @@ CBCFView::~CBCFView()
 
 bool CBCFView::IsBCF(LPCTSTR filePath)
 {
+	if (!filePath) {
+		return false;
+	}
+
 	auto len = wcslen(filePath);
 
-	if (len >= 4 && 0 == wcscmp(filePath + len - 4, L".bcf"))
+	if (len >= 4 && 0 == _wcsicmp(filePath + len - 4, L".bcf"))
 		return true;
 
-	if (len >= 4 && 0 == wcscmp(filePath + len - 7, L".bcfzip"))
+	if (len >= 7 && 0 == _wcsicmp(filePath + len - 7, L".bcfzip"))
 		return true;
 
 	return false;
@@ -101,12 +105,10 @@ bool CBCFView::SaveModified()
 {
 	if (m_bcfProject && m_bcfProject->IsModified()) {
 		auto answer = AfxMessageBox(L"BCF data are modified. Do you want to save before continue?", MB_YESNOCANCEL);
-		if (IDNO != answer) {
-			if (IDYES == answer) {
-				PostMessage(WM_COMMAND, IDC_SAVE);
-			}
-			return false;
+		if (IDYES == answer) {
+			return SaveBCFFile();
 		}
+		return IDNO == answer;
 	}
 	return true;
 }
@@ -453,7 +455,7 @@ void CBCFView::UpdateActiveTopic()
 	UpdateData();
 
 	bool ok = topic->SetTitle(ToUTF8(m_strTitle).c_str());
-	ok = topic->SetDescription(ToUTF8(m_strDescription).c_str());
+	ok = topic->SetDescription(ToUTF8(m_strDescription).c_str()) && ok;
 	ok = topic->SetTopicType(ToUTF8(m_strTopicType).c_str()) && ok;
 	ok = topic->SetStage(ToUTF8(m_strTopicStage).c_str()) && ok;
 	ok = topic->SetTopicStatus(ToUTF8(m_strTopicStatus).c_str()) && ok;
@@ -919,10 +921,10 @@ void CBCFView::OnClickedSave()
 	SaveBCFFile();
 }
 
-void CBCFView::SaveBCFFile()
+bool CBCFView::SaveBCFFile()
 {
 	if (!m_bcfProject) {
-		return;
+		return false;
 	}
 
 	LPCTSTR fileTypes = _T("BCF files (*.bcf)|*.bcf|All Files (*.*)|*.*||");
@@ -930,14 +932,17 @@ void CBCFView::SaveBCFFile()
 	CFileDialog dlgFile(FALSE, L"bcf", _T(""), OFN_OVERWRITEPROMPT | OFN_HIDEREADONLY, fileTypes);
 	if (dlgFile.DoModal() != IDOK)
 	{
-		return;
+		return false;
 	}
 
-	m_bcfFilePath = dlgFile.GetPathName();
-
-	bool ok = m_bcfProject->WriteFile(ToUTF8(m_bcfFilePath).c_str(), BCFVer_3_0);
+	CString filePath = dlgFile.GetPathName();
+	bool ok = m_bcfProject->WriteFile(ToUTF8(filePath).c_str(), BCFVer_3_0);
 
 	ShowLog(!ok);
+	if (ok) {
+		m_bcfFilePath = filePath;
+	}
+	return ok;
 }
 
 void CBCFView::OnClickedUpdateViewpoint()

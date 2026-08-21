@@ -532,6 +532,9 @@ void CMySTEPViewerDoc::OnBcfOpen()
 
 	CString strPath = dlgFile.GetPathName();
 	if (m_wndBCFView.IsBCF(strPath)) {
+		if (!m_wndBCFView.SaveModified()) {
+			return;
+		}
 		m_wndBCFView.Open(strPath);
 	}
 }

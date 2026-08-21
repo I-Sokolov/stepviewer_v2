@@ -101,7 +101,7 @@ private:
 	void RemoveDocument(BCFTopic* topic);
 	BCFBimFile* FindBimFileByPath(BCFTopic* topic, const char* searchPath);
 	void FillTopicAuthor(BCFTopic* topic);
-	void SaveBCFFile();
+	bool SaveBCFFile();
 
 private:
 	CMySTEPViewerDoc&				m_doc;
@@ -149,4 +149,3 @@ private:
 	CButton m_wndRemoveMulti;
 	CButton m_wndUpdateViewPoint;
 };
-
