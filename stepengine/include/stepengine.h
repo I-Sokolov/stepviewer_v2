@@ -1076,11 +1076,15 @@ static	inline	SdaiModel	engiOpenModelByArray(
 //				SdaiModel				model								IN
 //				SdaiString				fileName							IN
 //
-//				void					returns
+//				int_t					returns								OUT
 //
 //	This function saves the model (char file name).
 //
-void						DECL STDC	sdaiSaveModelBN(
+//	If save operation finished succesfully the return value will be 0, in case of non-zero value:
+//		1 - model is NULL or not recognized as a model handle
+//		2 - file at path location cannot be created/overwritten
+//
+int_t						DECL STDC	sdaiSaveModelBN(
 												SdaiModel				model,
 												SdaiString				fileName
 											);
@@ -1091,7 +1095,7 @@ void						DECL STDC	sdaiSaveModelBN(
 
 //
 //
-static	inline	void	sdaiSaveModelBN(
+static	inline	int_t	sdaiSaveModelBN(
 								SdaiModel				model,
 								char					* fileName
 							)
@@ -1111,11 +1115,15 @@ static	inline	void	sdaiSaveModelBN(
 //				SdaiModel				model								IN
 //				const wchar_t			* fileName							IN
 //
-//				void					returns
+//				int_t					returns								OUT
 //
 //	This function saves the model (wchar, i.e. Unicode file name).
 //
-void						DECL STDC	sdaiSaveModelBNUnicode(
+//	If save operation finished succesfully the return value will be 0, in case of non-zero value:
+//		1 - model is NULL or not recognized as a model handle
+//		2 - file at path location cannot be created/overwritten
+//
+int_t						DECL STDC	sdaiSaveModelBNUnicode(
 												SdaiModel				model,
 												const wchar_t			* fileName
 											);
@@ -1126,7 +1134,7 @@ void						DECL STDC	sdaiSaveModelBNUnicode(
 
 //
 //
-static	inline	void	sdaiSaveModelBNUnicode(
+static	inline	int_t	sdaiSaveModelBNUnicode(
 								SdaiModel				model,
 								wchar_t					* fileName
 							)
@@ -1147,11 +1155,15 @@ static	inline	void	sdaiSaveModelBNUnicode(
 //				const void				* callback							IN
 //				int_t					size								IN
 //
-//				void					returns
+//				int_t					returns								OUT
 //
 //	This function saves the model as a stream.
 //
-void						DECL STDC	engiSaveModelByStream(
+//	If save operation finished succesfully the return value will be 0, in case of non-zero value:
+//		1 - model is NULL or not recognized as a model handle
+//		2 - callback function not recognized
+//
+int_t						DECL STDC	engiSaveModelByStream(
 												SdaiModel				model,
 												const void				* callback,
 												int_t					size
@@ -1163,11 +1175,15 @@ void						DECL STDC	engiSaveModelByStream(
 //				unsigned char			* content							IN / OUT
 //				int_t					* size								IN / OUT
 //
-//				void					returns
+//				int_t					returns								OUT
 //
 //	This function saves the model as an array.
 //
-void						DECL STDC	engiSaveModelByArray(
+//	If save operation finished succesfully the return value will be 0, in case of non-zero value:
+//		1 - model is NULL or not recognized as a model handle
+//		2 - content or size could not be set
+//
+int_t						DECL STDC	engiSaveModelByArray(
 												SdaiModel				model,
 												unsigned char			* content,
 												int_t					* size
@@ -1178,11 +1194,15 @@ void						DECL STDC	engiSaveModelByArray(
 //				SdaiModel				model								IN
 //				SdaiString				fileName							IN
 //
-//				void					returns
+//				int_t					returns								OUT
 //
 //	This function saves the model as XML according to IFC2x3's way of XML serialization (char file name).
 //
-void						DECL STDC	sdaiSaveModelAsXmlBN(
+//	If save operation finished succesfully the return value will be 0, in case of non-zero value:
+//		1 - model is NULL or not recognized as a model handle
+//		2 - file at path location cannot be created/overwritten
+//
+int_t						DECL STDC	sdaiSaveModelAsXmlBN(
 												SdaiModel				model,
 												SdaiString				fileName
 											);
@@ -1193,7 +1213,7 @@ void						DECL STDC	sdaiSaveModelAsXmlBN(
 
 //
 //
-static	inline	void	sdaiSaveModelAsXmlBN(
+static	inline	int_t	sdaiSaveModelAsXmlBN(
 								SdaiModel				model,
 								char					* fileName
 							)
@@ -1213,11 +1233,15 @@ static	inline	void	sdaiSaveModelAsXmlBN(
 //				SdaiModel				model								IN
 //				const wchar_t			* fileName							IN
 //
-//				void					returns
+//				int_t					returns								OUT
 //
 //	This function saves the model as XML according to IFC2x3's way of XML serialization (wchar, i.e. Unicode file name).
 //
-void						DECL STDC	sdaiSaveModelAsXmlBNUnicode(
+//	If save operation finished succesfully the return value will be 0, in case of non-zero value:
+//		1 - model is NULL or not recognized as a model handle
+//		2 - file at path location cannot be created/overwritten
+//
+int_t						DECL STDC	sdaiSaveModelAsXmlBNUnicode(
 												SdaiModel				model,
 												const wchar_t			* fileName
 											);
@@ -1228,7 +1252,7 @@ void						DECL STDC	sdaiSaveModelAsXmlBNUnicode(
 
 //
 //
-static	inline	void	sdaiSaveModelAsXmlBNUnicode(
+static	inline	int_t	sdaiSaveModelAsXmlBNUnicode(
 								SdaiModel				model,
 								wchar_t					* fileName
 							)
@@ -1248,11 +1272,15 @@ static	inline	void	sdaiSaveModelAsXmlBNUnicode(
 //				SdaiModel				model								IN
 //				SdaiString				fileName							IN
 //
-//				void					returns
+//				int_t					returns								OUT
 //
 //	This function saves the model as XML according to IFC4's way of XML serialization (char file name).
 //
-void						DECL STDC	sdaiSaveModelAsSimpleXmlBN(
+//	If save operation finished succesfully the return value will be 0, in case of non-zero value:
+//		1 - model is NULL or not recognized as a model handle
+//		2 - file at path location cannot be created/overwritten
+//
+int_t						DECL STDC	sdaiSaveModelAsSimpleXmlBN(
 												SdaiModel				model,
 												SdaiString				fileName
 											);
@@ -1263,7 +1291,7 @@ void						DECL STDC	sdaiSaveModelAsSimpleXmlBN(
 
 //
 //
-static	inline	void	sdaiSaveModelAsSimpleXmlBN(
+static	inline	int_t	sdaiSaveModelAsSimpleXmlBN(
 								SdaiModel				model,
 								char					* fileName
 							)
@@ -1283,11 +1311,15 @@ static	inline	void	sdaiSaveModelAsSimpleXmlBN(
 //				SdaiModel				model								IN
 //				const wchar_t			* fileName							IN
 //
-//				void					returns
+//				int_t					returns								OUT
 //
 //	This function saves the model as XML according to IFC4's way of XML serialization (wchar, i.e. Unicode file name).
 //
-void						DECL STDC	sdaiSaveModelAsSimpleXmlBNUnicode(
+//	If save operation finished succesfully the return value will be 0, in case of non-zero value:
+//		1 - model is NULL or not recognized as a model handle
+//		2 - file at path location cannot be created/overwritten
+//
+int_t						DECL STDC	sdaiSaveModelAsSimpleXmlBNUnicode(
 												SdaiModel				model,
 												const wchar_t			* fileName
 											);
@@ -1298,7 +1330,7 @@ void						DECL STDC	sdaiSaveModelAsSimpleXmlBNUnicode(
 
 //
 //
-static	inline	void	sdaiSaveModelAsSimpleXmlBNUnicode(
+static	inline	int_t	sdaiSaveModelAsSimpleXmlBNUnicode(
 								SdaiModel				model,
 								wchar_t					* fileName
 							)
@@ -1318,11 +1350,15 @@ static	inline	void	sdaiSaveModelAsSimpleXmlBNUnicode(
 //				SdaiModel				model								IN
 //				SdaiString				fileName							IN
 //
-//				void					returns
+//				int_t					returns								OUT
 //
 //	This function saves the model as JSON according to IFC4's way of JSON serialization (char file name).
 //
-void						DECL STDC	sdaiSaveModelAsJsonBN(
+//	If save operation finished succesfully the return value will be 0, in case of non-zero value:
+//		1 - model is NULL or not recognized as a model handle
+//		2 - file at path location cannot be created/overwritten
+//
+int_t						DECL STDC	sdaiSaveModelAsJsonBN(
 												SdaiModel				model,
 												SdaiString				fileName
 											);
@@ -1333,7 +1369,7 @@ void						DECL STDC	sdaiSaveModelAsJsonBN(
 
 //
 //
-static	inline	void	sdaiSaveModelAsJsonBN(
+static	inline	int_t	sdaiSaveModelAsJsonBN(
 								SdaiModel				model,
 								char					* fileName
 							)
@@ -1353,11 +1389,15 @@ static	inline	void	sdaiSaveModelAsJsonBN(
 //				SdaiModel				model								IN
 //				const wchar_t			* fileName							IN
 //
-//				void					returns
+//				int_t					returns								OUT
 //
 //	This function saves the model as JSON according to IFC4's way of JSON serialization (wchar, i.e. Unicode file name).
 //
-void						DECL STDC	sdaiSaveModelAsJsonBNUnicode(
+//	If save operation finished succesfully the return value will be 0, in case of non-zero value:
+//		1 - model is NULL or not recognized as a model handle
+//		2 - file at path location cannot be created/overwritten
+//
+int_t						DECL STDC	sdaiSaveModelAsJsonBNUnicode(
 												SdaiModel				model,
 												const wchar_t			* fileName
 											);
@@ -1368,7 +1408,7 @@ void						DECL STDC	sdaiSaveModelAsJsonBNUnicode(
 
 //
 //
-static	inline	void	sdaiSaveModelAsJsonBNUnicode(
+static	inline	int_t	sdaiSaveModelAsJsonBNUnicode(
 								SdaiModel				model,
 								wchar_t					* fileName
 							)
@@ -1388,11 +1428,15 @@ static	inline	void	sdaiSaveModelAsJsonBNUnicode(
 //				SdaiModel				model								IN
 //				SdaiString				filePath							IN
 //
-//				bool					returns								OUT
+//				int_t					returns								OUT
 //
 //	This function saves the schema.
 //
-bool						DECL STDC	engiSaveSchemaBN(
+//	If save operation finished succesfully the return value will be 0, in case of non-zero value:
+//		1 - model is NULL or not recognized as a model handle
+//		2 - file at path location cannot be created/overwritten
+//
+int_t						DECL STDC	engiSaveSchemaBN(
 												SdaiModel				model,
 												SdaiString				filePath
 											);
@@ -1403,7 +1447,7 @@ bool						DECL STDC	engiSaveSchemaBN(
 
 //
 //
-static	inline	bool	engiSaveSchemaBN(
+static	inline	int_t	engiSaveSchemaBN(
 								SdaiModel				model,
 								char					* filePath
 							)
@@ -1423,11 +1467,15 @@ static	inline	bool	engiSaveSchemaBN(
 //				SdaiModel				model								IN
 //				const wchar_t			* filePath							IN
 //
-//				bool					returns								OUT
+//				int_t					returns								OUT
 //
 //	This function saves the schema (wchar, i.e. Unicode file name).
 //
-bool						DECL STDC	engiSaveSchemaBNUnicode(
+//	If save operation finished succesfully the return value will be 0, in case of non-zero value:
+//		1 - model is NULL or not recognized as a model handle
+//		2 - file at path location cannot be created/overwritten
+//
+int_t						DECL STDC	engiSaveSchemaBNUnicode(
 												SdaiModel				model,
 												const wchar_t			* filePath
 											);
@@ -1438,7 +1486,7 @@ bool						DECL STDC	engiSaveSchemaBNUnicode(
 
 //
 //
-static	inline	bool	engiSaveSchemaBNUnicode(
+static	inline	int_t	engiSaveSchemaBNUnicode(
 								SdaiModel				model,
 								wchar_t					* filePath
 							)
@@ -1457,14 +1505,17 @@ static	inline	bool	engiSaveSchemaBNUnicode(
 //		sdaiCloseModel                                          (https://rdf.bg/stepdoc/CP64/sdaiCloseModel.html)
 //				SdaiModel				model								IN
 //
-//				void					returns
+//				int_t					returns								OUT
 //
 //	This function closes the model. After this call no instance handles will be available including all
 //	handles referencing the geometry of this specific file, in default compilation the model itself will
 //	be known in the kernel, however known to be disabled. Calls containing the model reference will be
 //	protected from crashing when called.
 //
-void						DECL STDC	sdaiCloseModel(
+//	If the model is closed successfully the return value will be 0, in case of non-zero value:
+//		1 - model is NULL or not recognized as a model handle
+//
+int_t						DECL STDC	sdaiCloseModel(
 												SdaiModel				model
 											);
 
@@ -7991,24 +8042,6 @@ void						DECL STDC	engiGetAttributeAggr(
 											);
 
 //
-//		engiGetAggrUnknownElement                               (https://rdf.bg/stepdoc/CP64/engiGetAggrUnknownElement.html)
-//				const SdaiAggr			aggregate							IN
-//				int_t					elementIndex						IN
-//				SdaiPrimitiveType		* valueType							IN / OUT
-//				void					* value								IN / OUT
-//
-//				void					returns
-//
-//	...
-//
-void						DECL STDC	engiGetAggrUnknownElement(
-												const SdaiAggr			aggregate,
-												int_t					elementIndex,
-												SdaiPrimitiveType		* valueType,
-												void					* value
-											);
-
-//
 //		sdaiErrorQuery                                          (https://rdf.bg/stepdoc/CP64/sdaiErrorQuery.html)
 //				int_t					returns								OUT
 //
@@ -8091,6 +8124,30 @@ void						DECL STDC	owlGetModel(
 												OwlModel				* owlModel
 											);
 
+#ifdef __cplusplus
+	}
+//{{ Begin C++ polymorphic versions
+
+//
+//
+static	inline	OwlModel	owlGetModel(
+									SdaiModel				model
+								)
+{
+	OwlModel	owlModel = 0;
+
+	owlGetModel(
+			model,
+			&owlModel
+		);
+
+	return owlModel;
+}
+
+//}} End C++ polymorphic versions
+	extern "C" {
+#endif
+
 //
 //		owlConnectModel                                         (https://rdf.bg/stepdoc/CP64/owlConnectModel.html)
 //				SdaiModel				model								IN
@@ -8136,7 +8193,7 @@ void						DECL STDC	owlGetInstance(
 //
 //				void					returns
 //
-//	...
+//	deprecated, if you use this call, please contact us
 //
 void						DECL STDC	owlMaterialInstance(
 												SdaiInstance			instanceBase,
@@ -8166,6 +8223,45 @@ void						DECL STDC	owlBuildInstance(
 											);
 
 //
+//		owlBuildInstanceMT                                      (https://rdf.bg/stepdoc/CP64/owlBuildInstanceMT.html)
+//				SdaiInstance			instance							IN
+//				SdaiModel				model								IN
+//
+//				OwlInstance				returns								OUT
+//
+//	Returns a handle to the instance representing the head of design tree within the Geometry Kernel.
+//	If no design tree is created yet it will be created on-the-fly.
+//
+//	Note: the STEP Engine uses one or more models within the Geometry Kernel to generate design trees
+//		  within the Geometry Kernel. All Geometry Kernel calls can be called with the STEP instance handle also,
+//		  however most correct would be to get and use the Geometry Kernel handle.
+//
+OwlInstance					DECL STDC	owlBuildInstanceMT(
+												SdaiInstance			instance,
+												SdaiModel				model
+											);
+
+#ifdef __cplusplus
+	}
+//{{ Begin C++ polymorphic versions
+
+//
+//
+static	inline	OwlInstance	owlBuildInstanceMT(
+									SdaiInstance			instance
+								)
+{
+	return	owlBuildInstanceMT(
+					instance,
+					0									//	model
+				);
+}
+
+//}} End C++ polymorphic versions
+	extern "C" {
+#endif
+
+//
 //		owlBuildInstanceInContext                               (https://rdf.bg/stepdoc/CP64/owlBuildInstanceInContext.html)
 //				SdaiInstance			instanceBase						IN
 //				SdaiInstance			instanceContext						IN
@@ -8185,6 +8281,49 @@ void						DECL STDC	owlBuildInstanceInContext(
 												SdaiInstance			instanceContext,
 												OwlInstance				* owlInstance
 											);
+
+//
+//		owlBuildInstanceInContextMT                             (https://rdf.bg/stepdoc/CP64/owlBuildInstanceInContextMT.html)
+//				SdaiInstance			instanceBase						IN
+//				SdaiInstance			instanceContext						IN
+//				SdaiModel				model								IN
+//
+//				OwlInstance				returns								OUT
+//
+//	Returns a handle to the instance representing the head of design tree within the Geometry Kernel.
+//	If no design tree is created yet it will be created on-the-fly.
+//
+//	Note: the STEP Engine uses one or more models within the Geometry Kernel to generate design trees
+//		  within the Geometry Kernel. All Geometry Kernel calls can be called with the STEP instance handle also,
+//		  however most correct would be to get and use the Geometry Kernel handle.
+//
+OwlInstance					DECL STDC	owlBuildInstanceInContextMT(
+												SdaiInstance			instanceBase,
+												SdaiInstance			instanceContext,
+												SdaiModel				model
+											);
+
+#ifdef __cplusplus
+	}
+//{{ Begin C++ polymorphic versions
+
+//
+//
+static	inline	OwlInstance	owlBuildInstanceInContextMT(
+									SdaiInstance			instanceBase,
+									SdaiInstance			instanceContext
+								)
+{
+	return	owlBuildInstanceInContextMT(
+					instanceBase,
+					instanceContext,
+					0									//	model
+				);
+}
+
+//}} End C++ polymorphic versions
+	extern "C" {
+#endif
 
 //
 //		engiInstanceUsesSegmentation                            (https://rdf.bg/stepdoc/CP64/engiInstanceUsesSegmentation.html)
@@ -8208,7 +8347,7 @@ bool						DECL STDC	engiInstanceUsesSegmentation(
 //
 //				void					returns
 //
-//	...
+//	deprecated, if you use this call, please contact us
 //
 void						DECL STDC	owlBuildInstances(
 												SdaiModel				model,
@@ -8522,6 +8661,24 @@ int_t						DECL STDC	sdaiValidateSchemaInstance(
 //
 //  Deprecated API Calls (GENERIC)
 //
+
+//
+//		engiGetAggrUnknownElement                               (https://rdf.bg/stepdoc/CP64/engiGetAggrUnknownElement.html)
+//				const SdaiAggr			aggregate							IN
+//				int_t					elementIndex						IN
+//				SdaiPrimitiveType		* valueType							IN / OUT
+//				void					* value								IN / OUT
+//
+//				void					returns
+//
+//	This call is deprecated, please use engiGetAggrType, the index is irrelevant.
+//
+void						DECL STDC	engiGetAggrUnknownElement(
+												const SdaiAggr			aggregate,
+												int_t					elementIndex,
+												SdaiPrimitiveType		* valueType,
+												void					* value
+											);
 
 //
 //		engiGetEntityAttributeByIndex                           (https://rdf.bg/stepdoc/CP64/engiGetEntityAttributeByIndex.html)
