@@ -3,13 +3,13 @@
 #include "bcfAPI.h"
 #include <string>
 
-class CBCFView;
+class CBCFTopicView;
 class _instance;
 
 class CBCFViewPointMgr
 {
 public:
-	CBCFViewPointMgr(CBCFView& view) : m_view(view){}
+	CBCFViewPointMgr(CBCFTopicView& view) : m_view(view){}
 
 	void SetViewFromComment(BCFComment& comment);
 
@@ -36,5 +36,5 @@ private:
 	std::string GetColorStr(COLORREF clr);
 
 private:
-	CBCFView& m_view;
+	CBCFTopicView& m_view;
 };

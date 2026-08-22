@@ -2,7 +2,7 @@
 #include "BCFViewPointMgr.h"
 #include "STEPViewerDoc.h"
 #include "STEPViewerView.h"
-#include "BCFView.h"
+#include "BCFTopicView.h"
 #include "_ifc_instance.h"
 #include "_ifc_model.h"
 #include "_oglUtils.h"

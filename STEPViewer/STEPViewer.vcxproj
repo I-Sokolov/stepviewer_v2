@@ -669,7 +669,7 @@
     <ClInclude Include="BCF\BCFAddRelatedTopic.h" />
     <ClInclude Include="BCF\BCFBimFiles.h" />
     <ClInclude Include="BCF\BCFProjInfo.h" />
-    <ClInclude Include="BCF\BCFView.h" />
+    <ClInclude Include="BCF\BCFTopicView.h" />
     <ClInclude Include="BCF\BCFViewPointMgr.h" />
     <ClInclude Include="CIS2\CIS2DesignPart.h" />
     <ClInclude Include="CIS2\CIS2Geometry.h" />
@@ -1240,7 +1240,7 @@
     <ClCompile Include="BCF\BCFAddRelatedTopic.cpp" />
     <ClCompile Include="BCF\BCFBimFiles.cpp" />
     <ClCompile Include="BCF\BCFProjInfo.cpp" />
-    <ClCompile Include="BCF\BCFView.cpp" />
+    <ClCompile Include="BCF\BCFTopicView.cpp" />
     <ClCompile Include="BCF\BCFViewPointMgr.cpp" />
     <ClCompile Include="CIS2\CIS2DesignPart.cpp" />
     <ClCompile Include="CIS2\CIS2Geometry.cpp" />

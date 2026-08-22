@@ -12,13 +12,13 @@ class CMySTEPViewerView;
 class _model;
 
 
-class CBCFView : public CDialogEx
+class CBCFTopicView : public CDialogEx
 {
-	DECLARE_DYNAMIC(CBCFView)
+	DECLARE_DYNAMIC(CBCFTopicView)
 
 public:
-	CBCFView(CMySTEPViewerDoc& doc);
-	virtual ~CBCFView();
+	CBCFTopicView(CMySTEPViewerDoc& doc);
+	virtual ~CBCFTopicView();
 
 public:
 /// <summary>

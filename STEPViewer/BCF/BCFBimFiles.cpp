@@ -7,13 +7,13 @@
 #include "_mvc.h"
 #include "_ap_model_factory.h"
 #include "BCFBimFiles.h"
-#include "BCFView.h"
+#include "BCFTopicView.h"
 
 // CBCFBimFiles dialog
 
 IMPLEMENT_DYNAMIC(CBCFBimFiles, CDialogEx)
 
-CBCFBimFiles::CBCFBimFiles(CBCFView& bcfView)
+CBCFBimFiles::CBCFBimFiles(CBCFTopicView& bcfView)
 	: CDialogEx(IDD_BCF_TOPICFILES, &bcfView)
 	, m_view(bcfView)
 {

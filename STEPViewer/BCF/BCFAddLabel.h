@@ -1,13 +1,13 @@
 #pragma once
 
-class CBCFView;
+class CBCFTopicView;
 
 class CBCFAddLabel : public CDialogEx
 {
 	DECLARE_DYNAMIC(CBCFAddLabel)
 
 public:
-	CBCFAddLabel(CBCFView& bcfView);
+	CBCFAddLabel(CBCFTopicView& bcfView);
 	virtual ~CBCFAddLabel();
 
 // Dialog Data
@@ -23,7 +23,7 @@ protected:
 	DECLARE_MESSAGE_MAP()
 
 private:
-	CBCFView& m_view;
+	CBCFTopicView& m_view;
 	CComboBox m_wndAddLabel;
 	CString	  m_strAddLabel;
 };

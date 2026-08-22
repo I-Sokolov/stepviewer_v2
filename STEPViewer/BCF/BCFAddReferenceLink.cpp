@@ -3,7 +3,7 @@
 
 #include "stdafx.h"
 #include "STEPViewer.h"
-#include "BCFView.h"
+#include "BCFTopicView.h"
 #include "BCFAddReferenceLink.h"
 
 
@@ -11,7 +11,7 @@
 
 IMPLEMENT_DYNAMIC(CBCFAddReferenceLink, CDialogEx)
 
-CBCFAddReferenceLink::CBCFAddReferenceLink(CBCFView& view)
+CBCFAddReferenceLink::CBCFAddReferenceLink(CBCFTopicView& view)
 	: CDialogEx(IDD_BCF_ADDREFERENCELINK, &view)
 	, m_view(view)
 {

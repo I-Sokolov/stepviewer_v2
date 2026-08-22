@@ -2,14 +2,14 @@
 
 #include "bcfAPI.h"
 
-class CBCFView;
+class CBCFTopicView;
 
 class CBCFBimFiles : public CDialogEx
 {
 	DECLARE_DYNAMIC(CBCFBimFiles)
 
 public:
-	CBCFBimFiles(CBCFView& bcfView);   // standard constructor
+	CBCFBimFiles(CBCFTopicView& bcfView);   // standard constructor
 	virtual ~CBCFBimFiles();
 
 // Dialog Data
@@ -33,7 +33,7 @@ private:
 	void AddBimFile(BCFTopic& topic, const CString& strPath);
 
 private:
-	CBCFView&     m_view;
+	CBCFTopicView& m_view;
 	UsedModels    m_usedModels;
 	CCheckListBox m_fileList;
 };

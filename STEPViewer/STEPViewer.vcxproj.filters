@@ -255,7 +255,7 @@
     <ClInclude Include="BCF\BCFProjInfo.h">
       <Filter>BCF</Filter>
     </ClInclude>
-    <ClInclude Include="BCF\BCFView.h">
+    <ClInclude Include="BCF\BCFTopicView.h">
       <Filter>BCF</Filter>
     </ClInclude>
     <ClInclude Include="BCF\BCFViewPointMgr.h">
@@ -512,7 +512,7 @@
     <ClCompile Include="BCF\BCFProjInfo.cpp">
       <Filter>BCF</Filter>
     </ClCompile>
-    <ClCompile Include="BCF\BCFView.cpp">
+    <ClCompile Include="BCF\BCFTopicView.cpp">
       <Filter>BCF</Filter>
     </ClCompile>
     <ClCompile Include="BCF\BCFViewPointMgr.cpp">

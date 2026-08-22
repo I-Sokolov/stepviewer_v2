@@ -4,13 +4,13 @@
 #include "stdafx.h"
 #include "STEPViewer.h"
 #include "BCFAddDocumentReference.h"
-#include "BCFView.h"
+#include "BCFTopicView.h"
 
 // CBCFAddDocumentReference dialog
 
 IMPLEMENT_DYNAMIC(CBCFAddDocumentReference, CDialogEx)
 
-CBCFAddDocumentReference::CBCFAddDocumentReference(CBCFView& view)
+CBCFAddDocumentReference::CBCFAddDocumentReference(CBCFTopicView& view)
 	: CDialogEx(IDD_BCF_ADDOCUMENT, &view)
 	, m_view(view)
 	, m_strPath(_T(""))

@@ -4,14 +4,14 @@
 #include "stdafx.h"
 #include "STEPViewer.h"
 #include "BCFAddRelatedTopic.h"
-#include "BCFView.h"
+#include "BCFTopicView.h"
 
 #include <unordered_set>
 
 
 IMPLEMENT_DYNAMIC(CBCFAddRelatedTopic, CDialogEx)
 
-CBCFAddRelatedTopic::CBCFAddRelatedTopic(CBCFView& bcfView)
+CBCFAddRelatedTopic::CBCFAddRelatedTopic(CBCFTopicView& bcfView)
 	: CDialogEx(IDD_BCF_ADDRELATEDTOPIC, &bcfView)
 	, m_view(bcfView)
 {
