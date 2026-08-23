@@ -170,7 +170,6 @@
 #define IDC_SNIPPET_REFERENCE_BROWSE    1026
 #define IDC_SNIPPET_SCHEMA_BROWSE       1027
 #define IDC_TOPIC_COMMENTS              1028
-#define IDC_TOPIC_COMMENT_TEXT          1028
 #define IDC_COMMENT_ADD                 1029
 #define IDC_TAB                         1031
 #define IDC_MULTI_LIST                  1032

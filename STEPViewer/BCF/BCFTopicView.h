@@ -9,6 +9,23 @@ using namespace std;
 class CBCFProjectView;
 class _model;
 
+class CBCFCommentsListBox : public CListBox
+{
+public:
+	int AddComment(BCFComment& comment);
+
+protected:
+	virtual void DrawItem(LPDRAWITEMSTRUCT drawItem);
+	virtual void MeasureItem(LPMEASUREITEMSTRUCT measureItem);
+
+	afx_msg void OnSize(UINT type, int cx, int cy);
+	DECLARE_MESSAGE_MAP()
+
+private:
+	int MeasureCommentHeight(BCFComment* comment) const;
+	void UpdateItemHeights();
+};
+
 
 class CBCFTopicView : public CDialogEx
 {
@@ -57,7 +74,6 @@ private:
 	void LoadTopic();
 	void LoadComments(int select = 0);
 	void SaveTopic();
-	void SaveActiveComment();
 	void FillMultiList();
 	void FillLabels(BCFTopic* topic);
 	void FillRelated(BCFTopic* topic);
@@ -107,8 +123,7 @@ private:
 	CString m_strIndex;
 	CEdit m_wndServerIndex;
 	CString m_strServerId;
-	CListBox m_wndCommentsList;
-	CEdit m_wndCommentText;
+	CBCFCommentsListBox m_wndCommentsList;
 	CListBox m_wndMultiList;
 	CButton m_wndAddMulti;
 	CButton m_wndRemoveMulti;

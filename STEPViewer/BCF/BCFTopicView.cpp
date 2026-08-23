@@ -21,6 +21,164 @@ namespace fs = std::experimental::filesystem;
 #define TAB_Links			1
 #define TAB_Documents		0
 
+BEGIN_MESSAGE_MAP(CBCFCommentsListBox, CListBox)
+	ON_WM_SIZE()
+END_MESSAGE_MAP()
+
+namespace
+{
+	CString GetCommentMetadata(BCFComment& comment)
+	{
+		CString metadata;
+		metadata.Format(L"Created by %s %s",
+			FromUTF8(comment.GetAuthor()).GetString(),
+			CBCFProjectView::FormatDateTime(comment.GetDate()).GetString());
+
+		if (*comment.GetModifiedAuthor() || *comment.GetModifiedDate()) {
+			CString modified;
+			modified.Format(L"\nModified by %s %s",
+				FromUTF8(comment.GetModifiedAuthor()).GetString(),
+				CBCFProjectView::FormatDateTime(comment.GetModifiedDate()).GetString());
+			metadata.Append(modified);
+		}
+		return metadata;
+	}
+}
+
+int CBCFCommentsListBox::AddComment(BCFComment& comment)
+{
+	int item = AddString(FromUTF8(comment.GetText()));
+	if (item != LB_ERR && item != LB_ERRSPACE) {
+		SetItemDataPtr(item, &comment);
+		SetItemHeight(item, MeasureCommentHeight(&comment));
+	}
+	return item;
+}
+
+int CBCFCommentsListBox::MeasureCommentHeight(BCFComment* comment) const
+{
+	CClientDC dc(const_cast<CBCFCommentsListBox*>(this));
+	CFont* oldFont = dc.SelectObject(GetFont());
+
+	CRect client;
+	GetClientRect(client);
+	int scale = dc.GetDeviceCaps(LOGPIXELSY);
+	int outerMargin = MulDiv(4, scale, 96);
+	int padding = MulDiv(8, scale, 96);
+	int spacing = MulDiv(6, scale, 96);
+	int width = max(MulDiv(80, scale, 96),
+		client.Width() - GetSystemMetrics(SM_CXVSCROLL) - 2 * (outerMargin + padding));
+
+	CString text = comment ? FromUTF8(comment->GetText()) : CString();
+	if (text.IsEmpty()) {
+		text = L"(No text)";
+	}
+	CRect textRect(0, 0, width, 0);
+	dc.DrawText(text, textRect, DT_CALCRECT | DT_WORDBREAK | DT_EDITCONTROL | DT_NOPREFIX);
+
+	CString metadata = comment ? GetCommentMetadata(*comment) : CString(L" ");
+	CRect metadataRect(0, 0, width, 0);
+	dc.DrawText(metadata, metadataRect, DT_CALCRECT | DT_WORDBREAK | DT_NOPREFIX);
+
+	dc.SelectObject(oldFont);
+	return 2 * (outerMargin + padding) + spacing + textRect.Height() + metadataRect.Height();
+}
+
+void CBCFCommentsListBox::MeasureItem(LPMEASUREITEMSTRUCT measureItem)
+{
+	BCFComment* comment = nullptr;
+	if (measureItem->itemID != static_cast<UINT>(-1)) {
+		auto data = GetItemDataPtr(measureItem->itemID);
+		if (data != reinterpret_cast<void*>(LB_ERR)) {
+			comment = static_cast<BCFComment*>(data);
+		}
+	}
+	measureItem->itemHeight = MeasureCommentHeight(comment);
+}
+
+void CBCFCommentsListBox::DrawItem(LPDRAWITEMSTRUCT drawItem)
+{
+	if (drawItem->itemID == static_cast<UINT>(-1)) {
+		return;
+	}
+
+	CDC dc;
+	dc.Attach(drawItem->hDC);
+	int savedState = dc.SaveDC();
+
+	bool selected = (drawItem->itemState & ODS_SELECTED) != 0;
+	COLORREF background = GetSysColor(selected ? COLOR_HIGHLIGHT : COLOR_WINDOW);
+	COLORREF textColor = GetSysColor(selected ? COLOR_HIGHLIGHTTEXT : COLOR_WINDOWTEXT);
+	COLORREF metadataColor = selected ? textColor : GetSysColor(COLOR_GRAYTEXT);
+
+	CRect itemRect(drawItem->rcItem);
+	dc.FillSolidRect(itemRect, GetSysColor(COLOR_BTNFACE));
+
+	int scale = dc.GetDeviceCaps(LOGPIXELSY);
+	int outerMargin = MulDiv(4, scale, 96);
+	int padding = MulDiv(8, scale, 96);
+	int spacing = MulDiv(6, scale, 96);
+	CRect cardRect(itemRect);
+	cardRect.DeflateRect(outerMargin, outerMargin);
+	dc.FillSolidRect(cardRect, background);
+	dc.Draw3dRect(cardRect, GetSysColor(COLOR_3DSHADOW), GetSysColor(COLOR_3DHILIGHT));
+
+	auto data = GetItemDataPtr(drawItem->itemID);
+	auto comment = data == reinterpret_cast<void*>(LB_ERR) ? nullptr : static_cast<BCFComment*>(data);
+	if (comment) {
+		CFont* oldFont = dc.SelectObject(GetFont());
+		dc.SetBkMode(TRANSPARENT);
+
+		CRect contentRect(cardRect);
+		contentRect.DeflateRect(padding, padding);
+		CString metadata = GetCommentMetadata(*comment);
+		CRect metadataRect(contentRect);
+		metadataRect.top = metadataRect.bottom;
+		dc.DrawText(metadata, metadataRect, DT_CALCRECT | DT_WORDBREAK | DT_NOPREFIX);
+		metadataRect.OffsetRect(0, -metadataRect.Height());
+
+		CRect textRect(contentRect);
+		textRect.bottom = metadataRect.top - spacing;
+		CString text = FromUTF8(comment->GetText());
+		if (text.IsEmpty()) {
+			text = L"(No text)";
+		}
+		dc.SetTextColor(textColor);
+		dc.DrawText(text, textRect, DT_WORDBREAK | DT_EDITCONTROL | DT_NOPREFIX);
+
+		dc.SetTextColor(metadataColor);
+		dc.DrawText(metadata, metadataRect, DT_WORDBREAK | DT_NOPREFIX);
+		dc.SelectObject(oldFont);
+	}
+
+	if ((drawItem->itemState & ODS_FOCUS) != 0) {
+		cardRect.DeflateRect(1, 1);
+		dc.DrawFocusRect(cardRect);
+	}
+
+	dc.RestoreDC(savedState);
+	dc.Detach();
+}
+
+void CBCFCommentsListBox::UpdateItemHeights()
+{
+	for (int item = 0; item < GetCount(); ++item) {
+		auto data = GetItemDataPtr(item);
+		if (data != reinterpret_cast<void*>(LB_ERR)) {
+			SetItemHeight(item, MeasureCommentHeight(static_cast<BCFComment*>(data)));
+		}
+	}
+	Invalidate();
+}
+
+void CBCFCommentsListBox::OnSize(UINT type, int cx, int cy)
+{
+	CListBox::OnSize(type, cx, cy);
+	if (GetSafeHwnd()) {
+		UpdateItemHeights();
+	}
+}
+
 // CBCFTopicView dialog
 
 IMPLEMENT_DYNAMIC(CBCFTopicView, CDialogEx)
@@ -80,7 +238,6 @@ void CBCFTopicView::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_TOPIC_INDEX, m_strIndex);
 	DDX_Control(pDX, IDC_TOPIC_SERVER_ID, m_wndServerIndex);
 	DDX_Text(pDX, IDC_TOPIC_SERVER_ID, m_strServerId);
-	DDX_Control(pDX, IDC_TOPIC_COMMENT_TEXT, m_wndCommentText);
 	DDX_Control(pDX, IDC_COMMENTS_LIST, m_wndCommentsList);
 	DDX_Control(pDX, IDC_MULTI_LIST, m_wndMultiList);
 	DDX_Control(pDX, IDC_BUTTON_ADD, m_wndAddMulti);
@@ -98,7 +255,6 @@ void CBCFTopicView::OnOK()
 {
 	UpdateData();
 	SaveTopic();
-	SaveActiveComment();
 	CDialogEx::OnOK();
 }
 
@@ -232,9 +388,6 @@ void CBCFTopicView::LoadTopic()
 
 void CBCFTopicView::SaveTopic()
 {
-	auto topic = &m_topic;
-
-
 	bool ok = m_topic.SetTitle(ToUTF8(m_strTitle).c_str());
 	ok = m_topic.SetDescription(ToUTF8(m_strDescription).c_str()) && ok;
 	ok = m_topic.SetTopicType(ToUTF8(m_strTopicType).c_str()) && ok;
@@ -267,58 +420,12 @@ void CBCFTopicView::LoadComments(int select)
 
 	uint16_t i = 0;
 	while (auto comment = m_topic.GetComment(i++)) {
-		CString text;
-		text.Format(L"#%d Created by %s %s",
-			(int)i,
-			(LPCWSTR)FromUTF8(comment->GetAuthor()),
-			CBCFProjectView::FormatDateTime(comment->GetDate()).GetString()
-		);
-		if (*comment->GetModifiedAuthor()) {
-			CString modifier;
-			modifier.Format(L", modified by %s %s",
-				(LPCWSTR)FromUTF8(comment->GetModifiedAuthor()),
-				CBCFProjectView::FormatDateTime(comment->GetModifiedDate()).GetString());
-			text.Append(modifier);
-		}
-		auto item = m_wndCommentsList.AddString(text);
-		m_wndCommentsList.SetItemDataPtr(item, comment);
+		m_wndCommentsList.AddComment(*comment);
 	}
-	m_wndCommentsList.AddString(L"<My new comment>");
 
 	m_wndCommentsList.SetCurSel(select);
 	OnSelchangeCommentsList();
 }
-
-void CBCFTopicView::SaveActiveComment()
-{
-	auto topic = &m_topic;
-
-	auto indComment = m_wndCommentsList.GetCurSel();
-	auto comment = (BCFComment*)m_wndCommentsList.GetItemDataPtr(indComment);
-
-	CString newText;
-	m_wndCommentText.GetWindowText(newText);
-	newText.Trim();
-
-	bool ok = true;
-
-	if (!comment && !newText.IsEmpty()) {
-		comment = topic->AddComment();
-		if (comment)
-			ok = m_viewPointMgr.SaveCurrentViewToComent(*comment) && ok;
-		else
-			ok = false;
-	}
-
-	if (comment) {
-		ok = comment->SetText(ToUTF8(newText).c_str()) && ok;
-	}
-
-	ShowLog(!ok);
-
-	LoadComments(indComment);
-}
-
 
 void CBCFTopicView::OnSelchangeCommentsList()
 {
@@ -327,13 +434,7 @@ void CBCFTopicView::OnSelchangeCommentsList()
 	comment = item == LB_ERR ? NULL : (BCFComment*)m_wndCommentsList.GetItemDataPtr(item);
 
 	if (comment) {
-		CString strCommentText = FromUTF8(comment->GetText());
-		m_wndCommentText.SetWindowText(strCommentText);
-
 		m_viewPointMgr.SetViewFromComment(*comment);
-	}
-	else {
-		m_wndCommentText.SetWindowText(L""); //new comment
 	}
 
 	m_wndUpdateViewPoint.EnableWindow(comment != NULL);
