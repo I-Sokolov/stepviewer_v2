@@ -502,8 +502,6 @@ void CMySTEPViewerDoc::OnBcfAddbim()
 		// MRU
 		AfxGetApp()->AddToRecentFileList(strPath);
 	}
-
-	m_wndBCFView.ViewTopicModels(m_wndBCFView.GetActiveTopic());
 }
 
 void CMySTEPViewerDoc::OnUpdateBcfAddbim(CCmdUI* pCmdUI)

@@ -4,6 +4,7 @@
 #include "stdafx.h"
 
 #include "STEPViewer.h"
+#include "STEPViewerDoc.h"
 #include "BCF\BCFProjectView.h"
 #include "BCF\BCFTopicView.h"
 #include "BCF\BCFAddLabel.h"
@@ -95,8 +96,9 @@ void CBCFTopicView::OnCancel()
 
 void CBCFTopicView::OnOK()
 {
-	UpdateActiveTopic();
-	UpateActiveComment();
+	UpdateData();
+	SaveTopic();
+	SaveActiveComment();
 	CDialogEx::OnOK();
 }
 
@@ -108,20 +110,24 @@ BOOL CBCFTopicView::OnInitDialog()
 	m_wndTab.InsertItem(0, L"Related topic");
 	m_wndTab.InsertItem(0, L"Links");
 	m_wndTab.InsertItem(0, L"Documents");
-	LoadTopicToView();
+
+	LoadView();
+
+	UpdateData(FALSE);
 
 	return TRUE;  // return TRUE unless you set the focus to a control
 	// EXCEPTION: OCX Property Pages should return FALSE
 }
 
 
-void CBCFTopicView::LoadTopicToView()
+void CBCFTopicView::LoadView()
 {
 	CWaitCursor wait;
 
 	UpdateTopicInfo();
 	LoadExtensions();
-	LoadActiveTopic();
+	LoadBIMFiles();
+	LoadTopic();
 }
 
 void CBCFTopicView::UpdateTopicInfo()
@@ -187,25 +193,22 @@ void CBCFTopicView::ShowLog(bool knownError)
 }
 
 
-void CBCFTopicView::LoadActiveTopic()
+void CBCFTopicView::LoadTopic()
 {
-	auto topic = &m_topic;
-	m_projectView.ViewTopicModels(topic);
+	m_strTitle = FromUTF8(m_topic.GetTitle());
+	m_strDescription = FromUTF8(m_topic.GetDescription());
 
-	m_strTitle = FromUTF8(topic->GetTitle());
-	m_strDescription = FromUTF8(topic->GetDescription());
+	m_strTopicType = FromUTF8(m_topic.GetTopicType());
+	m_strTopicStage = FromUTF8(m_topic.GetStage());
+	m_strTopicStatus = FromUTF8(m_topic.GetTopicStatus());
+	m_strAssigned = FromUTF8(m_topic.GetAssignedTo());
+	m_strPriority = FromUTF8(m_topic.GetPriority());
+	m_strDue = FromUTF8(m_topic.GetDueDate());
 
-	m_strTopicType = FromUTF8(topic->GetTopicType());
-	m_strTopicStage = FromUTF8(topic->GetStage());
-	m_strTopicStatus = FromUTF8(topic->GetTopicStatus());
-	m_strAssigned = FromUTF8(topic->GetAssignedTo());
-	m_strPriority = FromUTF8(topic->GetPriority());
-	m_strDue = FromUTF8(topic->GetDueDate());
+	m_strIndex = FromUTF8(m_topic.GetIndexStr());
+	m_strServerId = FromUTF8(m_topic.GetServerAssignedId());
 
-	m_strIndex = FromUTF8(topic->GetIndexStr());
-	m_strServerId = FromUTF8(topic->GetServerAssignedId());
-
-	auto snippet = topic->GetBimSnippet(false);
+	auto snippet = m_topic.GetBimSnippet(false);
 	m_wndSnippetType.EnableWindow(snippet != NULL);
 	m_wndSnippetReference.EnableWindow(snippet!=NULL);
 	m_wndSnippetSchema.EnableWindow(snippet != NULL);
@@ -222,38 +225,35 @@ void CBCFTopicView::LoadActiveTopic()
 		m_strSnippetSchema.Empty();
 	}
 
-	UpdateData(FALSE);
-
-	LoadComments(topic);
+	LoadComments();
 	FillMultiList();
 }
 
 
-void CBCFTopicView::UpdateActiveTopic()
+void CBCFTopicView::SaveTopic()
 {
 	auto topic = &m_topic;
 
-	UpdateData();
 
-	bool ok = topic->SetTitle(ToUTF8(m_strTitle).c_str());
-	ok = topic->SetDescription(ToUTF8(m_strDescription).c_str()) && ok;
-	ok = topic->SetTopicType(ToUTF8(m_strTopicType).c_str()) && ok;
-	ok = topic->SetStage(ToUTF8(m_strTopicStage).c_str()) && ok;
-	ok = topic->SetTopicStatus(ToUTF8(m_strTopicStatus).c_str()) && ok;
-	ok = topic->SetAssignedTo(ToUTF8(m_strAssigned).c_str()) && ok;
-	ok = topic->SetPriority(ToUTF8(m_strPriority).c_str()) && ok;
-	ok = topic->SetDueDate(ToUTF8(m_strDue).c_str()) && ok;
+	bool ok = m_topic.SetTitle(ToUTF8(m_strTitle).c_str());
+	ok = m_topic.SetDescription(ToUTF8(m_strDescription).c_str()) && ok;
+	ok = m_topic.SetTopicType(ToUTF8(m_strTopicType).c_str()) && ok;
+	ok = m_topic.SetStage(ToUTF8(m_strTopicStage).c_str()) && ok;
+	ok = m_topic.SetTopicStatus(ToUTF8(m_strTopicStatus).c_str()) && ok;
+	ok = m_topic.SetAssignedTo(ToUTF8(m_strAssigned).c_str()) && ok;
+	ok = m_topic.SetPriority(ToUTF8(m_strPriority).c_str()) && ok;
+	ok = m_topic.SetDueDate(ToUTF8(m_strDue).c_str()) && ok;
 	if (m_strIndex.IsEmpty()) {
-		ok = topic->SetIndexStr(ToUTF8(m_strIndex).c_str()) && ok;
+		ok = m_topic.SetIndexStr(ToUTF8(m_strIndex).c_str()) && ok;
 	}
 	else {
-		ok = topic->SetIndex(_wtoi(m_strIndex)) && ok;
+		ok = m_topic.SetIndex(_wtoi(m_strIndex)) && ok;
 	}
-	ok = topic->SetServerAssignedId(ToUTF8(m_strServerId).c_str()) && ok;
+	ok = m_topic.SetServerAssignedId(ToUTF8(m_strServerId).c_str()) && ok;
 
 	ShowLog(!ok);
 	if (!ok) {
-		LoadActiveTopic(); //restore data was not set
+		LoadTopic(); //restore data was not set
 	}
 
 	LoadExtensions();
@@ -261,12 +261,12 @@ void CBCFTopicView::UpdateActiveTopic()
 }
 
 
-void CBCFTopicView::LoadComments(BCFTopic* topic, int select)
+void CBCFTopicView::LoadComments(int select)
 {
 	m_wndCommentsList.ResetContent();
 
 	uint16_t i = 0;
-	while (auto comment = topic->GetComment(i++)) {
+	while (auto comment = m_topic.GetComment(i++)) {
 		CString text;
 		text.Format(L"#%d Created by %s %s",
 			(int)i,
@@ -289,7 +289,7 @@ void CBCFTopicView::LoadComments(BCFTopic* topic, int select)
 	OnSelchangeCommentsList();
 }
 
-void CBCFTopicView::UpateActiveComment()
+void CBCFTopicView::SaveActiveComment()
 {
 	auto topic = &m_topic;
 
@@ -316,7 +316,7 @@ void CBCFTopicView::UpateActiveComment()
 
 	ShowLog(!ok);
 
-	LoadComments(topic, indComment);
+	LoadComments(indComment);
 }
 
 
@@ -346,9 +346,16 @@ _model* CBCFTopicView::GetBimModel(BCFBimFile& file)
 	return m_projectView.GetBimModel(file);
 }
 
-void CBCFTopicView::ViewTopicModels(BCFTopic* topic)
+void CBCFTopicView::LoadBIMFiles()
 {
-	m_projectView.ViewTopicModels(topic);
+	std::vector<_model*> activeModels;
+	uint16_t i = 0;
+	while (auto file = m_topic.GetBimFile(i++)) {
+		if (auto model = GetBimModel(*file)) {
+			activeModels.push_back(model);
+		}
+	}
+	m_projectView.GetViewerDoc().enableModelsAddIfNeeded(activeModels);
 }
 
 void CBCFTopicView::OnSelchangeTab(NMHDR* /*pNMHDR*/, LRESULT* pResult)

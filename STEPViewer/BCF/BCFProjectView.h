@@ -24,7 +24,6 @@ public:
 	BCFTopic* GetActiveTopic();
 	CMySTEPViewerDoc& GetViewerDoc() { return m_doc; }
 	_model* GetBimModel(BCFBimFile& file);
-	void ViewTopicModels(BCFTopic* topic);
 	static CString FormatDateTime(const char* value);
 
 #ifdef AFX_DESIGN_TIME

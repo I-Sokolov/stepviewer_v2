@@ -112,8 +112,6 @@ void CBCFBimFiles::OnOK()
 		AfxGetApp()->AddToRecentFileList(strPath);
 	}	
 
-	m_view.ViewTopicModels(topic);
-
 	FillFileList(*topic);
 
 	m_view.ShowLog(false);
@@ -141,7 +139,6 @@ void CBCFBimFiles::OnCheckFileList()
 
 					AddBimFile(*topic, model->getPath());
 					FillFileList(*topic);
-					m_view.ViewTopicModels(topic);
 				}
 			}
 			else {
@@ -149,7 +146,6 @@ void CBCFBimFiles::OnCheckFileList()
 
 					found->second->Remove();
 					FillFileList(*topic);
-					m_view.ViewTopicModels(topic);
 				}
 			}
 		}

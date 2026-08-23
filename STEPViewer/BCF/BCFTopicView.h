@@ -21,13 +21,11 @@ public:
 public:
 	CBCFProjectView& GetProjectView() { return m_projectView; }
 	BCFTopic& GetTopic() { return m_topic; }
-	void ShowLog(bool knownError); //false: show log if any, not neccessary error
-
-	_model* GetBimModel(BCFBimFile& file);
-
-	void ViewTopicModels(BCFTopic* topic);
+	void ShowLog(bool knownError); //false: show log if any, not necessary error
 
 	CString GetTopicDisplayName(BCFTopic& topic);
+
+	_model* GetBimModel(BCFBimFile& file);
 
 public:
 // Dialog Data
@@ -51,14 +49,15 @@ protected:
 	afx_msg void OnClickedButtonBims();
 
 private:
-	void LoadTopicToView();
+	void LoadView();
 	void UpdateTopicInfo();
 	void LoadExtensions();
 	void LoadExtension(CComboBox& wnd, BCFEnumeration enumeraion);
-	void LoadActiveTopic();
-	void UpdateActiveTopic();
-	void LoadComments(BCFTopic* topic, int select = 0);
-	void UpateActiveComment();
+	void LoadBIMFiles();
+	void LoadTopic();
+	void LoadComments(int select = 0);
+	void SaveTopic();
+	void SaveActiveComment();
 	void FillMultiList();
 	void FillLabels(BCFTopic* topic);
 	void FillRelated(BCFTopic* topic);

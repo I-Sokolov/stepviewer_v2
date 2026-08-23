@@ -273,20 +273,6 @@ BCFTopic* CBCFProjectView::GetActiveTopic()
 	return reinterpret_cast<BCFTopic*>(m_topics.GetItemData(item));
 }
 
-void CBCFProjectView::ViewTopicModels(BCFTopic* topic)
-{
-	std::vector<_model*> activeModels;
-	if (topic) {
-		uint16_t i = 0;
-		while (auto file = topic->GetBimFile(i++)) {
-			if (auto model = GetBimModel(*file)) {
-				activeModels.push_back(model);
-			}
-		}
-	}
-	m_doc.enableModelsAddIfNeeded(activeModels);
-}
-
 _model* CBCFProjectView::GetBimModel(BCFBimFile& file)
 {
 	auto found = m_mapBimFiles.find(&file);
