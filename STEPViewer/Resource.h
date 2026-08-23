@@ -132,7 +132,6 @@
 #define IDR_TEXTFILE_VERTEX_SHADER3     349
 #define IDR_TEXTFILE_FRAGMENT_SHADER3   350
 #define IDD_BCF_VIEW                    351
-#define IDD_BCF_PROJINFO                353
 #define IDD_BCF_ADDLABEL                355
 #define IDD_BCF_ADDRELATEDTOPIC         357
 #define IDD_BCF_ADDREFERENCELINK        359
@@ -178,18 +177,13 @@
 #define IDC_MULTI_LIST                  1032
 #define IDC_BUTTON_ADD                  1033
 #define IDC_BUTTON_REMOVE               1034
-#define IDC_SAVE                        1035
-#define IDC_PROJECT_INFO                1037
 #define IDC_EDIT7                       1038
 #define IDC_AUTHOR                      1039
 #define IDC_LIST1                       1042
 #define IDC_COMMENTS_LIST               1042
 #define IDC_LIST_TOPIC                  1042
 #define IDC_FILE_LIST                   1042
-#define IDC_USERNAME                    1043
-#define IDC_PROJECTID                   1044
 #define IDC_EDIT3                       1045
-#define IDC_PROJECTNAME                 1045
 #define IDC_COMBO_LABELS                1046
 #define IDC_EDIT1                       1047
 #define IDC_EDIT_PATH                   1048

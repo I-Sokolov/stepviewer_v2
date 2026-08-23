@@ -252,9 +252,6 @@
     <ClInclude Include="BCF\BCFBimFiles.h">
       <Filter>BCF</Filter>
     </ClInclude>
-    <ClInclude Include="BCF\BCFProjInfo.h">
-      <Filter>BCF</Filter>
-    </ClInclude>
     <ClInclude Include="BCF\BCFTopicView.h">
       <Filter>BCF</Filter>
     </ClInclude>
@@ -510,9 +507,6 @@
       <Filter>BCF</Filter>
     </ClCompile>
     <ClCompile Include="BCF\BCFBimFiles.cpp">
-      <Filter>BCF</Filter>
-    </ClCompile>
-    <ClCompile Include="BCF\BCFProjInfo.cpp">
       <Filter>BCF</Filter>
     </ClCompile>
     <ClCompile Include="BCF\BCFTopicView.cpp">

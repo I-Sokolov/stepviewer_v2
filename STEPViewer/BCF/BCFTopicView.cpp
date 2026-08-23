@@ -7,7 +7,6 @@
 #include "STEPViewerDoc.h"
 #include "STEPViewerView.h"
 #include "_ap_model_factory.h"
-#include "BCF\BCFProjInfo.h"
 #include "BCF\BCFTopicView.h"
 #include "BCF\BCFAddLabel.h"
 #include "BCF\BCFAddRelatedTopic.h"
@@ -36,7 +35,6 @@ BEGIN_MESSAGE_MAP(CBCFTopicView, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON_ADD, &CBCFTopicView::OnClickedButtonAddMulti)
 	ON_BN_CLICKED(IDC_BUTTON_REMOVE, &CBCFTopicView::OnClickedButtonRemoveMulti)
 	ON_LBN_SELCHANGE(IDC_MULTI_LIST, &CBCFTopicView::OnSelchangeMultiList)
-	ON_BN_CLICKED(IDC_PROJECT_INFO, &CBCFTopicView::OnClickedProjectInfo)
 	ON_EN_KILLFOCUS(IDC_TOPIC_TITLE, &CBCFTopicView::OnKillfocusEdit)
 	ON_EN_KILLFOCUS(IDC_TOPIC_DESCRIPTION, &CBCFTopicView::OnKillfocusEdit)
 	ON_CBN_KILLFOCUS(IDC_TOPIC_TYPE, &CBCFTopicView::OnKillfocusEdit)
@@ -48,7 +46,6 @@ BEGIN_MESSAGE_MAP(CBCFTopicView, CDialogEx)
 	ON_EN_KILLFOCUS(IDC_TOPIC_INDEX, &CBCFTopicView::OnKillfocusEdit)
 	ON_EN_KILLFOCUS(IDC_TOPIC_SERVER_ID, &CBCFTopicView::OnKillfocusEdit)
 	ON_EN_KILLFOCUS(IDC_TOPIC_COMMENT_TEXT, &CBCFTopicView::OnKillfocusTopicCommentText)
-	ON_BN_CLICKED(IDC_SAVE, &CBCFTopicView::OnClickedSave)
 	ON_BN_CLICKED(IDC_UPDATE_VIEWPOINT, &CBCFTopicView::OnClickedUpdateViewpoint)
 	ON_BN_CLICKED(IDC_BUTTON_BIMS, &CBCFTopicView::OnClickedButtonBims)
 END_MESSAGE_MAP()
@@ -850,14 +847,6 @@ void CBCFTopicView::OnSelchangeMultiList()
 }
 
 
-void CBCFTopicView::OnClickedProjectInfo()
-{
-	if (m_bcfProject) {
-		CBCFProjInfo projInfo(*m_bcfProject, this);
-		projInfo.DoModal();
-	}
-}
-
 void CBCFTopicView::OnKillfocusEdit()
 {
 	UpdateActiveTopic();
@@ -868,35 +857,6 @@ void CBCFTopicView::OnKillfocusTopicCommentText()
 	UpateActiveComment();
 }
 
-
-void CBCFTopicView::OnClickedSave()
-{
-	SaveBCFFile();
-}
-
-bool CBCFTopicView::SaveBCFFile()
-{
-	if (!m_bcfProject) {
-		return false;
-	}
-
-	LPCTSTR fileTypes = _T("BCF files (*.bcf)|*.bcf|All Files (*.*)|*.*||");
-
-	CFileDialog dlgFile(FALSE, L"bcf", _T(""), OFN_OVERWRITEPROMPT | OFN_HIDEREADONLY, fileTypes);
-	if (dlgFile.DoModal() != IDOK)
-	{
-		return false;
-	}
-
-	CString filePath = dlgFile.GetPathName();
-	bool ok = m_bcfProject->WriteFile(ToUTF8(filePath).c_str(), BCFVer_3_0);
-
-	ShowLog(!ok);
-	if (ok) {
-		m_bcfFilePath = filePath;
-	}
-	return ok;
-}
 
 void CBCFTopicView::OnClickedUpdateViewpoint()
 {

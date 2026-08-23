@@ -65,10 +65,8 @@ protected:
 	afx_msg void OnClickedButtonAddMulti();
 	afx_msg void OnClickedButtonRemoveMulti();
 	afx_msg void OnSelchangeMultiList();
-	afx_msg void OnClickedProjectInfo();
 	afx_msg void OnKillfocusEdit();
 	afx_msg void OnKillfocusTopicCommentText();
-	afx_msg void OnClickedSave();
 	afx_msg void OnClickedUpdateViewpoint();
 	afx_msg void OnClickedButtonBims();
 
@@ -98,7 +96,6 @@ private:
 	void RemoveDocument(BCFTopic* topic);
 	BCFBimFile* FindBimFileByPath(BCFTopic* topic, const char* searchPath);
 	void FillTopicAuthor(BCFTopic* topic);
-	bool SaveBCFFile();
 
 private:
 	CMySTEPViewerDoc&				m_doc;
