@@ -24,13 +24,9 @@ public:
 /// <summary>
 /// API
 /// </summary>
-	bool IsBCF(LPCTSTR filePath);
+	void Open(BCFProject& project, BCFTopic* topic, LPCTSTR filePath);
 
-	//activates BCF view with the BCF file or new when NULL
-	void Open(LPCTSTR filePath);
-
-	bool SaveModified();
-
+	void CommitChanges();
 	void Close();
 
 public:
@@ -78,6 +74,7 @@ protected:
 
 private:
 	void LoadProjectToView();
+	void SelectTopic(BCFTopic* topic);
 	void InsertTopicToList(int item, BCFTopic* topic);
 	void LoadExtensions();
 	void LoadExtension(CComboBox& wnd, BCFEnumeration enumeraion);

@@ -1,7 +1,6 @@
 // Microsoft Visual C++ generated resource script.
 //
 #include "resource.h"
-#include "version.h"
 
 #define APSTUDIO_READONLY_SYMBOLS
 /////////////////////////////////////////////////////////////////////////////
@@ -282,6 +281,27 @@ BEGIN
     EDITTEXT        IDC_EDIT_MESSAGES,7,7,443,204,ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_READONLY | WS_VSCROLL | WS_HSCROLL,WS_EX_STATICEDGE
 END
 
+IDD_BCF_PROJECT_VIEW DIALOGEX 0, 0, 700, 235
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
+EXSTYLE WS_EX_OVERLAPPEDWINDOW
+CAPTION "BCF Project"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    LTEXT           "Your email:",IDC_BCF_EMAIL_LABEL,7,197,37,8
+    EDITTEXT        IDC_BCF_EMAIL,51,193,186,14,ES_AUTOHSCROLL
+    LTEXT           "Project Id:",IDC_STATIC,7,11,34,8
+    EDITTEXT        IDC_BCF_PROJECT_ID,46,7,180,14,ES_AUTOHSCROLL | ES_READONLY
+    LTEXT           "Project name:",IDC_STATIC,236,11,45,8
+    EDITTEXT        IDC_BCF_PROJECT_NAME,286,7,407,14,ES_AUTOHSCROLL
+    LTEXT           "Topics:",IDC_STATIC,7,27,25,8
+    CONTROL         "",IDC_BCF_TOPIC_LIST,"SysListView32",LVS_REPORT | LVS_SINGLESEL | LVS_SHOWSELALWAYS | WS_BORDER | WS_TABSTOP,7,39,686,151
+    PUSHBUTTON      "Topic Details...",IDC_BCF_TOPIC_DETAILS,7,214,73,14
+    PUSHBUTTON      "New Topic",IDC_BCF_NEW_TOPIC,86,214,60,14
+    PUSHBUTTON      "Delete Topic...",IDC_BCF_DELETE_TOPIC,152,214,70,14
+    PUSHBUTTON      "Save Project...",IDC_BCF_SAVE_PROJECT,552,214,68,14
+    PUSHBUTTON      "Close Dialog",IDC_BCF_CLOSE_PROJECT,625,214,68,14
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -403,6 +423,14 @@ BEGIN
         TOPMARGIN, 7
         BOTTOMMARGIN, 230
     END
+
+    IDD_BCF_PROJECT_VIEW, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 693
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 228
+    END
 END
 #endif    // APSTUDIO_INVOKED
 
@@ -513,6 +541,11 @@ BEGIN
 END
 
 IDD_DIALOG_LOG AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+IDD_BCF_PROJECT_VIEW AFX_DIALOG_LAYOUT
 BEGIN
     0
 END
@@ -994,8 +1027,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
-FILEVERSION VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, VERSION_BUILD
-PRODUCTVERSION VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, VERSION_BUILD
+ FILEVERSION 1,0,1,2373
+ PRODUCTVERSION 1,0,1,2373
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -1012,12 +1045,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "RDF LTD"
             VALUE "FileDescription", "STEPViewer"
-            VALUE "FileVersion", VERSION_STRING
+            VALUE "FileVersion", "1.0.1.2373"
             VALUE "InternalName", "STEPViewer.exe"
             VALUE "LegalCopyright", "(c) RDF LTD. All rights reserved."
             VALUE "OriginalFilename", "STEPViewer.exe"
             VALUE "ProductName", "STEPViewer"
-            VALUE "ProductVersion", VERSION_STRING
+            VALUE "ProductVersion", "1.0.1.2373"
         END
     END
     BLOCK "VarFileInfo"

@@ -2,6 +2,9 @@
 // Microsoft Visual C++ generated include file.
 // Used by STEPViewer.rc
 //
+#define VERSION_MINOR                   0
+#define VERSION_MAJOR                   1
+#define VERSION_PATCH                   1
 #define IDD_ABOUTBOX                    100
 #define IDP_OLE_INIT_FAILED             100
 #define IDR_POPUP_EDIT                  119
@@ -140,6 +143,7 @@
 #define IDI_ICON_INFO                   368
 #define IDI_ICON_WARN                   369
 #define IDD_DIALOG_LOG                  370
+#define IDD_BCF_PROJECT_VIEW            372
 #define IDC_COMBO_EXISTING_INSTANCE     1000
 #define IDC_RADIO_EXISTING_INSTANCE     1001
 #define IDC_RADIO_NEW_INSTANCE          1002
@@ -199,6 +203,18 @@
 #define IDC_CHECK1                      1056
 #define IDC_CHECK_ERRORS_ONLY           1056
 #define IDC_EDIT_MESSAGES               1057
+#define IDC_BCF_EMAIL                   1058
+#define IDC_BCF_PROJECT_ID              1059
+#define IDC_BCF_PROJECT_NAME            1060
+#define IDC_BCF_TOPIC_LIST              1061
+#define IDC_BCF_TOPIC_DETAILS           1062
+#define IDC_BCF_NEW_TOPIC               1063
+#define IDC_BCF_DELETE_TOPIC            1064
+#define IDC_BCF_SAVE_PROJECT            1065
+#define IDC_BCF_CLOSE_PROJECT           1066
+#define IDC_BCF_EMAILSTATIC             1067
+#define IDC_BCF_EMAIL_LABEL             1067
+#define VERSION_BUILD                   2373
 #define ID_INSTANCES_ZOOM_TO            32772
 #define ID_INSTANCES                    32773
 #define ID_INSTANCES_METAINFORMATION    32778
@@ -254,9 +270,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        372
+#define _APS_NEXT_RESOURCE_VALUE        373
 #define _APS_NEXT_COMMAND_VALUE         32858
-#define _APS_NEXT_CONTROL_VALUE         1058
+#define _APS_NEXT_CONTROL_VALUE         1068
 #define _APS_NEXT_SYMED_VALUE           323
 #endif
 #endif

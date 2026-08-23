@@ -67,94 +67,36 @@ CBCFTopicView::~CBCFTopicView()
 	Close();
 }
 
-bool CBCFTopicView::IsBCF(LPCTSTR filePath)
-{
-	if (!filePath) {
-		return false;
-	}
-
-	auto len = wcslen(filePath);
-
-	if (len >= 4 && 0 == _wcsicmp(filePath + len - 4, L".bcf"))
-		return true;
-
-	if (len >= 7 && 0 == _wcsicmp(filePath + len - 7, L".bcfzip"))
-		return true;
-
-	return false;
-}
-
 void CBCFTopicView::Close()
 {
-	//close project
-	if (m_bcfProject) {
-		ShowLog(false);
-		if (!m_bcfProject->Delete()) {
-			ShowLog(true);
-		}
-		m_bcfProject = NULL;
-	}
-	
-	//hide window
+	CommitChanges();
 	if (GetSafeHwnd()) {
 		ShowWindow(SW_HIDE);
 	}
+	m_bcfProject = NULL;
 }
 
-bool CBCFTopicView::SaveModified()
+void CBCFTopicView::CommitChanges()
 {
-	if (m_bcfProject && m_bcfProject->IsModified()) {
-		auto answer = AfxMessageBox(L"BCF data are modified. Do you want to save before continue?", MB_YESNOCANCEL);
-		if (IDYES == answer) {
-			return SaveBCFFile();
-		}
-		return IDNO == answer;
+	if (!m_bcfProject || !GetSafeHwnd()) {
+		return;
 	}
-	return true;
+	UpdateActiveTopic();
+	UpateActiveComment();
 }
 
-
-void CBCFTopicView::Open(LPCTSTR filePath)
+void CBCFTopicView::Open(BCFProject& project, BCFTopic* topic, LPCTSTR filePath)
 {
-	//clean old data
 	Close();
-
 	m_bcfFilePath = filePath ? filePath : L"";
-
-	//
-	//open BCF project
-	//
-	m_bcfProject = BCFProject::Create();
-	if (!m_bcfProject) {
-		AfxMessageBox(L"Failed to initialize BCF Project");
-		Close();
-		return;
-	}
-
-	if (!m_bcfFilePath.IsEmpty()) {
-		CWaitCursor wait;
-		if (!m_bcfProject->ReadFile(ToUTF8(m_bcfFilePath).c_str(), true))
-		{
-			ShowLog(true);
-			Close();
-			return;
-		}
-	}
-
-	//
-	CBCFProjInfo projInfo(*m_bcfProject, AfxGetMainWnd());
-	if (IDOK != projInfo.DoModal()) {
-		Close();
-		return;
-	}
-
-	//show view
+	m_bcfProject = &project;
 	if (!IsWindow(GetSafeHwnd())) {
 		Create(IDD_BCF_VIEW, AfxGetMainWnd());
 	}
 	ShowWindow(SW_SHOW);
-
 	LoadProjectToView();
+	SelectTopic(topic);
+	SetForegroundWindow();
 }
 
 BCFBimFile* CBCFTopicView::FindBimFileByPath(BCFTopic* topic, const char* searchPath)
@@ -214,11 +156,8 @@ void CBCFTopicView::DoDataExchange(CDataExchange* pDX)
 void CBCFTopicView::OnClose()
 {
 	m_wndCommentsList.SetFocus(); //to last upate from edit field
-
-	if (SaveModified()) {
-		CDialogEx::OnClose();
-		Close();
-	}
+	CDialogEx::OnClose();
+	Close();
 }
 
 
@@ -272,6 +211,20 @@ void CBCFTopicView::LoadProjectToView()
 	m_wndTopics.SetCurSel(0);
 
 	OnSelchangeTopic();
+}
+
+void CBCFTopicView::SelectTopic(BCFTopic* topic)
+{
+	if (!topic) {
+		return;
+	}
+	for (int i = 0; i < m_wndTopics.GetCount(); i++) {
+		if ((BCFTopic*)m_wndTopics.GetItemData(i) == topic) {
+			m_wndTopics.SetCurSel(i);
+			OnSelchangeTopic();
+			return;
+		}
+	}
 }
 
 void CBCFTopicView::InsertTopicToList(int item, BCFTopic* topic)

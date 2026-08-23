@@ -258,6 +258,9 @@
     <ClInclude Include="BCF\BCFTopicView.h">
       <Filter>BCF</Filter>
     </ClInclude>
+    <ClInclude Include="BCF\BCFProjectView.h">
+      <Filter>BCF</Filter>
+    </ClInclude>
     <ClInclude Include="BCF\BCFViewPointMgr.h">
       <Filter>BCF</Filter>
     </ClInclude>
@@ -513,6 +516,9 @@
       <Filter>BCF</Filter>
     </ClCompile>
     <ClCompile Include="BCF\BCFTopicView.cpp">
+      <Filter>BCF</Filter>
+    </ClCompile>
+    <ClCompile Include="BCF\BCFProjectView.cpp">
       <Filter>BCF</Filter>
     </ClCompile>
     <ClCompile Include="BCF\BCFViewPointMgr.cpp">
