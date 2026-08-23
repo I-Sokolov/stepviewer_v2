@@ -336,7 +336,7 @@ void CBCFProjectView::OnClickedTopicDetails()
 	auto topic = GetActiveTopic();
 	if (m_project && topic) {
 		UpdateProjectInfo();
-		m_topicView.Open(*m_project, topic, m_filePath);
+		m_topicView.Open(*m_project, topic);
 	}
 }
 
@@ -350,7 +350,7 @@ void CBCFProjectView::OnClickedNewTopic()
 	ShowLog(!topic);
 	if (topic) {
 		RefreshTopics(topic);
-		m_topicView.Open(*m_project, topic, m_filePath);
+		m_topicView.Open(*m_project, topic);
 	}
 }
 

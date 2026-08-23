@@ -24,7 +24,7 @@ public:
 /// <summary>
 /// API
 /// </summary>
-	void Open(BCFProject& project, BCFTopic* topic, LPCTSTR filePath);
+	void Open(BCFProject& project, BCFTopic* topic);
 
 	void CommitChanges();
 	void Close();
@@ -59,7 +59,6 @@ protected:
 
 	DECLARE_MESSAGE_MAP()
 	afx_msg void OnClose();
-	afx_msg void OnSelchangeTopic();
 	afx_msg void OnSelchangeCommentsList();
 	afx_msg void OnSelchangeTab(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnClickedButtonAddMulti();
@@ -71,13 +70,11 @@ protected:
 	afx_msg void OnClickedButtonBims();
 
 private:
-	void LoadProjectToView();
-	void SelectTopic(BCFTopic* topic);
-	void InsertTopicToList(int item, BCFTopic* topic);
+	void LoadTopicToView();
+	void UpdateTopicCaptions();
 	void LoadExtensions();
 	void LoadExtension(CComboBox& wnd, BCFEnumeration enumeraion);
 	void LoadActiveTopic();
-	BCFTopic* CreateNewTopic();
 	void UpdateActiveTopic();
 	void LoadComments(BCFTopic* topic, int select = 0);
 	void UpateActiveComment();
@@ -99,15 +96,14 @@ private:
 
 private:
 	CMySTEPViewerDoc&				m_doc;
-	CString							m_bcfFilePath;
-
 	BCFProject*						m_bcfProject;
+	BCFTopic*						m_topic;
 
 	CBCFViewPointMgr				m_viewPointMgr;
 	std::map<BCFBimFile*, _model*>	m_mapBimFiles;
 
 private:
-	CComboBox m_wndTopics;
+	CStatic m_wndTopic;
 	CComboBox m_wndTopicType;
 	CString m_strTopicType;
 	CComboBox m_wndTopicStage;

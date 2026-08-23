@@ -149,8 +149,7 @@ EXSTYLE WS_EX_OVERLAPPEDWINDOW
 CAPTION "BCF View"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    LTEXT           "Topic: ",IDC_STATIC,7,8,23,8
-    COMBOBOX        IDC_TOPICS,31,8,187,120,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Topic <GUID>",IDC_TOPICS,7,10,211,8
     LTEXT           "Created by .. at ... Modified by .. at ..",IDC_AUTHOR,223,11,366,8
     LTEXT           "Title:",IDC_STATIC,7,24,17,8
     EDITTEXT        IDC_TOPIC_TITLE,30,22,559,14,ES_AUTOHSCROLL
@@ -435,7 +434,6 @@ END
 IDD_BCF_VIEW AFX_DIALOG_LAYOUT
 BEGIN
     0,
-    0, 0, 0, 0,
     0, 0, 0, 0,
     0, 0, 100, 0,
     0, 0, 0, 0,
