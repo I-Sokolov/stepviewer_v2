@@ -2,9 +2,12 @@
 
 #include "STEPViewer.h"
 #include "STEPViewerDoc.h"
+#include "_ap_model_factory.h"
 #include "BCF\BCFProjectView.h"
+#include "BCF\BCFTopicView.h"
 
-#include <algorithm>
+#include <experimental/filesystem>
+namespace fs = std::experimental::filesystem;
 
 namespace
 {
@@ -35,7 +38,6 @@ CBCFProjectView::CBCFProjectView(CMySTEPViewerDoc& doc)
 	: CDialogEx(IDD_BCF_PROJECT_VIEW, AfxGetMainWnd())
 	, m_doc(doc)
 	, m_project(NULL)
-	, m_topicView(doc)
 	, m_initialized(false)
 {
 }
@@ -129,8 +131,6 @@ void CBCFProjectView::Open(LPCTSTR filePath)
 
 void CBCFProjectView::Close()
 {
-	m_topicView.CommitChanges();
-	m_topicView.Close();
 	if (GetSafeHwnd() && m_initialized) {
 		UpdateProjectInfo();
 		SavePlacement();
@@ -275,7 +275,74 @@ BCFTopic* CBCFProjectView::GetActiveTopic()
 
 void CBCFProjectView::ViewTopicModels(BCFTopic* topic)
 {
-	m_topicView.ViewTopicModels(topic);
+	std::vector<_model*> activeModels;
+	if (topic) {
+		uint16_t i = 0;
+		while (auto file = topic->GetBimFile(i++)) {
+			if (auto model = GetBimModel(*file)) {
+				activeModels.push_back(model);
+			}
+		}
+	}
+	m_doc.enableModelsAddIfNeeded(activeModels);
+}
+
+_model* CBCFProjectView::GetBimModel(BCFBimFile& file)
+{
+	auto found = m_mapBimFiles.find(&file);
+	if (found != m_mapBimFiles.end()) {
+		return found->second;
+	}
+
+	_model* model = nullptr;
+	CString path = FromUTF8(file.GetReference());
+	for (auto candidate : m_doc.getModels()) {
+		if (candidate->getPath() == path) {
+			model = candidate;
+			break;
+		}
+	}
+
+	if (!model && !fs::exists(ToUTF8(path))) {
+		CString message(L"Can not locate BIM file assigned to the topic.\n\n");
+		if (!path.IsEmpty()) {
+			message += L"Reference: '" + path + L"'\n";
+		}
+		CString name = FromUTF8(file.GetFilename());
+		if (!name.IsEmpty()) {
+			message += L"Name: '" + name + L"'\n";
+		}
+		CString ifcProjectGuid = FromUTF8(file.GetIfcProject());
+		if (!ifcProjectGuid.IsEmpty()) {
+			message += L"IfcProject.GlobalId: '" + ifcProjectGuid + L"'\n";
+		}
+		message += L"\nDo you want to locate the file manually?";
+
+		if (AfxMessageBox(message, MB_YESNO | MB_ICONEXCLAMATION) == IDYES) {
+			CFileDialog dialog(TRUE, nullptr, _T(""), OFN_FILEMUSTEXIST, BIM_MODELS_FILTER);
+			if (dialog.DoModal() != IDOK) {
+				return nullptr;
+			}
+			path = dialog.GetPathName();
+		}
+	}
+
+	if (!model && fs::exists(ToUTF8(path))) {
+		model = _ap_model_factory::load(&m_doc, path, false,
+			m_doc.getModels().empty() ? nullptr : m_doc.getModels()[0], false);
+		if (model) {
+			_ptr<_ap_model> apModel(model);
+			if (apModel->getAP() == enumAP::IFC) {
+				m_mapBimFiles[&file] = model;
+			}
+			else {
+				delete model;
+				model = nullptr;
+			}
+		}
+	}
+
+	return model;
 }
 
 void CBCFProjectView::UpdateProjectInfo()
@@ -298,7 +365,6 @@ bool CBCFProjectView::SaveProject()
 	if (!m_project) {
 		return false;
 	}
-	m_topicView.CommitChanges();
 	UpdateProjectInfo();
 
 	LPCTSTR filter = _T("BCF files (*.bcf)|*.bcf|BCF packages (*.bcfzip)|*.bcfzip|All Files (*.*)|*.*||");
@@ -319,7 +385,6 @@ bool CBCFProjectView::SaveProject()
 
 bool CBCFProjectView::SaveModified()
 {
-	m_topicView.CommitChanges();
 	UpdateProjectInfo();
 	if (!m_project || !m_project->IsModified()) {
 		return true;
@@ -336,7 +401,9 @@ void CBCFProjectView::OnClickedTopicDetails()
 	auto topic = GetActiveTopic();
 	if (m_project && topic) {
 		UpdateProjectInfo();
-		m_topicView.Open(topic);
+		CBCFTopicView topicView(*this, *topic);
+		topicView.DoModal();
+		RefreshTopics(topic);
 	}
 }
 
@@ -350,7 +417,9 @@ void CBCFProjectView::OnClickedNewTopic()
 	ShowLog(!topic);
 	if (topic) {
 		RefreshTopics(topic);
-		m_topicView.Open(topic);
+		CBCFTopicView topicView(*this, *topic);
+		topicView.DoModal();
+		RefreshTopics(topic);
 	}
 }
 
@@ -363,7 +432,6 @@ void CBCFProjectView::OnClickedDeleteTopic()
 	CString question;
 	question.Format(L"Delete topic \"%s\"?", FromUTF8(topic->GetTitle()).GetString());
 	if (AfxMessageBox(question, MB_YESNO | MB_ICONWARNING) == IDYES) {
-		m_topicView.Close();
 		if (!topic->Remove()) {
 			ShowLog(true);
 		}

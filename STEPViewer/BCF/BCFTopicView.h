@@ -3,12 +3,10 @@
 #include "bcfAPI.h"
 #include "BCFViewPointMgr.h"
 
-#include <map>
 #include <vector>
 using namespace std;
 
-class CMySTEPViewerDoc;
-class CMySTEPViewerView;
+class CBCFProjectView;
 class _model;
 
 
@@ -17,26 +15,12 @@ class CBCFTopicView : public CDialogEx
 	DECLARE_DYNAMIC(CBCFTopicView)
 
 public:
-	CBCFTopicView(CMySTEPViewerDoc& doc);
+	CBCFTopicView(CBCFProjectView& projectView, BCFTopic& topic);
 	virtual ~CBCFTopicView();
 
 public:
-/// <summary>
-/// API
-/// </summary>
-	void Open(BCFTopic* topic);
-
-	void CommitChanges();
-	void Close();
-
-public:
-	//services for other dialogs
-	CMySTEPViewerDoc& GetViewerDoc() { return m_doc; }
-
-	CMySTEPViewerView* GetViewerView();
-
-	BCFTopic* GetActiveTopic();
-	
+	CBCFProjectView& GetProjectView() { return m_projectView; }
+	BCFTopic& GetTopic() { return m_topic; }
 	void ShowLog(bool knownError); //false: show log if any, not neccessary error
 
 	_model* GetBimModel(BCFBimFile& file);
@@ -58,14 +42,11 @@ protected:
 	virtual void OnOK();
 
 	DECLARE_MESSAGE_MAP()
-	afx_msg void OnClose();
 	afx_msg void OnSelchangeCommentsList();
 	afx_msg void OnSelchangeTab(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnClickedButtonAddMulti();
 	afx_msg void OnClickedButtonRemoveMulti();
 	afx_msg void OnSelchangeMultiList();
-	afx_msg void OnKillfocusEdit();
-	afx_msg void OnKillfocusTopicCommentText();
 	afx_msg void OnClickedUpdateViewpoint();
 	afx_msg void OnClickedButtonBims();
 
@@ -91,14 +72,12 @@ private:
 	void RemoveRelated(BCFTopic* topic);
 	void RemoveLink(BCFTopic* topic);
 	void RemoveDocument(BCFTopic* topic);
-	BCFBimFile* FindBimFileByPath(BCFTopic* topic, const char* searchPath);
 
 private:
-	CMySTEPViewerDoc&				m_doc;
-	BCFTopic*						m_topic;
+	CBCFProjectView&				m_projectView;
+	BCFTopic&						m_topic;
 
 	CBCFViewPointMgr				m_viewPointMgr;
-	std::map<BCFBimFile*, _model*>	m_mapBimFiles;
 
 private:
 	CStatic m_wndTopicInfo;

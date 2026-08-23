@@ -2,6 +2,7 @@
 #include "BCFViewPointMgr.h"
 #include "STEPViewerDoc.h"
 #include "STEPViewerView.h"
+#include "BCFProjectView.h"
 #include "BCFTopicView.h"
 #include "_ifc_instance.h"
 #include "_ifc_model.h"
@@ -13,6 +14,23 @@
 #define IFC_SPACE "IfcSpace"
 #define IFC_OPENING "IfcOpeningElement"
 #define GLOBAL_ID "GlobalId"
+
+CMySTEPViewerDoc& CBCFViewPointMgr::GetViewerDoc()
+{
+	return m_view.GetProjectView().GetViewerDoc();
+}
+
+CMySTEPViewerView* CBCFViewPointMgr::GetViewerView()
+{
+	auto& doc = GetViewerDoc();
+	auto position = doc.GetFirstViewPosition();
+	while (auto view = doc.GetNextView(position)) {
+		if (auto viewerView = dynamic_cast<CMySTEPViewerView*>(view)) {
+			return viewerView;
+		}
+	}
+	return NULL;
+}
 
 void CBCFViewPointMgr::SetViewFromComment(BCFComment& comment)
 {
@@ -28,14 +46,18 @@ void CBCFViewPointMgr::SetViewFromComment(BCFComment& comment)
 		double viewToWorldScale = commentViewPoint->GetViewToWorldScale();
 		double fieldOfView = commentViewPoint->GetFieldOfView();
 		double aspectRatio = commentViewPoint->GetAspectRatio();
-		m_view.GetViewerView()->SetBCFView(camera, viewPoint, direction, upVector, viewToWorldScale, fieldOfView, aspectRatio);
+		if (auto view = GetViewerView()) {
+			view->SetBCFView(camera, viewPoint, direction, upVector, viewToWorldScale, fieldOfView, aspectRatio);
+		}
 		
 		ApplySelectionToViewer(commentViewPoint);
 		ApplyColoringToViewer(commentViewPoint);
 		ApplyVisibilityToViewer(commentViewPoint);
 	}
 	else {
-		m_view.GetViewerView()->ResetBCFView();
+		if (auto view = GetViewerView()) {
+			view->ResetBCFView();
+		}
 
 		ApplySelectionToViewer(nullptr);
 		ApplyColoringToViewer(nullptr);
@@ -60,7 +82,7 @@ bool CBCFViewPointMgr::SaveCurrentViewToComent(BCFComment&comment)
 
 	if (vp) {
 
-		if (auto view = m_view.GetViewerView()) {
+		if (auto view = GetViewerView()) {
 
 			//save camera
 			BCFCamera camera = BCFCameraOrthogonal;
@@ -106,7 +128,7 @@ void CBCFViewPointMgr::ApplySelectionToViewer(BCFViewPoint* vp)
 		}
 	}
 
-	m_view.GetViewerDoc().selectInstances(nullptr, vecInstances);
+	GetViewerDoc().selectInstances(nullptr, vecInstances);
 }
 
 _instance* CBCFViewPointMgr::SearchComponent(BCFComponent& comp)
@@ -128,7 +150,7 @@ _instance* CBCFViewPointMgr::SearchComponent(BCFComponent& comp)
 
 _instance* CBCFViewPointMgr::SearchIfcComponent(const char* ifcGuid)
 {
-	for (auto model : m_view.GetViewerDoc().getModels()) {
+	for (auto model : GetViewerDoc().getModels()) {
 		if (auto ifcModel = dynamic_cast<_ifc_model*>(model)) {
 			if (auto sdaiModel = ifcModel->getSdaiModel()) {
 				if (auto rootEntity = sdaiGetEntity(sdaiModel, IFC_ROOT)) {
@@ -168,7 +190,7 @@ bool CBCFViewPointMgr::SaveSelection(BCFViewPoint& vp)
 		}
 	}
 
-	for (auto inst : m_view.GetViewerDoc().getSelectedInstances()) {
+	for (auto inst : GetViewerDoc().getSelectedInstances()) {
 		if (auto globalId = GetGlobalId(inst)) {
 			ok = vp.AddSelection(globalId) && ok;
 		}
@@ -192,7 +214,7 @@ const char* CBCFViewPointMgr::GetGlobalId(_instance* inst)
 
 void CBCFViewPointMgr::ApplyColoringToViewer(BCFViewPoint* vp)
 {
-	auto pOGLView = m_view.GetViewerDoc().getViewAs<_oglView>();
+	auto pOGLView = GetViewerDoc().getViewAs<_oglView>();
 	if (pOGLView == nullptr)
 	{
 		ASSERT(FALSE);
@@ -226,7 +248,7 @@ void CBCFViewPointMgr::ApplyColoringToViewer(BCFViewPoint* vp)
 
 bool CBCFViewPointMgr::SaveColoring(BCFViewPoint& vp)
 {
-	auto pOGLView = m_view.GetViewerDoc().getViewAs<_oglView>();
+	auto pOGLView = GetViewerDoc().getViewAs<_oglView>();
 	if (pOGLView == nullptr)
 	{
 		ASSERT(FALSE);
@@ -370,7 +392,7 @@ void CBCFViewPointMgr::ApplyVisibilityToViewer(BCFViewPoint* vp)
 			}
 		}
 
-		for (auto model : m_view.GetViewerDoc().getModels()) {
+		for (auto model : GetViewerDoc().getModels()) {
 			if (model) {
 
 				SdaiEntity space = NULL;
@@ -409,10 +431,10 @@ void CBCFViewPointMgr::ApplyVisibilityToViewer(BCFViewPoint* vp)
 			}
 		}
 
-		m_view.GetViewerDoc().onInstancesEnabledStateChanged(nullptr);
+		GetViewerDoc().onInstancesEnabledStateChanged(nullptr);
 	}
 	else {
-		m_view.GetViewerDoc().resetInstancesEnabledState(nullptr);
+		GetViewerDoc().resetInstancesEnabledState(nullptr);
 	}
 }
 
@@ -427,7 +449,7 @@ bool CBCFViewPointMgr::SaveVisibility(BCFViewPoint& vp)
 
 	// calculate visible/invisible instances
 	//
-	for (auto model : m_view.GetViewerDoc().getModels()) {
+	for (auto model : GetViewerDoc().getModels()) {
 		if (model) {
 
 			SdaiEntity space = NULL;
@@ -479,7 +501,7 @@ bool CBCFViewPointMgr::SaveVisibility(BCFViewPoint& vp)
 		}
 	}
 
-	for (auto model : m_view.GetViewerDoc().getModels()) {
+	for (auto model : GetViewerDoc().getModels()) {
 		if (model) {
 			SdaiEntity space = NULL;
 			SdaiEntity opening = NULL;

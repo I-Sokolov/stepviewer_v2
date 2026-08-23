@@ -4,6 +4,8 @@
 #include <string>
 
 class CBCFTopicView;
+class CMySTEPViewerDoc;
+class CMySTEPViewerView;
 class _instance;
 
 class CBCFViewPointMgr
@@ -24,6 +26,8 @@ private:
 
 	void ApplyVisibilityToViewer(BCFViewPoint* vp);
 	bool SaveVisibility(BCFViewPoint& vp);
+	CMySTEPViewerDoc& GetViewerDoc();
+	CMySTEPViewerView* GetViewerView();
 
 	_instance* SearchComponent(BCFComponent& comp);
 	_instance* SearchIfcComponent(const char* ifcGuid);

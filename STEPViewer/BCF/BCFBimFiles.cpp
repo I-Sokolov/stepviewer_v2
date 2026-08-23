@@ -41,12 +41,7 @@ BOOL CBCFBimFiles::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
 
-	auto topic = m_view.GetActiveTopic();
-	ASSERT(topic);
-	if (!topic) {
-		EndDialog(IDCANCEL);
-		return false;
-	}
+	auto topic = &m_view.GetTopic();
 
 	FillFileList(*topic);
 
@@ -79,7 +74,7 @@ void CBCFBimFiles::FillFileList(BCFTopic& topic)
 
 	m_fileList.ResetContent();
 
-	for (auto model : m_view.GetViewerDoc().getModels()) {
+	for (auto model : m_view.GetProjectView().GetViewerDoc().getModels()) {
 		if (model) {
 			auto item = m_fileList.AddString(model->getPath());
 			m_fileList.SetItemDataPtr(item, model);
@@ -98,10 +93,7 @@ void CBCFBimFiles::FillFileList(BCFTopic& topic)
 
 void CBCFBimFiles::OnOK()
 {
-	auto topic = m_view.GetActiveTopic();
-	ASSERT(topic);
-	if (!topic)
-		return;
+	auto topic = &m_view.GetTopic();
 
 	CFileDialog dlgFile(TRUE, nullptr, _T(""), OFN_OVERWRITEPROMPT | OFN_HIDEREADONLY | OFN_ALLOWMULTISELECT, BIM_MODELS_FILTER);
 	if (dlgFile.DoModal() != IDOK)
@@ -138,10 +130,7 @@ void CBCFBimFiles::AddBimFile(BCFTopic& topic, const CString& strPath)
 
 void CBCFBimFiles::OnCheckFileList()
 {
-	auto topic = m_view.GetActiveTopic();
-	ASSERT(topic);
-	if (!topic)
-		return;
+	auto topic = &m_view.GetTopic();
 
 	for (int i = 0; i < m_fileList.GetCount(); i++) {
 		auto model = (_model*)m_fileList.GetItemDataPtr(i);

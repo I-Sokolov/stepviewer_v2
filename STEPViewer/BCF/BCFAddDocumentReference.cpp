@@ -43,12 +43,7 @@ END_MESSAGE_MAP()
 
 void CBCFAddDocumentReference::OnOK()
 {
-	auto topic = m_view.GetActiveTopic();
-	if (!topic) {
-		ASSERT(0);
-		EndDialog(IDCANCEL);
-		return;
-	}
+	auto topic = &m_view.GetTopic();
 
 	UpdateData();
 

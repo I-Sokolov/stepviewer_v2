@@ -43,11 +43,7 @@ BOOL CBCFAddLabel::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
 
-	auto topic = m_view.GetActiveTopic();
-	if (!topic) {
-		ASSERT(0);
-		EndDialog(IDCANCEL);
-	}
+	auto topic = &m_view.GetTopic();
 
 	std::unordered_set<std::string> exist;
 	uint16_t i = 0;
@@ -71,12 +67,7 @@ BOOL CBCFAddLabel::OnInitDialog()
 
 void CBCFAddLabel::OnOK()
 {
-	auto topic = m_view.GetActiveTopic();
-	if (!topic) {
-		ASSERT(0);
-		EndDialog(IDCANCEL);
-		return;
-	}
+	auto topic = &m_view.GetTopic();
 
 	UpdateData();
 

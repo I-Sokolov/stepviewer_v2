@@ -42,11 +42,7 @@ BOOL CBCFAddRelatedTopic::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
 
-	auto topic = m_view.GetActiveTopic();
-	if (!topic) {
-		ASSERT(0);
-		EndDialog(IDCANCEL);
-	}
+	auto topic = &m_view.GetTopic();
 
 	std::unordered_set<BCFTopic*> exist;
 	uint16_t i = 0;
@@ -78,13 +74,12 @@ void CBCFAddRelatedTopic::OnOK()
 	if (item != LB_ERR) {
 		auto t = (BCFTopic*)m_wndListTopic.GetItemData(item);
 		if (t) {
-			if (auto topic = m_view.GetActiveTopic()) {
-				if (topic->AddRelatedTopic(t)) {
-					CDialogEx::OnOK();
-				}
-				else{
-					m_view.ShowLog(true);
-				}
+			auto& topic = m_view.GetTopic();
+			if (topic.AddRelatedTopic(t)) {
+				CDialogEx::OnOK();
+			}
+			else{
+				m_view.ShowLog(true);
 			}
 		}
 	}
@@ -98,9 +93,7 @@ void CBCFAddRelatedTopic::OnSelchangeListTopic()
 	if (item != LB_ERR) {
 		auto t = (BCFTopic*)m_wndListTopic.GetItemData(item);
 		if (t) {
-			if (auto topic = m_view.GetActiveTopic()) {
-				enable = true;
-			}
+			enable = true;
 		}
 	}
 	m_wndOK.EnableWindow(enable);

@@ -1,9 +1,12 @@
 #pragma once
 
 #include "bcfAPI.h"
-#include "BCFTopicView.h"
+
+#include <map>
 
 class CMySTEPViewerDoc;
+class CBCFTopicView;
+class _model;
 
 class CBCFProjectView : public CDialogEx
 {
@@ -19,6 +22,8 @@ public:
 	bool SaveModified();
 
 	BCFTopic* GetActiveTopic();
+	CMySTEPViewerDoc& GetViewerDoc() { return m_doc; }
+	_model* GetBimModel(BCFBimFile& file);
 	void ViewTopicModels(BCFTopic* topic);
 	static CString FormatDateTime(const char* value);
 
@@ -66,6 +71,6 @@ private:
 	CString m_projectId;
 	CString m_projectName;
 	CListCtrl m_topics;
-	CBCFTopicView m_topicView;
+	std::map<BCFBimFile*, _model*> m_mapBimFiles;
 	bool m_initialized;
 };

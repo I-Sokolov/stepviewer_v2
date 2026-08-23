@@ -42,13 +42,12 @@ void CBCFAddReferenceLink::OnOK()
 	text.Trim();
 	if (!text.IsEmpty())
 	{
-		if (auto topic = m_view.GetActiveTopic()) {
-			if (topic->AddReferenceLink(ToUTF8(text).c_str())) {
-				CDialogEx::OnOK();
-			}
-			else {
-				m_view.ShowLog(true);
-			}
+		auto& topic = m_view.GetTopic();
+		if (topic.AddReferenceLink(ToUTF8(text).c_str())) {
+			CDialogEx::OnOK();
+		}
+		else {
+			m_view.ShowLog(true);
 		}
 	}
 }
