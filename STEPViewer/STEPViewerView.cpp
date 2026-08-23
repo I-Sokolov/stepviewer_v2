@@ -756,41 +756,28 @@ void CMySTEPViewerView::SetBCFView(
 	double fieldOfView,
 	double aspectRatio)
 {
-	auto pRenderer = m_pOpenGLView != nullptr ? dynamic_cast<_oglRenderer*>(m_pOpenGLView) : nullptr;
-	if (pRenderer != nullptr)
-	{
-		double dLengthConversionFactor = getProjectUnitConversionFactor(
-			_ptr<_ap_model>(getController()->getModel())->getSdaiModel(), "LENGTHUNIT", nullptr, nullptr, nullptr);
+	if (auto pRenderer = dynamic_cast<_oglRenderer*>(m_pOpenGLView)) {
+		if (auto ctrl = getController()) {
+			if (auto model = ctrl->getModel()) {
+				if (auto apmodel = _ptr<_ap_model>(model)) {
+					if (auto sdaiModel = apmodel->getSdaiModel()) {
 
-		pRenderer->_setCameraSettings(
-			camera == BCFCamera::BCFCameraPerspective,
-			viewpoint.xyz,
-			direction.xyz,
-			upVector.xyz,
-			viewToWorldScale,
-			fieldOfView,
-			aspectRatio,
-			dLengthConversionFactor);
+						double dLengthConversionFactor = getProjectUnitConversionFactor(
+							sdaiModel, "LENGTHUNIT", nullptr, nullptr, nullptr);
 
-//#ifdef _DEBUG
-//		// TBD:
-//		// Igor: Set/GetBCFView must be complementary
-// 		// Svilen: OpenGL SDK always center the model
-//
-//		BCFCamera camera_;
-//		BCFPoint viewpoint_, direction_, upVector_;
-//		double viewToWorldScale_, fieldOfView_, aspectRatio_;
-//		
-//		GetBCFView(camera_, viewpoint_, direction_, upVector_, viewToWorldScale_, fieldOfView_, aspectRatio_);
-//
-//		ASSERT(camera == camera_);
-//		ASSERT_EQ(viewpoint,viewpoint_);
-//		ASSERT_EQ(direction, direction_);
-//		ASSERT_EQ(upVector, upVector_);
-//		ASSERT_EQ(viewToWorldScale, viewToWorldScale_);
-//		ASSERT_EQ(fieldOfView, fieldOfView_);
-//		ASSERT_EQ(aspectRatio, aspectRatio_);
-//#endif // _DEBUG
+						pRenderer->_setCameraSettings(
+							camera == BCFCamera::BCFCameraPerspective,
+							viewpoint.xyz,
+							direction.xyz,
+							upVector.xyz,
+							viewToWorldScale,
+							fieldOfView,
+							aspectRatio,
+							dLengthConversionFactor);
+					}
+				}
+			}
+		}
 	}
 }
 

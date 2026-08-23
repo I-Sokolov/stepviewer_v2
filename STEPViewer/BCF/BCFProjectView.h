@@ -48,6 +48,7 @@ protected:
 private:
 	void LoadProject();
 	void RefreshTopics(BCFTopic* selectTopic = NULL);
+	CString FormatDateTime(const char* value) const;
 	void UpdateProjectInfo();
 	void UpdateButtons();
 	bool SaveProject();

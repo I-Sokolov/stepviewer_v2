@@ -197,8 +197,19 @@ void CBCFProjectView::RefreshTopics(BCFTopic* selectTopic)
 		m_topics.SetItemText(item, 5, FromUTF8(topic->GetAssignedTo()));
 		m_topics.SetItemText(item, 6, FromUTF8(topic->GetPriority()));
 		m_topics.SetItemText(item, 7, FromUTF8(topic->GetDueDate()));
-		m_topics.SetItemText(item, 8, FromUTF8(topic->GetCreationDate()));
-		m_topics.SetItemText(item, 9, FromUTF8(topic->GetModifiedDate()));
+		CString created = FormatDateTime(topic->GetCreationDate());
+		CString createdAuthor = FromUTF8(topic->GetCreationAuthor());
+		if (!createdAuthor.IsEmpty()) {
+			created.AppendFormat(L" - %s", createdAuthor.GetString());
+		}
+		m_topics.SetItemText(item, 8, created);
+
+		CString modified = FormatDateTime(topic->GetModifiedDate());
+		CString modifiedAuthor = FromUTF8(topic->GetModifiedAuthor());
+		if (!modifiedAuthor.IsEmpty()) {
+			modified.AppendFormat(L" - %s", modifiedAuthor.GetString());
+		}
+		m_topics.SetItemText(item, 9, modified);
 		m_topics.SetItemData(item, reinterpret_cast<DWORD_PTR>(topic));
 		if (topic == selectTopic) {
 			selected = item;
@@ -215,6 +226,37 @@ void CBCFProjectView::RefreshTopics(BCFTopic* selectTopic)
 		m_topics.EnsureVisible(selected, FALSE);
 	}
 	UpdateButtons();
+}
+
+CString CBCFProjectView::FormatDateTime(const char* value) const
+{
+	if (!value || !*value) {
+		return CString();
+	}
+
+	SYSTEMTIME time = {};
+	if (sscanf_s(value, "%4hu-%2hu-%2huT%2hu:%2hu:%2hu",
+		&time.wYear, &time.wMonth, &time.wDay,
+		&time.wHour, &time.wMinute, &time.wSecond) != 6) {
+		return FromUTF8(value);
+	}
+
+	FILETIME fileTime;
+	if (!SystemTimeToFileTime(&time, &fileTime)) {
+		return FromUTF8(value);
+	}
+
+	wchar_t date[64] = {};
+	wchar_t clock[64] = {};
+	if (!GetDateFormatEx(LOCALE_NAME_USER_DEFAULT, DATE_SHORTDATE, &time, NULL, date, _countof(date), NULL)
+		|| !GetTimeFormatEx(LOCALE_NAME_USER_DEFAULT, TIME_NOSECONDS, &time, NULL, clock, _countof(clock))) {
+		return FromUTF8(value);
+	}
+
+	CString result(date);
+	result += L" ";
+	result += clock;
+	return result;
 }
 
 BCFTopic* CBCFProjectView::GetActiveTopic()
