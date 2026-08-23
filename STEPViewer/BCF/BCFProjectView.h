@@ -20,6 +20,7 @@ public:
 
 	BCFTopic* GetActiveTopic();
 	void ViewTopicModels(BCFTopic* topic);
+	static CString FormatDateTime(const char* value);
 
 #ifdef AFX_DESIGN_TIME
 	enum { IDD = IDD_BCF_PROJECT_VIEW };
@@ -48,7 +49,6 @@ protected:
 private:
 	void LoadProject();
 	void RefreshTopics(BCFTopic* selectTopic = NULL);
-	CString FormatDateTime(const char* value) const;
 	void UpdateProjectInfo();
 	void UpdateButtons();
 	bool SaveProject();

@@ -24,7 +24,7 @@ public:
 /// <summary>
 /// API
 /// </summary>
-	void Open(BCFProject& project, BCFTopic* topic);
+	void Open(BCFTopic* topic);
 
 	void CommitChanges();
 	void Close();
@@ -48,7 +48,7 @@ public:
 public:
 // Dialog Data
 #ifdef AFX_DESIGN_TIME
-	enum { IDD = IDD_BCF_VIEW };
+	enum { IDD = IDD_BCF_TOPIC_VIEW };
 #endif
 
 protected:
@@ -71,7 +71,7 @@ protected:
 
 private:
 	void LoadTopicToView();
-	void UpdateTopicCaptions();
+	void UpdateTopicInfo();
 	void LoadExtensions();
 	void LoadExtension(CComboBox& wnd, BCFEnumeration enumeraion);
 	void LoadActiveTopic();
@@ -92,18 +92,16 @@ private:
 	void RemoveLink(BCFTopic* topic);
 	void RemoveDocument(BCFTopic* topic);
 	BCFBimFile* FindBimFileByPath(BCFTopic* topic, const char* searchPath);
-	void FillTopicAuthor(BCFTopic* topic);
 
 private:
 	CMySTEPViewerDoc&				m_doc;
-	BCFProject*						m_bcfProject;
 	BCFTopic*						m_topic;
 
 	CBCFViewPointMgr				m_viewPointMgr;
 	std::map<BCFBimFile*, _model*>	m_mapBimFiles;
 
 private:
-	CStatic m_wndTopic;
+	CStatic m_wndTopicInfo;
 	CComboBox m_wndTopicType;
 	CString m_strTopicType;
 	CComboBox m_wndTopicStage;
@@ -117,7 +115,6 @@ private:
 	CComboBox m_wndSnippetType;
 	CString m_strSnippetType;
 	CTabCtrl m_wndTab;
-	CStatic m_wndAuthor;
 	CEdit m_wndDue;
 	CString m_strDue;
 	CEdit m_wndDescription;

@@ -131,7 +131,7 @@
 #define IDR_POPUP_META_DATA             348
 #define IDR_TEXTFILE_VERTEX_SHADER3     349
 #define IDR_TEXTFILE_FRAGMENT_SHADER3   350
-#define IDD_BCF_VIEW                    351
+#define IDD_BCF_TOPIC_VIEW              351
 #define IDD_BCF_ADDLABEL                355
 #define IDD_BCF_ADDRELATEDTOPIC         357
 #define IDD_BCF_ADDREFERENCELINK        359
@@ -155,7 +155,6 @@
 #define IDC_EDIT_SEARCH_TEXT            1007
 #define IDC_COMBO_SEARCH_FILTER         1008
 #define IDC_COMBO_INSTANCES             1009
-#define IDC_TOPICS                      1012
 #define IDC_TOPIC_TYPE                  1013
 #define IDC_TOPIC_STAGE                 1014
 #define IDC_TOPIC_TITLE                 1015
@@ -178,7 +177,7 @@
 #define IDC_BUTTON_ADD                  1033
 #define IDC_BUTTON_REMOVE               1034
 #define IDC_EDIT7                       1038
-#define IDC_AUTHOR                      1039
+#define IDC_TOPIC_INFO                  1039
 #define IDC_LIST1                       1042
 #define IDC_COMMENTS_LIST               1042
 #define IDC_LIST_TOPIC                  1042
