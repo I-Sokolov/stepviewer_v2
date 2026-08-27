@@ -122,17 +122,22 @@ END_MESSAGE_MAP()
 BOOL CBCFProjectForm::Create(CBCFView* pane)
 {
 	m_pane = pane;
+
 	if (!CreateEx(0, RegisterPaneClass(), L"", WS_CHILD | WS_CLIPCHILDREN, CRect(), pane, 0)) {
 		return FALSE;
 	}
+
 	CreateStaticLabel(m_topicsLabel, L"Topics:", this);
+	
 	m_topics.Create(WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP | LVS_REPORT | LVS_SINGLESEL | LVS_SHOWSELALWAYS,
 		CRect(), this, IDC_PANE_TOPICS);
 	SetControlFont(m_topics, this);
 	m_topics.SetExtendedStyle(LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES | LVS_EX_DOUBLEBUFFER);
+	
 	for (int column = 0; column < COLUMN_COUNT; ++column) {
 		m_topics.InsertColumn(column, COLUMN_NAMES[column], LVCFMT_LEFT, COLUMN_WIDTHS[column]);
 	}
+	
 	return TRUE;
 }
 
@@ -231,12 +236,16 @@ END_MESSAGE_MAP()
 BOOL CBCFTopicForm::Create(CBCFView* pane)
 {
 	m_pane = pane;
+
 	if (!CreateEx(0, RegisterPaneClass(), L"", WS_CHILD | WS_CLIPCHILDREN, CRect(), pane, 0)) {
 		return FALSE;
 	}
+
 	CreateStaticLabel(m_topicInfo, L"Topic", this);
-	m_tabs.Create(WS_CHILD | WS_VISIBLE | WS_TABSTOP | TCS_TABS, CRect(), this, IDC_PANE_TABS);
+
+	m_tabs.Create(WS_CHILD | WS_VISIBLE | WS_TABSTOP | TCS_TABS, CRect(), this, IDC_PANE_TABS);	
 	SetControlFont(m_tabs, this);
+	
 	m_tabs.InsertItem(0, L"Topic");
 	m_tabs.InsertItem(1, L"Attributes");
 	m_tabs.InsertItem(2, L"Comments");
@@ -245,9 +254,11 @@ BOOL CBCFTopicForm::Create(CBCFView* pane)
 
 	CreateStaticLabel(m_titleLabel, L"Title:", this);
 	m_title.Create(WS_CHILD | WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL, CRect(), this, IDC_PANE_TOPIC_TITLE);
+
 	CreateStaticLabel(m_descriptionLabel, L"Description:", this);
 	m_description.Create(WS_CHILD | WS_BORDER | WS_TABSTOP | ES_MULTILINE | ES_AUTOVSCROLL | ES_WANTRETURN | WS_VSCROLL,
 		CRect(), this, IDC_PANE_TOPIC_DESCRIPTION);
+
 	SetControlFont(m_title, this);
 	SetControlFont(m_description, this);
 
@@ -255,9 +266,11 @@ BOOL CBCFTopicForm::Create(CBCFView* pane)
 		L"Type:", L"Stage:", L"Status:", L"Assigned:", L"Priority:", L"Due:",
 		L"Snippet:", L"Reference:", L"Schema:", L"Index:", L"Server Id:", L""
 	};
+
 	for (int i = 0; i < 12; ++i) {
 		CreateStaticLabel(m_attributeLabels[i], labels[i], this);
 	}
+
 	DWORD comboStyle = WS_CHILD | WS_TABSTOP | WS_VSCROLL | CBS_DROPDOWN;
 	m_type.Create(comboStyle, CRect(), this, IDC_PANE_TOPIC_TYPE);
 	m_stage.Create(comboStyle, CRect(), this, IDC_PANE_TOPIC_STAGE);
@@ -617,6 +630,7 @@ int CBCFView::OnCreate(LPCREATESTRUCT createStruct)
 	if (CDockablePane::OnCreate(createStruct) == -1) {
 		return -1;
 	}
+
 	if (!m_menuBar.Create(this, AFX_DEFAULT_TOOLBAR_STYLE, IDR_BCF_VIEW_MENU) ||
 		!m_menu.LoadMenu(IDR_BCF_VIEW_MENU)) {
 		return -1;
@@ -628,17 +642,22 @@ int CBCFView::OnCreate(LPCREATESTRUCT createStruct)
 	m_menuBar.SetDefaultMenuResId(IDR_BCF_VIEW_MENU);
 	m_menuBar.CreateFromMenu(m_menu.GetSafeHmenu(), TRUE);
 	m_menuBar.SetMessageWnd(this);
+
 	CreateStaticLabel(m_projectIdLabel, L"Project Id:", this);
 	CreateStaticLabel(m_projectNameLabel, L"Project Name:", this);
+	
 	m_projectId.Create(WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL | ES_READONLY,
 		CRect(), this, IDC_PANE_PROJECT_ID);
 	m_projectName.Create(WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL,
 		CRect(), this, IDC_PANE_PROJECT_NAME);
+
 	SetControlFont(m_projectId, this);
 	SetControlFont(m_projectName, this);
+	
 	if (!m_projectForm.Create(this) || !m_topicForm.Create(this) || !m_commentForm.Create(this)) {
 		return -1;
 	}
+	
 	ShowForm(ProjectForm);
 	return 0;
 }
@@ -651,7 +670,7 @@ void CBCFView::Activate()
 
 void CBCFView::NewProject()
 {
-	if (!SaveModified()) {
+	if (!AskAndSaveModified()) {
 		return;
 	}
 	ReleaseProject();
@@ -672,7 +691,7 @@ void CBCFView::NewProject()
 void CBCFView::OpenProject()
 {
 	CFileDialog dialog(TRUE, nullptr, L"", OFN_FILEMUSTEXIST | OFN_HIDEREADONLY, BCF_PACKAGES_FILTER);
-	if (dialog.DoModal() != IDOK || !SaveModified()) {
+	if (dialog.DoModal() != IDOK || !AskAndSaveModified()) {
 		return;
 	}
 	ReleaseProject();
@@ -730,7 +749,7 @@ bool CBCFView::SaveProject()
 	return ok;
 }
 
-bool CBCFView::SaveModified()
+bool CBCFView::AskAndSaveModified()
 {
 	if (!CommitCurrent()) {
 		return false;
@@ -745,7 +764,7 @@ bool CBCFView::SaveModified()
 
 void CBCFView::CloseProject(bool prompt)
 {
-	if (!prompt || SaveModified()) {
+	if (!prompt || AskAndSaveModified()) {
 		ReleaseProject();
 		ShowProject();
 	}

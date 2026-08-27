@@ -128,7 +128,7 @@ public:
 	void Activate();
 	void NewProject();
 	void OpenProject();
-	bool SaveModified();
+	bool AskAndSaveModified();
 	void CloseProject(bool prompt);
 	void OnCloseMainDocument();
 	void ShowProject();

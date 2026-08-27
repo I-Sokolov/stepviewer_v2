@@ -57,7 +57,7 @@ protected:  // control bar embedded members
 	CSchemaView			m_schemaView;
 	CRelationsView		m_relationsView;
 	CPropertiesWnd      m_propertiesView;
-	CBCFView     m_bcfView;
+	CBCFView			m_bcfView;
 
 
 // Generated message map functions

@@ -417,7 +417,7 @@ BOOL CMySTEPViewerDoc::SaveModified()
 		return FALSE;
 	}
 	if (auto frame = dynamic_cast<CMainFrame*>(AfxGetMainWnd())) {
-		if (!frame->GetBCFView().SaveModified()) {
+		if (!frame->GetBCFView().AskAndSaveModified()) {
 			return FALSE;
 		}
 	}
