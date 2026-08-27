@@ -1093,6 +1093,7 @@ void CBCFView::AdjustLayout()
 	m_projectForm.MoveWindow(formRect);
 	m_topicForm.MoveWindow(formRect);
 	m_commentForm.MoveWindow(formRect);
+	RedrawWindow(nullptr, nullptr, RDW_INVALIDATE | RDW_ERASE | RDW_ALLCHILDREN);
 }
 
 void CBCFView::OnSize(UINT type, int cx, int cy)
