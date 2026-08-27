@@ -10,6 +10,7 @@
 #endif
 
 #include "STEPViewerDoc.h"
+#include "MainFrm.h"
 #include <propkey.h>
 
 #include "IDSCheckerDialog.h"
@@ -403,6 +404,9 @@ void CMySTEPViewerDoc::DeleteContents()
 void CMySTEPViewerDoc::OnCloseDocument()
 {
 	m_wndBCFProjectDlg.Close();
+	if (auto frame = dynamic_cast<CMainFrame*>(AfxGetMainWnd())) {
+		frame->GetBCFView().OnCloseMainDocument();
+	}
 
 	__super::OnCloseDocument();
 }
@@ -411,6 +415,11 @@ BOOL CMySTEPViewerDoc::SaveModified()
 {
 	if (!m_wndBCFProjectDlg.SaveModified()) {
 		return FALSE;
+	}
+	if (auto frame = dynamic_cast<CMainFrame*>(AfxGetMainWnd())) {
+		if (!frame->GetBCFView().SaveModified()) {
+			return FALSE;
+		}
 	}
 
 	return __super::SaveModified();

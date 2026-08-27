@@ -576,6 +576,8 @@ IDI_PROPERTIES_WND      ICON                    "res\\properties_wnd.ico"
 
 IDI_PROPERTIES_WND_HC   ICON                    "res\\properties_wnd_hc.ico"
 
+IDI_BCF_VIEW            ICON                    "res\\bcf_view.ico"
+
 IDI_ICON_ERR            ICON                    "res\\error.ico"
 
 IDI_ICON_INFO           ICON                    "res\\information.ico"
@@ -721,6 +723,30 @@ END
 //
 // Menu
 //
+
+IDR_BCF_VIEW_MENU MENU
+BEGIN
+    POPUP "&File"
+    BEGIN
+        MENUITEM "&New BCF File",               ID_BCF_FILE_NEW
+        MENUITEM "&Open BCF File...",           ID_BCF_FILE_OPEN
+        MENUITEM SEPARATOR
+        MENUITEM "&Save BCF File",              ID_BCF_FILE_SAVE
+        MENUITEM SEPARATOR
+        MENUITEM "&Back",                       ID_BCF_PANE_BACK
+    END
+    POPUP "&Topic"
+    BEGIN
+        MENUITEM "&Add Topic",                  ID_BCF_PANE_ADD_TOPIC
+        MENUITEM "&Delete Topic",               ID_BCF_PANE_DELETE_TOPIC
+        MENUITEM "Topic &Details",              ID_BCF_PANE_TOPIC_DETAILS
+    END
+    POPUP "&Comment"
+    BEGIN
+        MENUITEM "&Save Comment",               ID_BCF_PANE_SAVE_COMMENT
+        MENUITEM "&Delete Comment",             ID_BCF_PANE_DELETE_COMMENT
+    END
+END
 
 IDR_MAINFRAME MENU
 BEGIN
@@ -1235,4 +1261,3 @@ LANGUAGE 9, 1
 
 /////////////////////////////////////////////////////////////////////////////
 #endif    // not APSTUDIO_INVOKED
-

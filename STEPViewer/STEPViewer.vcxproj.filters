@@ -252,6 +252,9 @@
     <ClInclude Include="BCF\BCFBimFiles.h">
       <Filter>BCF</Filter>
     </ClInclude>
+    <ClInclude Include="BCF\BCFView.h">
+      <Filter>BCF</Filter>
+    </ClInclude>
     <ClInclude Include="BCF\BCFTopicDlg.h">
       <Filter>BCF</Filter>
     </ClInclude>
@@ -509,6 +512,9 @@
     <ClCompile Include="BCF\BCFBimFiles.cpp">
       <Filter>BCF</Filter>
     </ClCompile>
+    <ClCompile Include="BCF\BCFView.cpp">
+      <Filter>BCF</Filter>
+    </ClCompile>
     <ClCompile Include="BCF\BCFTopicDlg.cpp">
       <Filter>BCF</Filter>
     </ClCompile>
@@ -609,6 +615,9 @@
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
+    <Image Include="res\bcf_view.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
     <Image Include="res\file_view.ico">
       <Filter>Resource Files</Filter>
     </Image>

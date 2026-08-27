@@ -3,7 +3,6 @@
 #include "bcfAPI.h"
 #include <string>
 
-class CBCFTopicDlg;
 class CMySTEPViewerDoc;
 class CMySTEPViewerView;
 class _instance;
@@ -11,7 +10,7 @@ class _instance;
 class CBCFViewPointMgr
 {
 public:
-	CBCFViewPointMgr(CBCFTopicDlg& view) : m_view(view){}
+	explicit CBCFViewPointMgr(CMySTEPViewerDoc& document);
 
 	void SetViewFromComment(BCFComment& comment);
 
@@ -40,5 +39,5 @@ private:
 	std::string GetColorStr(COLORREF clr);
 
 private:
-	CBCFTopicDlg& m_view;
+	CMySTEPViewerDoc& m_document;
 };

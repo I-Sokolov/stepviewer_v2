@@ -2,8 +2,6 @@
 #include "BCFViewPointMgr.h"
 #include "STEPViewerDoc.h"
 #include "STEPViewerView.h"
-#include "BCFProjectDlg.h"
-#include "BCFTopicDlg.h"
 #include "_ifc_instance.h"
 #include "_ifc_model.h"
 #include "_oglUtils.h"
@@ -15,9 +13,14 @@
 #define IFC_OPENING "IfcOpeningElement"
 #define GLOBAL_ID "GlobalId"
 
+CBCFViewPointMgr::CBCFViewPointMgr(CMySTEPViewerDoc& document)
+	: m_document(document)
+{
+}
+
 CMySTEPViewerDoc& CBCFViewPointMgr::GetViewerDoc()
 {
-	return m_view.GetProjectDlg().GetViewerDoc();
+	return m_document;
 }
 
 CMySTEPViewerView* CBCFViewPointMgr::GetViewerView()

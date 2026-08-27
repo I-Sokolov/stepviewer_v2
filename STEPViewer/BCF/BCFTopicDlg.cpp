@@ -199,7 +199,7 @@ CBCFTopicDlg::CBCFTopicDlg(CBCFProjectDlg& projectDlg, BCFTopic& topic)
 	: CDialogEx(IDD_BCF_TOPIC_DLG, &projectDlg)
 	, m_projectDlg(projectDlg)
 	, m_topic(topic)
-	, m_viewPointMgr(*this)
+	, m_viewPointMgr(projectDlg.GetViewerDoc())
 {
 }
 

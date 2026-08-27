@@ -11,6 +11,7 @@
 #include "SchemaView.h"
 #include "RelationsView.h"
 #include "CustomStatusBar.h"
+#include "BCF\BCFView.h"
 
 class CMainFrame : public CFrameWndEx
 {
@@ -40,6 +41,7 @@ public:
 // Implementation
 public:
 	virtual ~CMainFrame();
+	CBCFView& GetBCFView() { return m_bcfView; }
 #ifdef _DEBUG
 	virtual void AssertValid() const;
 	virtual void Dump(CDumpContext& dc) const;
@@ -55,6 +57,7 @@ protected:  // control bar embedded members
 	CSchemaView			m_schemaView;
 	CRelationsView		m_relationsView;
 	CPropertiesWnd      m_propertiesView;
+	CBCFView     m_bcfView;
 
 
 // Generated message map functions
@@ -69,5 +72,3 @@ protected:
 	BOOL CreateDockingWindows();
 	void SetDockingWindowIcons(BOOL bHiColorIcons);
 };
-
-
