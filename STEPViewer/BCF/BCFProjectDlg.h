@@ -5,16 +5,16 @@
 #include <map>
 
 class CMySTEPViewerDoc;
-class CBCFTopicView;
+class CBCFTopicDlg;
 class _model;
 
-class CBCFProjectView : public CDialogEx
+class CBCFProjectDlg : public CDialogEx
 {
-	DECLARE_DYNAMIC(CBCFProjectView)
+	DECLARE_DYNAMIC(CBCFProjectDlg)
 
 public:
-	CBCFProjectView(CMySTEPViewerDoc& doc);
-	virtual ~CBCFProjectView();
+	CBCFProjectDlg(CMySTEPViewerDoc& doc);
+	virtual ~CBCFProjectDlg();
 
 	bool IsBCF(LPCTSTR filePath) const;
 	void Open(LPCTSTR filePath);
@@ -27,7 +27,7 @@ public:
 	static CString FormatDateTime(const char* value);
 
 #ifdef AFX_DESIGN_TIME
-	enum { IDD = IDD_BCF_PROJECT_VIEW };
+	enum { IDD = IDD_BCF_PROJECT_DLG };
 #endif
 
 protected:

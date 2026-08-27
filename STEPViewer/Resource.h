@@ -131,7 +131,7 @@
 #define IDR_POPUP_META_DATA             348
 #define IDR_TEXTFILE_VERTEX_SHADER3     349
 #define IDR_TEXTFILE_FRAGMENT_SHADER3   350
-#define IDD_BCF_TOPIC_VIEW              351
+#define IDD_BCF_TOPIC_DLG              351
 #define IDD_BCF_ADDLABEL                355
 #define IDD_BCF_ADDRELATEDTOPIC         357
 #define IDD_BCF_ADDREFERENCELINK        359
@@ -142,7 +142,7 @@
 #define IDI_ICON_INFO                   368
 #define IDI_ICON_WARN                   369
 #define IDD_DIALOG_LOG                  370
-#define IDD_BCF_PROJECT_VIEW            372
+#define IDD_BCF_PROJECT_DLG            372
 #define IDC_COMBO_EXISTING_INSTANCE     1000
 #define IDC_RADIO_EXISTING_INSTANCE     1001
 #define IDC_RADIO_NEW_INSTANCE          1002

@@ -1,6 +1,6 @@
 #pragma once
 
-class CBCFTopicView;
+class CBCFTopicDlg;
 
 // CBCFAddDocumentReference dialog
 
@@ -9,7 +9,7 @@ class CBCFAddDocumentReference : public CDialogEx
 	DECLARE_DYNAMIC(CBCFAddDocumentReference)
 
 public:
-	CBCFAddDocumentReference(CBCFTopicView& view);   // standard constructor
+	CBCFAddDocumentReference(CBCFTopicDlg& view);   // standard constructor
 	virtual ~CBCFAddDocumentReference();
 
 // Dialog Data
@@ -25,7 +25,7 @@ protected:
 	afx_msg void OnClickedButtonBrowse();
 
 public:
-	CBCFTopicView& m_view;
+	CBCFTopicDlg& m_view;
 	CString m_strPath;
 	CString m_strDescription;
 	BOOL m_isExternal;

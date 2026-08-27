@@ -2,8 +2,8 @@
 #include "BCFViewPointMgr.h"
 #include "STEPViewerDoc.h"
 #include "STEPViewerView.h"
-#include "BCFProjectView.h"
-#include "BCFTopicView.h"
+#include "BCFProjectDlg.h"
+#include "BCFTopicDlg.h"
 #include "_ifc_instance.h"
 #include "_ifc_model.h"
 #include "_oglUtils.h"
@@ -17,7 +17,7 @@
 
 CMySTEPViewerDoc& CBCFViewPointMgr::GetViewerDoc()
 {
-	return m_view.GetProjectView().GetViewerDoc();
+	return m_view.GetProjectDlg().GetViewerDoc();
 }
 
 CMySTEPViewerView* CBCFViewPointMgr::GetViewerView()

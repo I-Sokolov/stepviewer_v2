@@ -4,7 +4,7 @@
 #include "stdafx.h"
 #include "STEPViewer.h"
 #include "BCFAddLabel.h"
-#include "BCFTopicView.h"
+#include "BCFTopicDlg.h"
 
 #include <unordered_set>
 
@@ -13,7 +13,7 @@
 
 IMPLEMENT_DYNAMIC(CBCFAddLabel, CDialogEx)
 
-CBCFAddLabel::CBCFAddLabel(CBCFTopicView& view)
+CBCFAddLabel::CBCFAddLabel(CBCFTopicDlg& view)
 	: CDialogEx(IDD_BCF_ADDLABEL, &view)
 	, m_view(view)
 {

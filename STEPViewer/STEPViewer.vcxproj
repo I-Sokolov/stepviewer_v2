@@ -668,8 +668,8 @@
     <ClInclude Include="BCF\BCFAddReferenceLink.h" />
     <ClInclude Include="BCF\BCFAddRelatedTopic.h" />
     <ClInclude Include="BCF\BCFBimFiles.h" />
-    <ClInclude Include="BCF\BCFProjectView.h" />
-    <ClInclude Include="BCF\BCFTopicView.h" />
+    <ClInclude Include="BCF\BCFProjectDlg.h" />
+    <ClInclude Include="BCF\BCFTopicDlg.h" />
     <ClInclude Include="BCF\BCFViewPointMgr.h" />
     <ClInclude Include="CIS2\CIS2DesignPart.h" />
     <ClInclude Include="CIS2\CIS2Geometry.h" />
@@ -1239,8 +1239,8 @@
     <ClCompile Include="BCF\BCFAddReferenceLink.cpp" />
     <ClCompile Include="BCF\BCFAddRelatedTopic.cpp" />
     <ClCompile Include="BCF\BCFBimFiles.cpp" />
-    <ClCompile Include="BCF\BCFProjectView.cpp" />
-    <ClCompile Include="BCF\BCFTopicView.cpp" />
+    <ClCompile Include="BCF\BCFProjectDlg.cpp" />
+    <ClCompile Include="BCF\BCFTopicDlg.cpp" />
     <ClCompile Include="BCF\BCFViewPointMgr.cpp" />
     <ClCompile Include="CIS2\CIS2DesignPart.cpp" />
     <ClCompile Include="CIS2\CIS2Geometry.cpp" />

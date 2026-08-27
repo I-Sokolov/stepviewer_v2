@@ -1,12 +1,12 @@
-// BCF\BCFTopicView.cpp : implementation file
+// BCF\BCFTopicDlg.cpp : implementation file
 //
 
 #include "stdafx.h"
 
 #include "STEPViewer.h"
 #include "STEPViewerDoc.h"
-#include "BCF\BCFProjectView.h"
-#include "BCF\BCFTopicView.h"
+#include "BCF\BCFProjectDlg.h"
+#include "BCF\BCFTopicDlg.h"
 #include "BCF\BCFAddLabel.h"
 #include "BCF\BCFAddRelatedTopic.h"
 #include "BCF\BCFAddReferenceLink.h"
@@ -32,13 +32,13 @@ namespace
 		CString metadata;
 		metadata.Format(L"Created by %s %s",
 			FromUTF8(comment.GetAuthor()).GetString(),
-			CBCFProjectView::FormatDateTime(comment.GetDate()).GetString());
+			CBCFProjectDlg::FormatDateTime(comment.GetDate()).GetString());
 
 		if (*comment.GetModifiedAuthor() || *comment.GetModifiedDate()) {
 			CString modified;
 			modified.Format(L"\nModified by %s %s",
 				FromUTF8(comment.GetModifiedAuthor()).GetString(),
-				CBCFProjectView::FormatDateTime(comment.GetModifiedDate()).GetString());
+				CBCFProjectDlg::FormatDateTime(comment.GetModifiedDate()).GetString());
 			metadata.Append(modified);
 		}
 		return metadata;
@@ -179,35 +179,35 @@ void CBCFCommentsListBox::OnSize(UINT type, int cx, int cy)
 	}
 }
 
-// CBCFTopicView dialog
+// CBCFTopicDlg dialog
 
-IMPLEMENT_DYNAMIC(CBCFTopicView, CDialogEx)
+IMPLEMENT_DYNAMIC(CBCFTopicDlg, CDialogEx)
 
-BEGIN_MESSAGE_MAP(CBCFTopicView, CDialogEx)
+BEGIN_MESSAGE_MAP(CBCFTopicDlg, CDialogEx)
 	ON_WM_SHOWWINDOW()
-	ON_LBN_SELCHANGE(IDC_COMMENTS_LIST, &CBCFTopicView::OnSelchangeCommentsList)
-	ON_NOTIFY(TCN_SELCHANGE, IDC_TAB, &CBCFTopicView::OnSelchangeTab)
-	ON_BN_CLICKED(IDC_BUTTON_ADD, &CBCFTopicView::OnClickedButtonAddMulti)
-	ON_BN_CLICKED(IDC_BUTTON_REMOVE, &CBCFTopicView::OnClickedButtonRemoveMulti)
-	ON_LBN_SELCHANGE(IDC_MULTI_LIST, &CBCFTopicView::OnSelchangeMultiList)
-	ON_BN_CLICKED(IDC_UPDATE_VIEWPOINT, &CBCFTopicView::OnClickedUpdateViewpoint)
-	ON_BN_CLICKED(IDC_BUTTON_BIMS, &CBCFTopicView::OnClickedButtonBims)
+	ON_LBN_SELCHANGE(IDC_COMMENTS_LIST, &CBCFTopicDlg::OnSelchangeCommentsList)
+	ON_NOTIFY(TCN_SELCHANGE, IDC_TAB, &CBCFTopicDlg::OnSelchangeTab)
+	ON_BN_CLICKED(IDC_BUTTON_ADD, &CBCFTopicDlg::OnClickedButtonAddMulti)
+	ON_BN_CLICKED(IDC_BUTTON_REMOVE, &CBCFTopicDlg::OnClickedButtonRemoveMulti)
+	ON_LBN_SELCHANGE(IDC_MULTI_LIST, &CBCFTopicDlg::OnSelchangeMultiList)
+	ON_BN_CLICKED(IDC_UPDATE_VIEWPOINT, &CBCFTopicDlg::OnClickedUpdateViewpoint)
+	ON_BN_CLICKED(IDC_BUTTON_BIMS, &CBCFTopicDlg::OnClickedButtonBims)
 END_MESSAGE_MAP()
 
 
-CBCFTopicView::CBCFTopicView(CBCFProjectView& projectView, BCFTopic& topic)
-	: CDialogEx(IDD_BCF_TOPIC_VIEW, &projectView)
-	, m_projectView(projectView)
+CBCFTopicDlg::CBCFTopicDlg(CBCFProjectDlg& projectDlg, BCFTopic& topic)
+	: CDialogEx(IDD_BCF_TOPIC_DLG, &projectDlg)
+	, m_projectDlg(projectDlg)
 	, m_topic(topic)
 	, m_viewPointMgr(*this)
 {
 }
 
-CBCFTopicView::~CBCFTopicView()
+CBCFTopicDlg::~CBCFTopicDlg()
 {
 }
 
-void CBCFTopicView::DoDataExchange(CDataExchange* pDX)
+void CBCFTopicDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_TOPIC_INFO, m_wndTopicInfo);
@@ -244,20 +244,20 @@ void CBCFTopicView::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_BUTTON_REMOVE, m_wndRemoveMulti);
 }
 
-void CBCFTopicView::OnCancel()
+void CBCFTopicDlg::OnCancel()
 {
 	CDialogEx::OnCancel();
 }
 
 
-void CBCFTopicView::OnOK()
+void CBCFTopicDlg::OnOK()
 {
 	UpdateData();
 	SaveTopic();
 	CDialogEx::OnOK();
 }
 
-BOOL CBCFTopicView::OnInitDialog()
+BOOL CBCFTopicDlg::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
 
@@ -275,7 +275,7 @@ BOOL CBCFTopicView::OnInitDialog()
 }
 
 
-void CBCFTopicView::LoadView()
+void CBCFTopicDlg::LoadView()
 {
 	CWaitCursor wait;
 
@@ -285,7 +285,7 @@ void CBCFTopicView::LoadView()
 	LoadTopic();
 }
 
-void CBCFTopicView::UpdateTopicInfo()
+void CBCFTopicDlg::UpdateTopicInfo()
 {
 	CString caption;
 	caption.Format(L"BCF Topic %s", FromUTF8(m_topic.GetTitle()).GetString());
@@ -295,18 +295,18 @@ void CBCFTopicView::UpdateTopicInfo()
 	topicInfo.Format(L"Topic %s. Created by %s %s",
 		FromUTF8(m_topic.GetGuid()).GetString(),
 		FromUTF8(m_topic.GetCreationAuthor()).GetString(),
-		CBCFProjectView::FormatDateTime(m_topic.GetCreationDate()).GetString());
+		CBCFProjectDlg::FormatDateTime(m_topic.GetCreationDate()).GetString());
 	if (*m_topic.GetModifiedAuthor()) {
 		CString modified;
 		modified.Format(L", modified by %s %s",
 			FromUTF8(m_topic.GetModifiedAuthor()).GetString(),
-			CBCFProjectView::FormatDateTime(m_topic.GetModifiedDate()).GetString());
+			CBCFProjectDlg::FormatDateTime(m_topic.GetModifiedDate()).GetString());
 		topicInfo.Append(modified);
 	}
 	m_wndTopicInfo.SetWindowText(topicInfo);
 }
 
-void CBCFTopicView::LoadExtensions()
+void CBCFTopicDlg::LoadExtensions()
 {
 	LoadExtension(m_wndTopicType, BCFTopicTypes);
 	LoadExtension(m_wndTopicStatus, BCFTopicStatuses);
@@ -316,7 +316,7 @@ void CBCFTopicView::LoadExtensions()
 	LoadExtension(m_wndTopicStage, BCFStages);
 }
 
-void CBCFTopicView::LoadExtension(CComboBox& wnd, BCFEnumeration enumeraion)
+void CBCFTopicDlg::LoadExtension(CComboBox& wnd, BCFEnumeration enumeraion)
 {
 	CString txt;
 	wnd.GetWindowText(txt);
@@ -332,7 +332,7 @@ void CBCFTopicView::LoadExtension(CComboBox& wnd, BCFEnumeration enumeraion)
 	wnd.SetWindowText(txt);
 }
 
-void CBCFTopicView::ShowLog(bool knownError)
+void CBCFTopicDlg::ShowLog(bool knownError)
 {
 	const char* msg = m_topic.GetProject().GetErrors();
 
@@ -348,7 +348,7 @@ void CBCFTopicView::ShowLog(bool knownError)
 }
 
 
-void CBCFTopicView::LoadTopic()
+void CBCFTopicDlg::LoadTopic()
 {
 	m_strTitle = FromUTF8(m_topic.GetTitle());
 	m_strDescription = FromUTF8(m_topic.GetDescription());
@@ -385,7 +385,7 @@ void CBCFTopicView::LoadTopic()
 }
 
 
-void CBCFTopicView::SaveTopic()
+void CBCFTopicDlg::SaveTopic()
 {
 	bool ok = m_topic.SetTitle(ToUTF8(m_strTitle).c_str());
 	ok = m_topic.SetDescription(ToUTF8(m_strDescription).c_str()) && ok;
@@ -413,7 +413,7 @@ void CBCFTopicView::SaveTopic()
 }
 
 
-void CBCFTopicView::LoadComments(int select)
+void CBCFTopicDlg::LoadComments(int select)
 {
 	m_wndCommentsList.ResetContent();
 
@@ -426,7 +426,7 @@ void CBCFTopicView::LoadComments(int select)
 	OnSelchangeCommentsList();
 }
 
-void CBCFTopicView::OnSelchangeCommentsList()
+void CBCFTopicDlg::OnSelchangeCommentsList()
 {
 	BCFComment* comment = NULL;
 	auto item = m_wndCommentsList.GetCurSel();
@@ -439,12 +439,12 @@ void CBCFTopicView::OnSelchangeCommentsList()
 	ShowLog(false);
 }
 
-_model* CBCFTopicView::GetBimModel(BCFBimFile& file)
+_model* CBCFTopicDlg::GetBimModel(BCFBimFile& file)
 {
-	return m_projectView.GetBimModel(file);
+	return m_projectDlg.GetBimModel(file);
 }
 
-void CBCFTopicView::LoadBIMFiles()
+void CBCFTopicDlg::LoadBIMFiles()
 {
 	std::vector<_model*> activeModels;
 	uint16_t i = 0;
@@ -453,16 +453,16 @@ void CBCFTopicView::LoadBIMFiles()
 			activeModels.push_back(model);
 		}
 	}
-	m_projectView.GetViewerDoc().enableModelsAddIfNeeded(activeModels);
+	m_projectDlg.GetViewerDoc().enableModelsAddIfNeeded(activeModels);
 }
 
-void CBCFTopicView::OnSelchangeTab(NMHDR* /*pNMHDR*/, LRESULT* pResult)
+void CBCFTopicDlg::OnSelchangeTab(NMHDR* /*pNMHDR*/, LRESULT* pResult)
 {
 	FillMultiList();
 	*pResult = 0;
 }
 
-void CBCFTopicView::FillMultiList()
+void CBCFTopicDlg::FillMultiList()
 {
 	auto sel = m_wndMultiList.GetCurSel();
 	m_wndMultiList.ResetContent();
@@ -493,7 +493,7 @@ void CBCFTopicView::FillMultiList()
 	OnSelchangeMultiList();
 }
 
-void CBCFTopicView::FillLabels(BCFTopic* topic)
+void CBCFTopicDlg::FillLabels(BCFTopic* topic)
 {
 	m_wndMultiList.ResetContent();
 	uint16_t i = 0;
@@ -502,7 +502,7 @@ void CBCFTopicView::FillLabels(BCFTopic* topic)
 	}
 }
 
-void CBCFTopicView::FillRelated(BCFTopic* topic)
+void CBCFTopicDlg::FillRelated(BCFTopic* topic)
 {
 	uint16_t i = 0;
 	while (auto related = topic->GetRelatedTopic(i++)) {
@@ -512,7 +512,7 @@ void CBCFTopicView::FillRelated(BCFTopic* topic)
 	}
 }
 
-void CBCFTopicView::FillLinks(BCFTopic* topic)
+void CBCFTopicDlg::FillLinks(BCFTopic* topic)
 {
 	uint16_t i = 0;
 	while (auto link = topic->GetReferenceLink(i++)) {
@@ -532,7 +532,7 @@ static CString GetDocumentText(BCFDocumentReference* doc)
 	return text;
 }
 
-void CBCFTopicView::FillDocuments(BCFTopic* topic)
+void CBCFTopicDlg::FillDocuments(BCFTopic* topic)
 {
 	uint16_t i = 0;
 	while (auto doc = topic->GetDocumentReference(i++)) {
@@ -541,7 +541,7 @@ void CBCFTopicView::FillDocuments(BCFTopic* topic)
 	}
 }
 
-void CBCFTopicView::OnClickedButtonAddMulti()
+void CBCFTopicDlg::OnClickedButtonAddMulti()
 {
 	auto topic = &m_topic;
 	switch (m_wndTab.GetCurSel()) {
@@ -563,31 +563,31 @@ void CBCFTopicView::OnClickedButtonAddMulti()
 	FillMultiList();
 }
 
-void CBCFTopicView::AddLabel(BCFTopic* /*topic*/)
+void CBCFTopicDlg::AddLabel(BCFTopic* /*topic*/)
 {
 	CBCFAddLabel dlg(*this);
 	dlg.DoModal();
 }
 
-void CBCFTopicView::AddRelated(BCFTopic* /*topic*/)
+void CBCFTopicDlg::AddRelated(BCFTopic* /*topic*/)
 {
 	CBCFAddRelatedTopic dlg(*this);
 	dlg.DoModal();
 }
 
-void CBCFTopicView::AddLink(BCFTopic* /*topic*/)
+void CBCFTopicDlg::AddLink(BCFTopic* /*topic*/)
 {
 	CBCFAddReferenceLink dlg(*this);
 	dlg.DoModal();
 }
 
-void CBCFTopicView::AddDocument(BCFTopic* /*topic*/)
+void CBCFTopicDlg::AddDocument(BCFTopic* /*topic*/)
 {
 	CBCFAddDocumentReference dlg(*this);
 	dlg.DoModal();
 }
 
-void CBCFTopicView::OnClickedButtonRemoveMulti()
+void CBCFTopicDlg::OnClickedButtonRemoveMulti()
 {
 	auto topic = &m_topic;
 	switch (m_wndTab.GetCurSel()) {
@@ -609,7 +609,7 @@ void CBCFTopicView::OnClickedButtonRemoveMulti()
 	FillMultiList();
 }
 
-void CBCFTopicView::RemoveLabel(BCFTopic* topic)
+void CBCFTopicDlg::RemoveLabel(BCFTopic* topic)
 {
 	auto sel = m_wndMultiList.GetCurSel();
 	if (sel != LB_ERR) {
@@ -623,7 +623,7 @@ void CBCFTopicView::RemoveLabel(BCFTopic* topic)
 	}
 }
 
-void CBCFTopicView::RemoveRelated(BCFTopic* topic)
+void CBCFTopicDlg::RemoveRelated(BCFTopic* topic)
 {
 	auto sel = m_wndMultiList.GetCurSel();
 	if (sel != LB_ERR) {
@@ -636,7 +636,7 @@ void CBCFTopicView::RemoveRelated(BCFTopic* topic)
 	}
 }
 
-void CBCFTopicView::RemoveLink(BCFTopic* topic)
+void CBCFTopicDlg::RemoveLink(BCFTopic* topic)
 {
 	auto sel = m_wndMultiList.GetCurSel();
 	if (sel != LB_ERR) {
@@ -650,7 +650,7 @@ void CBCFTopicView::RemoveLink(BCFTopic* topic)
 	}
 }
 
-void CBCFTopicView::RemoveDocument(BCFTopic* /*topic*/)
+void CBCFTopicDlg::RemoveDocument(BCFTopic* /*topic*/)
 {
 	auto sel = m_wndMultiList.GetCurSel();
 	if (sel != LB_ERR) {
@@ -669,13 +669,13 @@ void CBCFTopicView::RemoveDocument(BCFTopic* /*topic*/)
 
 
 
-void CBCFTopicView::OnSelchangeMultiList()
+void CBCFTopicDlg::OnSelchangeMultiList()
 {
 	m_wndRemoveMulti.EnableWindow(m_wndMultiList.GetCurSel() != LB_ERR);
 }
 
 
-void CBCFTopicView::OnClickedUpdateViewpoint()
+void CBCFTopicDlg::OnClickedUpdateViewpoint()
 {
 	auto indComment = m_wndCommentsList.GetCurSel();
 	if (auto comment = (BCFComment*)m_wndCommentsList.GetItemDataPtr(indComment)) {
@@ -684,7 +684,7 @@ void CBCFTopicView::OnClickedUpdateViewpoint()
 	}
 }
 
-CString CBCFTopicView::GetTopicDisplayName(BCFTopic& topic)
+CString CBCFTopicDlg::GetTopicDisplayName(BCFTopic& topic)
 {
 	uint16_t i = 0;
 	auto& bcfProject = topic.GetProject();
@@ -704,7 +704,7 @@ CString CBCFTopicView::GetTopicDisplayName(BCFTopic& topic)
 }
 
 
-void CBCFTopicView::OnClickedButtonBims()
+void CBCFTopicDlg::OnClickedButtonBims()
 {
 	CBCFBimFiles dlg(*this);
 	dlg.DoModal();

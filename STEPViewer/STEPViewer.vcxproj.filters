@@ -252,10 +252,10 @@
     <ClInclude Include="BCF\BCFBimFiles.h">
       <Filter>BCF</Filter>
     </ClInclude>
-    <ClInclude Include="BCF\BCFTopicView.h">
+    <ClInclude Include="BCF\BCFTopicDlg.h">
       <Filter>BCF</Filter>
     </ClInclude>
-    <ClInclude Include="BCF\BCFProjectView.h">
+    <ClInclude Include="BCF\BCFProjectDlg.h">
       <Filter>BCF</Filter>
     </ClInclude>
     <ClInclude Include="BCF\BCFViewPointMgr.h">
@@ -509,10 +509,10 @@
     <ClCompile Include="BCF\BCFBimFiles.cpp">
       <Filter>BCF</Filter>
     </ClCompile>
-    <ClCompile Include="BCF\BCFTopicView.cpp">
+    <ClCompile Include="BCF\BCFTopicDlg.cpp">
       <Filter>BCF</Filter>
     </ClCompile>
-    <ClCompile Include="BCF\BCFProjectView.cpp">
+    <ClCompile Include="BCF\BCFProjectDlg.cpp">
       <Filter>BCF</Filter>
     </ClCompile>
     <ClCompile Include="BCF\BCFViewPointMgr.cpp">

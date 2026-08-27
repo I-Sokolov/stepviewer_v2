@@ -6,7 +6,7 @@
 #include <vector>
 using namespace std;
 
-class CBCFProjectView;
+class CBCFProjectDlg;
 class _model;
 
 class CBCFCommentsListBox : public CListBox
@@ -27,16 +27,16 @@ private:
 };
 
 
-class CBCFTopicView : public CDialogEx
+class CBCFTopicDlg : public CDialogEx
 {
-	DECLARE_DYNAMIC(CBCFTopicView)
+	DECLARE_DYNAMIC(CBCFTopicDlg)
 
 public:
-	CBCFTopicView(CBCFProjectView& projectView, BCFTopic& topic);
-	virtual ~CBCFTopicView();
+	CBCFTopicDlg(CBCFProjectDlg& projectDlg, BCFTopic& topic);
+	virtual ~CBCFTopicDlg();
 
 public:
-	CBCFProjectView& GetProjectView() { return m_projectView; }
+	CBCFProjectDlg& GetProjectDlg() { return m_projectDlg; }
 	BCFTopic& GetTopic() { return m_topic; }
 	void ShowLog(bool knownError); //false: show log if any, not necessary error
 
@@ -47,7 +47,7 @@ public:
 public:
 // Dialog Data
 #ifdef AFX_DESIGN_TIME
-	enum { IDD = IDD_BCF_TOPIC_VIEW };
+	enum { IDD = IDD_BCF_TOPIC_DLG };
 #endif
 
 protected:
@@ -89,7 +89,7 @@ private:
 	void RemoveDocument(BCFTopic* topic);
 
 private:
-	CBCFProjectView&				m_projectView;
+	CBCFProjectDlg&				m_projectDlg;
 	BCFTopic&						m_topic;
 
 	CBCFViewPointMgr				m_viewPointMgr;

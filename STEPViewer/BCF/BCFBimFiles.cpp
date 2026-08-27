@@ -7,13 +7,13 @@
 #include "_mvc.h"
 #include "_ap_model_factory.h"
 #include "BCFBimFiles.h"
-#include "BCFTopicView.h"
+#include "BCFTopicDlg.h"
 
 // CBCFBimFiles dialog
 
 IMPLEMENT_DYNAMIC(CBCFBimFiles, CDialogEx)
 
-CBCFBimFiles::CBCFBimFiles(CBCFTopicView& bcfView)
+CBCFBimFiles::CBCFBimFiles(CBCFTopicDlg& bcfView)
 	: CDialogEx(IDD_BCF_TOPICFILES, &bcfView)
 	, m_view(bcfView)
 {
@@ -74,7 +74,7 @@ void CBCFBimFiles::FillFileList(BCFTopic& topic)
 
 	m_fileList.ResetContent();
 
-	for (auto model : m_view.GetProjectView().GetViewerDoc().getModels()) {
+	for (auto model : m_view.GetProjectDlg().GetViewerDoc().getModels()) {
 		if (model) {
 			auto item = m_fileList.AddString(model->getPath());
 			m_fileList.SetItemDataPtr(item, model);

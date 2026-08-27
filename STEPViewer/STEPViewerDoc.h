@@ -7,7 +7,7 @@
 
 #include "Controller.h"
 #include "ModelCheckDlg.h"
-#include "BCF\BCFProjectView.h"
+#include "BCF\BCFProjectDlg.h"
 
 // ************d************************************************************************************
 static TCHAR BCF_PACKAGES_FILTER[] = _T("BCF Packages (*.bcf; *.bcfzip)|*.bcf; *.bcfzip|All Files (*.*)|*.*||");
@@ -63,7 +63,7 @@ public:
 
 protected:
 	CModelCheckDlg		m_wndModelChecker;
-	CBCFProjectView     m_wndBCFView;
+	CBCFProjectDlg     m_wndBCFProjectDlg;
 
 // Generated message map functions
 protected:

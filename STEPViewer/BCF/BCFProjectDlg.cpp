@@ -3,8 +3,8 @@
 #include "STEPViewer.h"
 #include "STEPViewerDoc.h"
 #include "_ap_model_factory.h"
-#include "BCF\BCFProjectView.h"
-#include "BCF\BCFTopicView.h"
+#include "BCF\BCFProjectDlg.h"
+#include "BCF\BCFTopicDlg.h"
 
 #include <experimental/filesystem>
 namespace fs = std::experimental::filesystem;
@@ -16,38 +16,38 @@ namespace
 	const int DEFAULT_COLUMN_WIDTHS[COLUMN_COUNT] = { 190, 180, 90, 90, 90, 130, 80, 90, 130, 130 };
 }
 
-IMPLEMENT_DYNAMIC(CBCFProjectView, CDialogEx)
+IMPLEMENT_DYNAMIC(CBCFProjectDlg, CDialogEx)
 
-BEGIN_MESSAGE_MAP(CBCFProjectView, CDialogEx)
+BEGIN_MESSAGE_MAP(CBCFProjectDlg, CDialogEx)
 	ON_WM_CLOSE()
 	ON_WM_DESTROY()
 	ON_WM_SIZE()
 	ON_WM_ACTIVATE()
-	ON_NOTIFY(LVN_ITEMCHANGED, IDC_BCF_TOPIC_LIST, &CBCFProjectView::OnItemChangedTopics)
-	ON_NOTIFY(NM_DBLCLK, IDC_BCF_TOPIC_LIST, &CBCFProjectView::OnDoubleClickTopics)
-	ON_BN_CLICKED(IDC_BCF_TOPIC_DETAILS, &CBCFProjectView::OnClickedTopicDetails)
-	ON_BN_CLICKED(IDC_BCF_NEW_TOPIC, &CBCFProjectView::OnClickedNewTopic)
-	ON_BN_CLICKED(IDC_BCF_DELETE_TOPIC, &CBCFProjectView::OnClickedDeleteTopic)
-	ON_BN_CLICKED(IDC_BCF_SAVE_PROJECT, &CBCFProjectView::OnClickedSaveProject)
-	ON_BN_CLICKED(IDC_BCF_CLOSE_PROJECT, &CBCFProjectView::OnClickedCloseDialog)
-	ON_EN_KILLFOCUS(IDC_BCF_EMAIL, &CBCFProjectView::OnKillFocusProjectInfo)
-	ON_EN_KILLFOCUS(IDC_BCF_PROJECT_NAME, &CBCFProjectView::OnKillFocusProjectInfo)
+	ON_NOTIFY(LVN_ITEMCHANGED, IDC_BCF_TOPIC_LIST, &CBCFProjectDlg::OnItemChangedTopics)
+	ON_NOTIFY(NM_DBLCLK, IDC_BCF_TOPIC_LIST, &CBCFProjectDlg::OnDoubleClickTopics)
+	ON_BN_CLICKED(IDC_BCF_TOPIC_DETAILS, &CBCFProjectDlg::OnClickedTopicDetails)
+	ON_BN_CLICKED(IDC_BCF_NEW_TOPIC, &CBCFProjectDlg::OnClickedNewTopic)
+	ON_BN_CLICKED(IDC_BCF_DELETE_TOPIC, &CBCFProjectDlg::OnClickedDeleteTopic)
+	ON_BN_CLICKED(IDC_BCF_SAVE_PROJECT, &CBCFProjectDlg::OnClickedSaveProject)
+	ON_BN_CLICKED(IDC_BCF_CLOSE_PROJECT, &CBCFProjectDlg::OnClickedCloseDialog)
+	ON_EN_KILLFOCUS(IDC_BCF_EMAIL, &CBCFProjectDlg::OnKillFocusProjectInfo)
+	ON_EN_KILLFOCUS(IDC_BCF_PROJECT_NAME, &CBCFProjectDlg::OnKillFocusProjectInfo)
 END_MESSAGE_MAP()
 
-CBCFProjectView::CBCFProjectView(CMySTEPViewerDoc& doc)
-	: CDialogEx(IDD_BCF_PROJECT_VIEW, AfxGetMainWnd())
+CBCFProjectDlg::CBCFProjectDlg(CMySTEPViewerDoc& doc)
+	: CDialogEx(IDD_BCF_PROJECT_DLG, AfxGetMainWnd())
 	, m_doc(doc)
 	, m_project(NULL)
 	, m_initialized(false)
 {
 }
 
-CBCFProjectView::~CBCFProjectView()
+CBCFProjectDlg::~CBCFProjectDlg()
 {
 	Close();
 }
 
-void CBCFProjectView::DoDataExchange(CDataExchange* pDX)
+void CBCFProjectDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
 	DDX_Text(pDX, IDC_BCF_EMAIL, m_email);
@@ -56,7 +56,7 @@ void CBCFProjectView::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_BCF_TOPIC_LIST, m_topics);
 }
 
-BOOL CBCFProjectView::OnInitDialog()
+BOOL CBCFProjectDlg::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
 
@@ -91,7 +91,7 @@ BOOL CBCFProjectView::OnInitDialog()
 	return TRUE;
 }
 
-bool CBCFProjectView::IsBCF(LPCTSTR filePath) const
+bool CBCFProjectDlg::IsBCF(LPCTSTR filePath) const
 {
 	if (!filePath) {
 		return false;
@@ -101,7 +101,7 @@ bool CBCFProjectView::IsBCF(LPCTSTR filePath) const
 		|| (len >= 7 && _wcsicmp(filePath + len - 7, L".bcfzip") == 0);
 }
 
-void CBCFProjectView::Open(LPCTSTR filePath)
+void CBCFProjectDlg::Open(LPCTSTR filePath)
 {
 	Close();
 	m_filePath = filePath ? filePath : L"";
@@ -120,7 +120,7 @@ void CBCFProjectView::Open(LPCTSTR filePath)
 	}
 
 	if (!GetSafeHwnd()) {
-		Create(IDD_BCF_PROJECT_VIEW, AfxGetMainWnd());
+		Create(IDD_BCF_PROJECT_DLG, AfxGetMainWnd());
 	}
 	else {
 		LoadProject();
@@ -129,7 +129,7 @@ void CBCFProjectView::Open(LPCTSTR filePath)
 	SetForegroundWindow();
 }
 
-void CBCFProjectView::Close()
+void CBCFProjectDlg::Close()
 {
 	if (GetSafeHwnd() && m_initialized) {
 		UpdateProjectInfo();
@@ -147,7 +147,7 @@ void CBCFProjectView::Close()
 	m_filePath.Empty();
 }
 
-void CBCFProjectView::LoadProject()
+void CBCFProjectDlg::LoadProject()
 {
 	if (!GetSafeHwnd()) {
 		return;
@@ -172,7 +172,7 @@ void CBCFProjectView::LoadProject()
 	SetWindowText(title);
 }
 
-void CBCFProjectView::RefreshTopics(BCFTopic* selectTopic)
+void CBCFProjectDlg::RefreshTopics(BCFTopic* selectTopic)
 {
 	if (!m_project) {
 		return;
@@ -228,7 +228,7 @@ void CBCFProjectView::RefreshTopics(BCFTopic* selectTopic)
 	UpdateButtons();
 }
 
-CString CBCFProjectView::FormatDateTime(const char* value)
+CString CBCFProjectDlg::FormatDateTime(const char* value)
 {
 	if (!value || !*value) {
 		return CString();
@@ -259,7 +259,7 @@ CString CBCFProjectView::FormatDateTime(const char* value)
 	return result;
 }
 
-BCFTopic* CBCFProjectView::GetActiveTopic()
+BCFTopic* CBCFProjectDlg::GetActiveTopic()
 {
 	if (!m_topics.GetSafeHwnd()) {
 		return NULL;
@@ -273,7 +273,7 @@ BCFTopic* CBCFProjectView::GetActiveTopic()
 	return reinterpret_cast<BCFTopic*>(m_topics.GetItemData(item));
 }
 
-_model* CBCFProjectView::GetBimModel(BCFBimFile& file)
+_model* CBCFProjectDlg::GetBimModel(BCFBimFile& file)
 {
 	auto found = m_mapBimFiles.find(&file);
 	if (found != m_mapBimFiles.end()) {
@@ -331,7 +331,7 @@ _model* CBCFProjectView::GetBimModel(BCFBimFile& file)
 	return model;
 }
 
-void CBCFProjectView::UpdateProjectInfo()
+void CBCFProjectDlg::UpdateProjectInfo()
 {
 	if (!m_project || !GetSafeHwnd()) {
 		return;
@@ -346,7 +346,7 @@ void CBCFProjectView::UpdateProjectInfo()
 	}
 }
 
-bool CBCFProjectView::SaveProject()
+bool CBCFProjectDlg::SaveProject()
 {
 	if (!m_project) {
 		return false;
@@ -369,7 +369,7 @@ bool CBCFProjectView::SaveProject()
 	return ok;
 }
 
-bool CBCFProjectView::SaveModified()
+bool CBCFProjectDlg::SaveModified()
 {
 	UpdateProjectInfo();
 	if (!m_project || !m_project->IsModified()) {
@@ -382,18 +382,18 @@ bool CBCFProjectView::SaveModified()
 	return answer == IDNO;
 }
 
-void CBCFProjectView::OnClickedTopicDetails()
+void CBCFProjectDlg::OnClickedTopicDetails()
 {
 	auto topic = GetActiveTopic();
 	if (m_project && topic) {
 		UpdateProjectInfo();
-		CBCFTopicView topicView(*this, *topic);
-		topicView.DoModal();
+		CBCFTopicDlg topicDlg(*this, *topic);
+		topicDlg.DoModal();
 		RefreshTopics(topic);
 	}
 }
 
-void CBCFProjectView::OnClickedNewTopic()
+void CBCFProjectDlg::OnClickedNewTopic()
 {
 	if (!m_project) {
 		return;
@@ -403,13 +403,13 @@ void CBCFProjectView::OnClickedNewTopic()
 	ShowLog(!topic);
 	if (topic) {
 		RefreshTopics(topic);
-		CBCFTopicView topicView(*this, *topic);
-		topicView.DoModal();
+		CBCFTopicDlg topicDlg(*this, *topic);
+		topicDlg.DoModal();
 		RefreshTopics(topic);
 	}
 }
 
-void CBCFProjectView::OnClickedDeleteTopic()
+void CBCFProjectDlg::OnClickedDeleteTopic()
 {
 	auto topic = GetActiveTopic();
 	if (!topic) {
@@ -427,14 +427,14 @@ void CBCFProjectView::OnClickedDeleteTopic()
 	}
 }
 
-void CBCFProjectView::UpdateButtons()
+void CBCFProjectDlg::UpdateButtons()
 {
 	BOOL hasTopic = GetActiveTopic() != NULL;
 	GetDlgItem(IDC_BCF_TOPIC_DETAILS)->EnableWindow(hasTopic);
 	GetDlgItem(IDC_BCF_DELETE_TOPIC)->EnableWindow(hasTopic);
 }
 
-void CBCFProjectView::ShowLog(bool knownError)
+void CBCFProjectDlg::ShowLog(bool knownError)
 {
 	const char* message = m_project ? m_project->GetErrors() : NULL;
 	if (knownError && (!message || !*message)) {
@@ -445,7 +445,7 @@ void CBCFProjectView::ShowLog(bool knownError)
 	}
 }
 
-void CBCFProjectView::RestorePlacement()
+void CBCFProjectDlg::RestorePlacement()
 {
 	auto app = AfxGetApp();
 	int width = app->GetProfileInt(PROFILE_SECTION, L"Width", 0);
@@ -463,7 +463,7 @@ void CBCFProjectView::RestorePlacement()
 	}
 }
 
-void CBCFProjectView::SavePlacement()
+void CBCFProjectDlg::SavePlacement()
 {
 	if (IsIconic() || IsZoomed()) {
 		return;
@@ -477,7 +477,7 @@ void CBCFProjectView::SavePlacement()
 	app->WriteProfileInt(PROFILE_SECTION, L"Height", rect.Height());
 }
 
-void CBCFProjectView::RestoreColumnWidths()
+void CBCFProjectDlg::RestoreColumnWidths()
 {
 	for (int i = 0; i < COLUMN_COUNT; i++) {
 		CString key;
@@ -487,7 +487,7 @@ void CBCFProjectView::RestoreColumnWidths()
 	}
 }
 
-void CBCFProjectView::SaveColumnWidths()
+void CBCFProjectDlg::SaveColumnWidths()
 {
 	for (int i = 0; i < COLUMN_COUNT; i++) {
 		CString key;
@@ -496,41 +496,41 @@ void CBCFProjectView::SaveColumnWidths()
 	}
 }
 
-void CBCFProjectView::OnItemChangedTopics(NMHDR*, LRESULT* result)
+void CBCFProjectDlg::OnItemChangedTopics(NMHDR*, LRESULT* result)
 {
 	UpdateButtons();
 	*result = 0;
 }
 
-void CBCFProjectView::OnDoubleClickTopics(NMHDR*, LRESULT* result)
+void CBCFProjectDlg::OnDoubleClickTopics(NMHDR*, LRESULT* result)
 {
 	OnClickedTopicDetails();
 	*result = 0;
 }
 
-void CBCFProjectView::OnClickedSaveProject()
+void CBCFProjectDlg::OnClickedSaveProject()
 {
 	SaveProject();
 }
 
-void CBCFProjectView::OnClickedCloseDialog()
+void CBCFProjectDlg::OnClickedCloseDialog()
 {
 	OnClose();
 }
 
-void CBCFProjectView::OnKillFocusProjectInfo()
+void CBCFProjectDlg::OnKillFocusProjectInfo()
 {
 	UpdateProjectInfo();
 }
 
-void CBCFProjectView::OnClose()
+void CBCFProjectDlg::OnClose()
 {
 	if (SaveModified()) {
 		Close();
 	}
 }
 
-void CBCFProjectView::OnDestroy()
+void CBCFProjectDlg::OnDestroy()
 {
 	if (m_initialized) {
 		SavePlacement();
@@ -539,12 +539,12 @@ void CBCFProjectView::OnDestroy()
 	CDialogEx::OnDestroy();
 }
 
-void CBCFProjectView::OnSize(UINT nType, int cx, int cy)
+void CBCFProjectDlg::OnSize(UINT nType, int cx, int cy)
 {
 	CDialogEx::OnSize(nType, cx, cy);
 }
 
-void CBCFProjectView::OnActivate(UINT nState, CWnd* pWndOther, BOOL bMinimized)
+void CBCFProjectDlg::OnActivate(UINT nState, CWnd* pWndOther, BOOL bMinimized)
 {
 	CDialogEx::OnActivate(nState, pWndOther, bMinimized);
 	if (nState != WA_INACTIVE && m_project && m_initialized) {
@@ -552,12 +552,12 @@ void CBCFProjectView::OnActivate(UINT nState, CWnd* pWndOther, BOOL bMinimized)
 	}
 }
 
-void CBCFProjectView::OnCancel()
+void CBCFProjectDlg::OnCancel()
 {
 	OnClose();
 }
 
-void CBCFProjectView::OnOK()
+void CBCFProjectDlg::OnOK()
 {
 	OnClickedTopicDetails();
 }
