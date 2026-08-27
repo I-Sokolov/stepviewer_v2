@@ -732,8 +732,6 @@ BEGIN
         MENUITEM "&Open BCF File...",           ID_BCF_FILE_OPEN
         MENUITEM SEPARATOR
         MENUITEM "&Save BCF File",              ID_BCF_FILE_SAVE
-        MENUITEM SEPARATOR
-        MENUITEM "&Back",                       ID_BCF_PANE_BACK
     END
     POPUP "&Topic"
     BEGIN
@@ -745,6 +743,12 @@ BEGIN
     BEGIN
         MENUITEM "&Save Comment",               ID_BCF_PANE_SAVE_COMMENT
         MENUITEM "&Delete Comment",             ID_BCF_PANE_DELETE_COMMENT
+    END
+    POPUP "&View"
+    BEGIN
+        MENUITEM "&Project",                    ID_BCF_VIEW_PROJECT
+        MENUITEM "&Topic",                      ID_BCF_VIEW_TOPIC
+        MENUITEM "&Comment",                    ID_BCF_VIEW_COMMENT
     END
 END
 

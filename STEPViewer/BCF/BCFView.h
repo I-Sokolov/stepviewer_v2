@@ -9,6 +9,15 @@ class CMySTEPViewerDoc;
 class _model;
 class CBCFView;
 
+class CBCFEdit : public CEdit
+{
+protected:
+	afx_msg void OnPaint();
+	afx_msg void OnSetFocus(CWnd* oldWnd);
+	afx_msg void OnKillFocus(CWnd* newWnd);
+	DECLARE_MESSAGE_MAP()
+};
+
 class CBCFPaneMenuBar : public CMFCMenuBar
 {
 public:
@@ -34,7 +43,7 @@ class CBCFProjectForm : public CWnd
 {
 public:
 	BOOL Create(CBCFView* pane);
-	void Load();
+	void Load(BCFTopic* selectTopic = nullptr);
 	bool Commit();
 	BCFTopic* GetSelectedTopic() const;
 
@@ -57,6 +66,7 @@ public:
 	void Load(BCFTopic* topic);
 	bool Commit();
 	BCFTopic* GetTopic() const { return m_topic; }
+	BCFComment* GetSelectedComment() const;
 	void ReloadComments(BCFComment* selectComment = nullptr);
 
 protected:
@@ -64,10 +74,11 @@ protected:
 	afx_msg void OnTabChanged(NMHDR* header, LRESULT* result);
 	afx_msg void OnCommentChanged();
 	afx_msg void OnCommentDoubleClick();
+	afx_msg HBRUSH OnCtlColor(CDC* dc, CWnd* window, UINT controlColor);
 	DECLARE_MESSAGE_MAP()
 
 private:
-	void Layout();
+	void AdjustLayout();
 	void ShowTab(int tab);
 	void LoadExtension(CComboBox& combo, BCFEnumeration enumeration);
 	void UpdateMetadata();
@@ -77,21 +88,21 @@ private:
 	CStatic m_topicInfo;
 	CTabCtrl m_tabs;
 	CStatic m_titleLabel;
-	CEdit m_title;
+	CBCFEdit m_title;
 	CStatic m_descriptionLabel;
-	CEdit m_description;
+	CBCFEdit m_description;
 	CStatic m_attributeLabels[12];
 	CComboBox m_type;
 	CComboBox m_stage;
 	CComboBox m_status;
 	CComboBox m_assigned;
 	CComboBox m_priority;
-	CEdit m_due;
+	CBCFEdit m_due;
 	CComboBox m_snippet;
-	CEdit m_reference;
-	CEdit m_schema;
-	CEdit m_index;
-	CEdit m_serverId;
+	CBCFEdit m_reference;
+	CBCFEdit m_schema;
+	CBCFEdit m_index;
+	CBCFEdit m_serverId;
 	CBCFCommentsListBox m_comments;
 	CStatic m_documentsPlaceholder;
 	CStatic m_linksPlaceholder;
@@ -115,7 +126,7 @@ private:
 	CStatic m_createdInfo;
 	CStatic m_modifiedInfo;
 	CStatic m_textLabel;
-	CEdit m_text;
+	CBCFEdit m_text;
 };
 
 class CBCFView : public CDockablePane
@@ -146,6 +157,7 @@ public:
 
 protected:
 	afx_msg int OnCreate(LPCREATESTRUCT createStruct);
+	afx_msg BOOL OnEraseBkgnd(CDC* dc);
 	afx_msg void OnSize(UINT type, int cx, int cy);
 	afx_msg void OnSetFocus(CWnd* oldWnd);
 	afx_msg void OnNewFile();
@@ -154,13 +166,17 @@ protected:
 	afx_msg void OnAddTopic();
 	afx_msg void OnDeleteTopic();
 	afx_msg void OnTopicDetails();
-	afx_msg void OnBack();
+	afx_msg void OnViewProject();
+	afx_msg void OnViewTopic();
+	afx_msg void OnViewComment();
 	afx_msg void OnSaveComment();
 	afx_msg void OnDeleteComment();
 	afx_msg void OnUpdateProjectCommand(CCmdUI* commandUI);
 	afx_msg void OnUpdateTopicCommand(CCmdUI* commandUI);
 	afx_msg void OnUpdateCommentCommand(CCmdUI* commandUI);
-	afx_msg void OnUpdateBack(CCmdUI* commandUI);
+	afx_msg void OnUpdateViewProject(CCmdUI* commandUI);
+	afx_msg void OnUpdateViewTopic(CCmdUI* commandUI);
+	afx_msg void OnUpdateViewComment(CCmdUI* commandUI);
 	DECLARE_MESSAGE_MAP()
 
 private:
@@ -180,10 +196,11 @@ private:
 	Form m_activeForm;
 	CMenu m_menu;
 	CBCFPaneMenuBar m_menuBar;
+	CFont m_dialogFont;
 	CStatic m_projectIdLabel;
 	CStatic m_projectNameLabel;
-	CEdit m_projectId;
-	CEdit m_projectName;
+	CBCFEdit m_projectId;
+	CBCFEdit m_projectName;
 	CBCFProjectForm m_projectForm;
 	CBCFTopicForm m_topicForm;
 	CBCFCommentForm m_commentForm;

@@ -8,7 +8,40 @@
 #include "_ptr.h"
 
 #include <experimental/filesystem>
+
 namespace fs = std::experimental::filesystem;
+
+class CBCFPopupMenu : public CMFCPopupMenu
+{
+public:
+	virtual BOOL Create(CWnd* parent, int x, int y, HMENU menu, BOOL locked = FALSE,
+		BOOL ownMessage = FALSE) override
+	{
+		const BOOL showAllCommands = CMFCMenuBar::IsShowAllCommands();
+		CMFCMenuBar::SetShowAllCommands(TRUE);
+		const BOOL created = CMFCPopupMenu::Create(parent, x, y, menu, locked, ownMessage);
+		CMFCMenuBar::SetShowAllCommands(showAllCommands);
+		return created;
+	}
+};
+
+class CBCFMenuButton : public CMFCToolBarMenuButton
+{
+	DECLARE_SERIAL(CBCFMenuButton)
+
+public:
+	CBCFMenuButton(HMENU menu = nullptr)
+		: CMFCToolBarMenuButton(static_cast<UINT>(-1), menu, -1)
+	{
+	}
+
+	virtual CMFCPopupMenu* CreatePopupMenu() override
+	{
+		return new CBCFPopupMenu;
+	}
+};
+
+IMPLEMENT_SERIAL(CBCFMenuButton, CMFCToolBarMenuButton, 1)
 
 namespace
 {
@@ -45,15 +78,20 @@ namespace
 	LPCTSTR RegisterPaneClass()
 	{
 		static CString className = AfxRegisterWndClass(CS_DBLCLKS, ::LoadCursor(nullptr, IDC_ARROW),
-			reinterpret_cast<HBRUSH>(COLOR_WINDOW + 1), nullptr);
+			reinterpret_cast<HBRUSH>(COLOR_3DFACE + 1), nullptr);
 		return className;
 	}
 
 	void SetControlFont(CWnd& control, CWnd* owner)
 	{
-		if (owner && owner->GetFont()) {
-			control.SetFont(owner->GetFont());
+		CFont* font = nullptr;
+		for (CWnd* window = owner; window && !font; window = window->GetParent()) {
+			font = window->GetFont();
 		}
+		if (!font) {
+			font = &afxGlobalData.fontRegular;
+		}
+		control.SetFont(font);
 	}
 
 	BOOL CreateStaticLabel(CStatic& label, LPCTSTR text, CWnd* parent)
@@ -113,6 +151,41 @@ namespace
 	}
 }
 
+BEGIN_MESSAGE_MAP(CBCFEdit, CEdit)
+	ON_WM_PAINT()
+	ON_WM_SETFOCUS()
+	ON_WM_KILLFOCUS()
+END_MESSAGE_MAP()
+
+void CBCFEdit::OnPaint()
+{
+	CEdit::OnPaint();
+	if (::GetFocus() != GetSafeHwnd()) {
+		return;
+	}
+
+	CClientDC dc(this);
+	CRect client;
+	GetClientRect(client);
+	CPen pen(PS_SOLID, 2, ::GetSysColor(COLOR_HIGHLIGHT));
+	CPen* oldPen = dc.SelectObject(&pen);
+	dc.MoveTo(client.left, client.bottom - 1);
+	dc.LineTo(client.right, client.bottom - 1);
+	dc.SelectObject(oldPen);
+}
+
+void CBCFEdit::OnSetFocus(CWnd* oldWnd)
+{
+	CEdit::OnSetFocus(oldWnd);
+	Invalidate(FALSE);
+}
+
+void CBCFEdit::OnKillFocus(CWnd* newWnd)
+{
+	CEdit::OnKillFocus(newWnd);
+	Invalidate(FALSE);
+}
+
 BEGIN_MESSAGE_MAP(CBCFProjectForm, CWnd)
 	ON_WM_SIZE()
 	ON_NOTIFY(LVN_ITEMCHANGED, IDC_PANE_TOPICS, &CBCFProjectForm::OnTopicChanged)
@@ -141,9 +214,9 @@ BOOL CBCFProjectForm::Create(CBCFView* pane)
 	return TRUE;
 }
 
-void CBCFProjectForm::Load()
+void CBCFProjectForm::Load(BCFTopic* selectTopic)
 {
-	BCFTopic* selected = GetSelectedTopic();
+	BCFTopic* selected = selectTopic ? selectTopic : GetSelectedTopic();
 	BCFProject* project = m_pane->GetProject();
 	m_topics.SetRedraw(FALSE);
 	m_topics.DeleteAllItems();
@@ -228,6 +301,7 @@ void CBCFProjectForm::OnTopicDoubleClick(NMHDR*, LRESULT* result)
 
 BEGIN_MESSAGE_MAP(CBCFTopicForm, CWnd)
 	ON_WM_SIZE()
+	ON_WM_CTLCOLOR()
 	ON_NOTIFY(TCN_SELCHANGE, IDC_PANE_TABS, &CBCFTopicForm::OnTabChanged)
 	ON_CONTROL(LBN_SELCHANGE, IDC_PANE_COMMENTS, &CBCFTopicForm::OnCommentChanged)
 	ON_CONTROL(LBN_DBLCLK, IDC_PANE_COMMENTS, &CBCFTopicForm::OnCommentDoubleClick)
@@ -253,10 +327,10 @@ BOOL CBCFTopicForm::Create(CBCFView* pane)
 	m_tabs.InsertItem(4, L"Links");
 
 	CreateStaticLabel(m_titleLabel, L"Title:", this);
-	m_title.Create(WS_CHILD | WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL, CRect(), this, IDC_PANE_TOPIC_TITLE);
+	m_title.Create(WS_CHILD | WS_TABSTOP | ES_AUTOHSCROLL, CRect(), this, IDC_PANE_TOPIC_TITLE);
 
 	CreateStaticLabel(m_descriptionLabel, L"Description:", this);
-	m_description.Create(WS_CHILD | WS_BORDER | WS_TABSTOP | ES_MULTILINE | ES_AUTOVSCROLL | ES_WANTRETURN | WS_VSCROLL,
+	m_description.Create(WS_CHILD | WS_TABSTOP | ES_MULTILINE | ES_AUTOVSCROLL | ES_WANTRETURN | WS_VSCROLL,
 		CRect(), this, IDC_PANE_TOPIC_DESCRIPTION);
 
 	SetControlFont(m_title, this);
@@ -282,7 +356,7 @@ BOOL CBCFTopicForm::Create(CBCFView* pane)
 	for (CWnd* combo : combos) {
 		SetControlFont(*combo, this);
 	}
-	DWORD editStyle = WS_CHILD | WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL;
+	DWORD editStyle = WS_CHILD | WS_TABSTOP | ES_AUTOHSCROLL;
 	m_due.Create(editStyle, CRect(), this, IDC_PANE_TOPIC_DUE);
 	m_reference.Create(editStyle, CRect(), this, IDC_PANE_TOPIC_REFERENCE);
 	m_schema.Create(editStyle, CRect(), this, IDC_PANE_TOPIC_SCHEMA);
@@ -297,6 +371,17 @@ BOOL CBCFTopicForm::Create(CBCFView* pane)
 	SetControlFont(m_comments, this);
 	CreateStaticLabel(m_documentsPlaceholder, L"Documents are not available in this version.", this);
 	CreateStaticLabel(m_linksPlaceholder, L"Links are not available in this version.", this);
+
+	CStatic* tabLabels[] = {
+		&m_titleLabel, &m_descriptionLabel, &m_documentsPlaceholder, &m_linksPlaceholder
+	};
+	for (CStatic* label : tabLabels) {
+		label->ModifyStyleEx(0, WS_EX_TRANSPARENT);
+	}
+	for (CStatic& label : m_attributeLabels) {
+		label.ModifyStyleEx(0, WS_EX_TRANSPARENT);
+	}
+
 	m_tabs.SetCurSel(0);
 	ShowTab(0);
 	return TRUE;
@@ -431,16 +516,22 @@ void CBCFTopicForm::ReloadComments(BCFComment* selectComment)
 	OnCommentChanged();
 }
 
-void CBCFTopicForm::OnCommentChanged()
+BCFComment* CBCFTopicForm::GetSelectedComment() const
 {
 	int selection = m_comments.GetCurSel();
-	if (selection != LB_ERR) {
-		BCFComment* comment = static_cast<BCFComment*>(m_comments.GetItemDataPtr(selection));
-		if (comment && m_pane->GetDocument()) {
-			CBCFViewPointMgr(*m_pane->GetDocument()).SetViewFromComment(*comment);
-			m_pane->ShowLog(false);
-		}
+	return selection == LB_ERR
+		? nullptr
+		: static_cast<BCFComment*>(m_comments.GetItemDataPtr(selection));
+}
+
+void CBCFTopicForm::OnCommentChanged()
+{
+	BCFComment* comment = GetSelectedComment();
+	if (comment && m_pane->GetDocument()) {
+		CBCFViewPointMgr(*m_pane->GetDocument()).SetViewFromComment(*comment);
+		m_pane->ShowLog(false);
 	}
+	m_pane->RefreshCommandUI();
 }
 
 void CBCFTopicForm::OnCommentDoubleClick()
@@ -457,8 +548,19 @@ void CBCFTopicForm::OnTabChanged(NMHDR*, LRESULT* result)
 	*result = 0;
 }
 
+HBRUSH CBCFTopicForm::OnCtlColor(CDC* dc, CWnd* window, UINT controlColor)
+{
+	if (controlColor == CTLCOLOR_STATIC &&
+		window->GetSafeHwnd() != m_topicInfo.GetSafeHwnd()) {
+		dc->SetBkMode(TRANSPARENT);
+		return static_cast<HBRUSH>(::GetStockObject(HOLLOW_BRUSH));
+	}
+	return CWnd::OnCtlColor(dc, window, controlColor);
+}
+
 void CBCFTopicForm::ShowTab(int tab)
 {
+	AdjustLayout();
 	m_titleLabel.ShowWindow(tab == 0 ? SW_SHOW : SW_HIDE);
 	m_title.ShowWindow(tab == 0 ? SW_SHOW : SW_HIDE);
 	m_descriptionLabel.ShowWindow(tab == 0 ? SW_SHOW : SW_HIDE);
@@ -476,62 +578,104 @@ void CBCFTopicForm::ShowTab(int tab)
 	m_comments.ShowWindow(tab == 2 ? SW_SHOW : SW_HIDE);
 	m_documentsPlaceholder.ShowWindow(tab == 3 ? SW_SHOW : SW_HIDE);
 	m_linksPlaceholder.ShowWindow(tab == 4 ? SW_SHOW : SW_HIDE);
-	Layout();
+	RedrawWindow(nullptr, nullptr,
+		RDW_INVALIDATE | RDW_ERASE | RDW_FRAME | RDW_ALLCHILDREN | RDW_UPDATENOW);
 }
 
-void CBCFTopicForm::Layout()
+void CBCFTopicForm::AdjustLayout()
 {
 	if (!m_tabs.GetSafeHwnd()) {
 		return;
 	}
+
 	CRect client;
 	GetClientRect(client);
-	const int margin = 8;
-	m_topicInfo.MoveWindow(margin, 5, max(20, client.Width() - 2 * margin), 18);
-	m_tabs.MoveWindow(margin, 25, max(20, client.Width() - 2 * margin), max(30, client.Height() - 33));
-	CRect page(margin + 10, 56,
-		max(margin + 30, static_cast<int>(client.right) - margin - 10),
-		max(113, static_cast<int>(client.bottom) - margin - 10));
+
+	CClientDC dc(this);
+	CFont* font = m_topicInfo.GetFont();
+	CFont* oldFont = font ? dc.SelectObject(font) : nullptr;
+	TEXTMETRIC textMetrics = {};
+	dc.GetTextMetrics(&textMetrics);
+	const int textHeight = textMetrics.tmAscent + textMetrics.tmDescent + textMetrics.tmExternalLeading;
+	const int rowHeight = textHeight + textHeight / 2;
+	const int margin = rowHeight / 3;
+	const int labelOffset = (rowHeight - textHeight) / 2;
+	const int tabsTop = margin + textHeight + margin;
+	const int tabsWidth = max(rowHeight, client.Width() - 2 * margin);
+	const int tabsHeight = max(2 * rowHeight, client.Height() - tabsTop - margin);
+
+	m_topicInfo.MoveWindow(margin, margin, tabsWidth, textHeight);
+	m_tabs.MoveWindow(margin, tabsTop, tabsWidth, tabsHeight);
+
+	CRect page(0, 0, tabsWidth, tabsHeight);
+	m_tabs.AdjustRect(FALSE, page);
+	page.OffsetRect(margin, tabsTop);
+	page.DeflateRect(margin, margin);
+
+	auto getLabelWidth = [&dc](CStatic& label) {
+		CString text;
+		label.GetWindowText(text);
+		return static_cast<int>(dc.GetTextExtent(text).cx);
+	};
+
 	if (m_tabs.GetCurSel() == 0) {
-		m_titleLabel.MoveWindow(page.left, page.top + 3, 75, 18);
-		m_title.MoveWindow(page.left + 78, page.top, max(20, page.Width() - 78), 23);
-		m_descriptionLabel.MoveWindow(page.left, page.top + 32, 75, 18);
-		m_description.MoveWindow(page.left, page.top + 52, page.Width(),
-			max(25, static_cast<int>(page.bottom - page.top) - 52));
+		const int titleLabelWidth = getLabelWidth(m_titleLabel) + margin;
+		m_titleLabel.MoveWindow(page.left, page.top + labelOffset, titleLabelWidth, textHeight);
+		m_title.MoveWindow(page.left + titleLabelWidth, page.top + labelOffset,
+			max(rowHeight, page.Width() - titleLabelWidth), rowHeight - labelOffset);
+
+		const int descriptionLabelTop = page.top + rowHeight + margin;
+		m_descriptionLabel.MoveWindow(page.left, descriptionLabelTop,
+			getLabelWidth(m_descriptionLabel), textHeight);
+		const int descriptionTop = descriptionLabelTop + textHeight + margin / 2;
+		m_description.MoveWindow(page.left, descriptionTop, page.Width(),
+			max(rowHeight, static_cast<int>(page.bottom) - descriptionTop));
 	}
 	else if (m_tabs.GetCurSel() == 1) {
 		CWnd* controls[] = {
 			&m_type, &m_stage, &m_status, &m_assigned, &m_priority, &m_due,
 			&m_snippet, &m_reference, &m_schema, &m_index, &m_serverId
 		};
-		int rowHeight = 26;
-		int labelWidth = 78;
-		int columnWidth = max(150, page.Width() / 2);
-		for (int i = 0; i < 11; ++i) {
-			int column = i / 6;
-			int row = i % 6;
-			int left = page.left + column * columnWidth;
-			int width = column == 0 ? columnWidth - 8 : page.right - left;
-			m_attributeLabels[i].MoveWindow(left, page.top + row * rowHeight + 4, labelWidth, 18);
-			controls[i]->MoveWindow(left + labelWidth, page.top + row * rowHeight,
-				max(20, width - labelWidth), 200);
+		int labelWidth = 0;
+		for (size_t i = 0; i < _countof(controls); ++i) {
+			labelWidth = max(labelWidth, getLabelWidth(m_attributeLabels[i]));
+		}
+		labelWidth += margin;
+
+		const int rowsPerColumn = (static_cast<int>(_countof(controls)) + 1) / 2;
+		const int columnWidth = max(labelWidth + 3 * rowHeight, page.Width() / 2);
+		for (size_t i = 0; i < _countof(controls); ++i) {
+			const int column = static_cast<int>(i) / rowsPerColumn;
+			const int row = static_cast<int>(i) % rowsPerColumn;
+			const int left = page.left + column * columnWidth;
+			const int width = column == 0 ? columnWidth - margin : page.right - left;
+			const int top = page.top + row * (rowHeight + margin / 2);
+			m_attributeLabels[i].MoveWindow(left, top + labelOffset, labelWidth, textHeight);
+			const bool isEdit = controls[i]->IsKindOf(RUNTIME_CLASS(CEdit)) != FALSE;
+			controls[i]->MoveWindow(left + labelWidth, top + labelOffset,
+				max(rowHeight, width - labelWidth),
+				isEdit ? rowHeight - labelOffset : rowsPerColumn * rowHeight);
 		}
 	}
 	else if (m_tabs.GetCurSel() == 2) {
 		m_comments.MoveWindow(page);
 	}
 	else if (m_tabs.GetCurSel() == 3) {
-		m_documentsPlaceholder.MoveWindow(page.left, page.top, page.Width(), 20);
+		m_documentsPlaceholder.MoveWindow(page.left, page.top, page.Width(), textHeight);
 	}
 	else if (m_tabs.GetCurSel() == 4) {
-		m_linksPlaceholder.MoveWindow(page.left, page.top, page.Width(), 20);
+		m_linksPlaceholder.MoveWindow(page.left, page.top, page.Width(), textHeight);
+	}
+
+	if (oldFont) {
+		dc.SelectObject(oldFont);
 	}
 }
 
 void CBCFTopicForm::OnSize(UINT type, int cx, int cy)
 {
 	CWnd::OnSize(type, cx, cy);
-	Layout();
+	AdjustLayout();
 }
 
 BEGIN_MESSAGE_MAP(CBCFCommentForm, CWnd)
@@ -547,7 +691,7 @@ BOOL CBCFCommentForm::Create(CBCFView* pane)
 	CreateStaticLabel(m_createdInfo, L"Created by", this);
 	CreateStaticLabel(m_modifiedInfo, L"Modified by", this);
 	CreateStaticLabel(m_textLabel, L"Comment:", this);
-	m_text.Create(WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP | ES_MULTILINE | ES_AUTOVSCROLL |
+	m_text.Create(WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_MULTILINE | ES_AUTOVSCROLL |
 		ES_WANTRETURN | WS_VSCROLL, CRect(), this, IDC_PANE_COMMENT_TEXT);
 	SetControlFont(m_text, this);
 	return TRUE;
@@ -595,6 +739,7 @@ void CBCFCommentForm::OnSize(UINT type, int cx, int cy)
 
 BEGIN_MESSAGE_MAP(CBCFView, CDockablePane)
 	ON_WM_CREATE()
+	ON_WM_ERASEBKGND()
 	ON_WM_SIZE()
 	ON_WM_SETFOCUS()
 	ON_COMMAND(ID_BCF_FILE_NEW, &CBCFView::OnNewFile)
@@ -603,14 +748,18 @@ BEGIN_MESSAGE_MAP(CBCFView, CDockablePane)
 	ON_COMMAND(ID_BCF_PANE_ADD_TOPIC, &CBCFView::OnAddTopic)
 	ON_COMMAND(ID_BCF_PANE_DELETE_TOPIC, &CBCFView::OnDeleteTopic)
 	ON_COMMAND(ID_BCF_PANE_TOPIC_DETAILS, &CBCFView::OnTopicDetails)
-	ON_COMMAND(ID_BCF_PANE_BACK, &CBCFView::OnBack)
+	ON_COMMAND(ID_BCF_VIEW_PROJECT, &CBCFView::OnViewProject)
+	ON_COMMAND(ID_BCF_VIEW_TOPIC, &CBCFView::OnViewTopic)
+	ON_COMMAND(ID_BCF_VIEW_COMMENT, &CBCFView::OnViewComment)
 	ON_COMMAND(ID_BCF_PANE_SAVE_COMMENT, &CBCFView::OnSaveComment)
 	ON_COMMAND(ID_BCF_PANE_DELETE_COMMENT, &CBCFView::OnDeleteComment)
 	ON_UPDATE_COMMAND_UI(ID_BCF_FILE_SAVE, &CBCFView::OnUpdateProjectCommand)
 	ON_UPDATE_COMMAND_UI(ID_BCF_PANE_ADD_TOPIC, &CBCFView::OnUpdateProjectCommand)
 	ON_UPDATE_COMMAND_UI(ID_BCF_PANE_DELETE_TOPIC, &CBCFView::OnUpdateTopicCommand)
 	ON_UPDATE_COMMAND_UI(ID_BCF_PANE_TOPIC_DETAILS, &CBCFView::OnUpdateTopicCommand)
-	ON_UPDATE_COMMAND_UI(ID_BCF_PANE_BACK, &CBCFView::OnUpdateBack)
+	ON_UPDATE_COMMAND_UI(ID_BCF_VIEW_PROJECT, &CBCFView::OnUpdateViewProject)
+	ON_UPDATE_COMMAND_UI(ID_BCF_VIEW_TOPIC, &CBCFView::OnUpdateViewTopic)
+	ON_UPDATE_COMMAND_UI(ID_BCF_VIEW_COMMENT, &CBCFView::OnUpdateViewComment)
 	ON_UPDATE_COMMAND_UI(ID_BCF_PANE_SAVE_COMMENT, &CBCFView::OnUpdateCommentCommand)
 	ON_UPDATE_COMMAND_UI(ID_BCF_PANE_DELETE_COMMENT, &CBCFView::OnUpdateCommentCommand)
 END_MESSAGE_MAP()
@@ -631,6 +780,10 @@ int CBCFView::OnCreate(LPCREATESTRUCT createStruct)
 		return -1;
 	}
 
+	SetFont(m_dialogFont.CreatePointFont(80, L"MS Shell Dlg")
+		? &m_dialogFont
+		: &afxGlobalData.fontRegular);
+
 	if (!m_menuBar.Create(this, AFX_DEFAULT_TOOLBAR_STYLE, IDR_BCF_VIEW_MENU) ||
 		!m_menu.LoadMenu(IDR_BCF_VIEW_MENU)) {
 		return -1;
@@ -640,15 +793,16 @@ int CBCFView::OnCreate(LPCREATESTRUCT createStruct)
 	m_menuBar.SetOwner(this);
 	m_menuBar.SetRouteCommandsViaFrame(FALSE);
 	m_menuBar.SetDefaultMenuResId(IDR_BCF_VIEW_MENU);
+	m_menuBar.SetMenuButtonRTC(RUNTIME_CLASS(CBCFMenuButton));
 	m_menuBar.CreateFromMenu(m_menu.GetSafeHmenu(), TRUE);
 	m_menuBar.SetMessageWnd(this);
 
 	CreateStaticLabel(m_projectIdLabel, L"Project Id:", this);
-	CreateStaticLabel(m_projectNameLabel, L"Project Name:", this);
+	CreateStaticLabel(m_projectNameLabel, L"Name:", this);
 	
-	m_projectId.Create(WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL | ES_READONLY,
+	m_projectId.Create(WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL | ES_READONLY,
 		CRect(), this, IDC_PANE_PROJECT_ID);
-	m_projectName.Create(WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL,
+	m_projectName.Create(WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL,
 		CRect(), this, IDC_PANE_PROJECT_NAME);
 
 	SetControlFont(m_projectId, this);
@@ -660,6 +814,14 @@ int CBCFView::OnCreate(LPCREATESTRUCT createStruct)
 	
 	ShowForm(ProjectForm);
 	return 0;
+}
+
+BOOL CBCFView::OnEraseBkgnd(CDC* dc)
+{
+	CRect client;
+	GetClientRect(client);
+	dc->FillRect(client, CBrush::FromHandle(::GetSysColorBrush(COLOR_3DFACE)));
+	return TRUE;
 }
 
 void CBCFView::Activate()
@@ -800,12 +962,10 @@ void CBCFView::ShowProject()
 		return;
 	}
 	if (m_activeForm == CommentForm) {
-		BCFTopic* topic = m_topicForm.GetTopic();
 		if (!m_commentForm.Commit()) {
 			return;
 		}
 		m_topicForm.ReloadComments(m_commentForm.GetComment());
-		m_topicForm.Load(topic);
 	}
 	m_projectForm.Load();
 	ShowForm(ProjectForm);
@@ -822,7 +982,13 @@ void CBCFView::ShowTopic(BCFTopic* topic)
 		}
 	}
 	else if (m_activeForm == CommentForm) {
+		BCFComment* comment = m_commentForm.GetComment();
 		if (!m_commentForm.Commit()) {
+			return;
+		}
+		if (m_topicForm.GetTopic() == topic) {
+			m_topicForm.ReloadComments(comment);
+			ShowForm(TopicForm);
 			return;
 		}
 	}
@@ -895,7 +1061,7 @@ void CBCFView::OnAddTopic()
 	BCFTopic* topic = m_project->AddTopic(nullptr, nullptr, nullptr);
 	ShowLog(!topic);
 	if (topic) {
-		m_projectForm.Load();
+		m_projectForm.Load(topic);
 		ShowTopic(topic);
 	}
 }
@@ -922,23 +1088,9 @@ void CBCFView::OnTopicDetails()
 	ShowTopic(m_projectForm.GetSelectedTopic());
 }
 
-void CBCFView::OnBack()
-{
-	if (!CommitProjectInfo()) {
-		return;
-	}
-	if (m_activeForm == CommentForm) {
-		BCFComment* comment = m_commentForm.GetComment();
-		if (m_commentForm.Commit()) {
-			m_topicForm.ReloadComments(comment);
-			ShowForm(TopicForm);
-		}
-	}
-	else if (m_activeForm == TopicForm && m_topicForm.Commit()) {
-		m_projectForm.Load();
-		ShowForm(ProjectForm);
-	}
-}
+void CBCFView::OnViewProject() { ShowProject(); }
+void CBCFView::OnViewTopic() { ShowTopic(m_projectForm.GetSelectedTopic()); }
+void CBCFView::OnViewComment() { ShowComment(m_topicForm.GetSelectedComment()); }
 
 void CBCFView::OnSaveComment()
 {
@@ -1059,9 +1211,24 @@ void CBCFView::OnUpdateCommentCommand(CCmdUI* commandUI)
 	commandUI->Enable(m_activeForm == CommentForm && m_commentForm.GetComment() != nullptr);
 }
 
-void CBCFView::OnUpdateBack(CCmdUI* commandUI)
+void CBCFView::OnUpdateViewProject(CCmdUI* commandUI)
 {
-	commandUI->Enable(m_activeForm != ProjectForm);
+	commandUI->Enable(TRUE);
+	commandUI->SetRadio(m_activeForm == ProjectForm);
+}
+
+void CBCFView::OnUpdateViewTopic(CCmdUI* commandUI)
+{
+	commandUI->Enable(m_projectForm.GetSelectedTopic() != nullptr);
+	commandUI->SetRadio(m_activeForm == TopicForm);
+}
+
+void CBCFView::OnUpdateViewComment(CCmdUI* commandUI)
+{
+	const bool hasSelectedComment = m_topicForm.GetTopic() == m_projectForm.GetSelectedTopic() &&
+		m_topicForm.GetSelectedComment() != nullptr;
+	commandUI->Enable(hasSelectedComment);
+	commandUI->SetRadio(m_activeForm == CommentForm);
 }
 
 void CBCFView::OnNewFile() { NewProject(); }
@@ -1078,18 +1245,59 @@ void CBCFView::AdjustLayout()
 	CSize menuSize = m_menuBar.CalcFixedLayout(FALSE, TRUE);
 	m_menuBar.SetWindowPos(nullptr, client.left, client.top, client.Width(), menuSize.cy,
 		SWP_NOACTIVATE | SWP_NOZORDER);
-	const int margin = 8;
-	const int labelWidth = 78;
-	const int rowHeight = 23;
-	int headerTop = client.top + menuSize.cy + margin;
-	int half = max(100, (client.Width() - 3 * margin) / 2);
-	m_projectIdLabel.MoveWindow(margin, headerTop + 4, labelWidth, 18);
-	m_projectId.MoveWindow(margin + labelWidth, headerTop, max(20, half - labelWidth), rowHeight);
-	int second = 2 * margin + half;
-	m_projectNameLabel.MoveWindow(second, headerTop + 4, labelWidth, 18);
-	m_projectName.MoveWindow(second + labelWidth, headerTop,
-		max(20, static_cast<int>(client.right) - second - labelWidth - margin), rowHeight);
-	CRect formRect(client.left, headerTop + rowHeight + margin, client.right, client.bottom);
+
+	CClientDC dc(this);
+	CFont* font = m_projectIdLabel.GetFont();
+	CFont* oldFont = font ? dc.SelectObject(font) : nullptr;
+	TEXTMETRIC textMetrics = {};
+	dc.GetTextMetrics(&textMetrics);
+	const int textHeight = textMetrics.tmAscent + textMetrics.tmDescent + textMetrics.tmExternalLeading;
+	const int rowHeight = textHeight + textHeight / 2;
+	const int margin = rowHeight / 3;
+	const int labelOffset = (rowHeight - textHeight) / 2;
+	const int headerTop = client.top + menuSize.cy + margin;
+
+	CString idLabelText;
+	CString nameLabelText;
+	CString projectIdText;
+	m_projectIdLabel.GetWindowText(idLabelText);
+	m_projectNameLabel.GetWindowText(nameLabelText);
+	m_projectId.GetWindowText(projectIdText);
+	const int idLabelWidth = dc.GetTextExtent(idLabelText).cx + margin;
+	const int nameLabelWidth = dc.GetTextExtent(nameLabelText).cx + margin;
+	const DWORD projectIdMargins = m_projectId.GetMargins();
+	const int projectIdWidth = max(rowHeight,
+		static_cast<int>(dc.GetTextExtent(projectIdText).cx) +
+		LOWORD(projectIdMargins) + HIWORD(projectIdMargins));
+	if (oldFont) {
+		dc.SelectObject(oldFont);
+	}
+
+	int headerHeight = rowHeight;
+	const int minEditWidth = 3 * rowHeight;
+	const int twoColumnWidth =
+		3 * margin + idLabelWidth + projectIdWidth + nameLabelWidth + minEditWidth;
+	if (client.Width() >= twoColumnWidth) {
+		m_projectIdLabel.MoveWindow(margin, headerTop + labelOffset, idLabelWidth, textHeight);
+		m_projectId.MoveWindow(margin + idLabelWidth, headerTop + labelOffset,
+			projectIdWidth, rowHeight - labelOffset);
+		const int second = 2 * margin + idLabelWidth + projectIdWidth;
+		m_projectNameLabel.MoveWindow(second, headerTop + labelOffset, nameLabelWidth, textHeight);
+		m_projectName.MoveWindow(second + nameLabelWidth, headerTop + labelOffset,
+			client.right - second - nameLabelWidth - margin, rowHeight - labelOffset);
+	}
+	else {
+		const int labelWidth = max(idLabelWidth, nameLabelWidth);
+		const int editWidth = max(rowHeight, client.Width() - 2 * margin - labelWidth);
+		m_projectIdLabel.MoveWindow(margin, headerTop + labelOffset, labelWidth, textHeight);
+		m_projectId.MoveWindow(margin + labelWidth, headerTop + labelOffset,
+			min(projectIdWidth, editWidth), rowHeight - labelOffset);
+		m_projectNameLabel.MoveWindow(margin, headerTop + rowHeight + labelOffset, labelWidth, textHeight);
+		m_projectName.MoveWindow(margin + labelWidth, headerTop + rowHeight + labelOffset,
+			editWidth, rowHeight - labelOffset);
+		headerHeight = 2 * rowHeight;
+	}
+	CRect formRect(client.left, headerTop + headerHeight + margin, client.right, client.bottom);
 	m_projectForm.MoveWindow(formRect);
 	m_topicForm.MoveWindow(formRect);
 	m_commentForm.MoveWindow(formRect);
