@@ -127,5 +127,4 @@ private:
 	CListBox m_wndMultiList;
 	CButton m_wndAddMulti;
 	CButton m_wndRemoveMulti;
-	CButton m_wndUpdateViewPoint;
 };

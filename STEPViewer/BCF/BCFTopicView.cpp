@@ -242,7 +242,6 @@ void CBCFTopicView::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_MULTI_LIST, m_wndMultiList);
 	DDX_Control(pDX, IDC_BUTTON_ADD, m_wndAddMulti);
 	DDX_Control(pDX, IDC_BUTTON_REMOVE, m_wndRemoveMulti);
-	DDX_Control(pDX, IDC_UPDATE_VIEWPOINT, m_wndUpdateViewPoint);
 }
 
 void CBCFTopicView::OnCancel()
@@ -437,8 +436,6 @@ void CBCFTopicView::OnSelchangeCommentsList()
 		m_viewPointMgr.SetViewFromComment(*comment);
 	}
 
-	m_wndUpdateViewPoint.EnableWindow(comment != NULL);
-	
 	ShowLog(false);
 }
 
