@@ -65,6 +65,7 @@ namespace
 		IDC_PANE_TOPIC_SCHEMA,
 		IDC_PANE_TOPIC_INDEX,
 		IDC_PANE_TOPIC_SERVER_ID,
+		IDC_PANE_SELECT_SNIPPET_FILE,
 		IDC_PANE_COMMENTS,
 		IDC_PANE_COMMENT_TEXT
 	};
@@ -150,6 +151,28 @@ namespace
 		}
 		return value;
 	}
+}
+
+CBCFSelectFileDlg::CBCFSelectFileDlg(LPCTSTR filePath, bool external, CWnd* parent)
+	: CFileDialog(TRUE, nullptr, filePath, OFN_FILEMUSTEXIST | OFN_HIDEREADONLY,
+		L"All files (*.*)|*.*||", parent)
+	, m_external(external)
+{
+	AddRadioButtonList(ModeControl);
+	AddControlItem(ModeControl, ExternalFileMode, L"Use external file");
+	AddControlItem(ModeControl, EmbedFileMode, L"Embed to BCF package");
+	SetSelectedControlItem(ModeControl, external ? ExternalFileMode : EmbedFileMode);
+}
+
+BOOL CBCFSelectFileDlg::OnFileNameOK()
+{
+	DWORD mode = 0;
+	if (FAILED(GetSelectedControlItem(ModeControl, mode))) {
+		AfxMessageBox(L"Cannot determine how the selected file should be stored.", MB_ICONERROR);
+		return TRUE;
+	}
+	m_external = mode == ExternalFileMode;
+	return CFileDialog::OnFileNameOK();
 }
 
 BEGIN_MESSAGE_MAP(CBCFEdit, CEdit)
@@ -304,6 +327,7 @@ BEGIN_MESSAGE_MAP(CBCFTopicForm, CWnd)
 	ON_WM_SIZE()
 	ON_WM_CTLCOLOR()
 	ON_BN_CLICKED(IDC_PANE_VIEW_PROJECT, &CBCFTopicForm::OnViewProject)
+	ON_BN_CLICKED(IDC_PANE_SELECT_SNIPPET_FILE, &CBCFTopicForm::OnSelectSnippetFile)
 	ON_NOTIFY(TCN_SELCHANGE, IDC_PANE_TABS, &CBCFTopicForm::OnTabChanged)
 	ON_CONTROL(LBN_SELCHANGE, IDC_PANE_COMMENTS, &CBCFTopicForm::OnCommentChanged)
 	ON_CONTROL(LBN_DBLCLK, IDC_PANE_COMMENTS, &CBCFTopicForm::OnCommentDoubleClick)
@@ -343,8 +367,11 @@ BOOL CBCFTopicForm::Create(CBCFView* pane)
 
 	const wchar_t* labels[12] = {
 		L"Type:", L"Stage:", L"Status:", L"Assigned:", L"Priority:", L"Due:",
-		L"Snippet:", L"Reference:", L"Schema:", L"Index:", L"Server Id:", L""
+		L"Type:", L"File:", L"Schema:", L"Index:", L"Server Id:", L""
 	};
+
+	m_snippetGroup.Create(L"Snippet", WS_CHILD | BS_GROUPBOX, CRect(), this, 0);
+	SetControlFont(m_snippetGroup, this);
 
 	for (int i = 0; i < 12; ++i) {
 		CreateStaticLabel(m_attributeLabels[i], labels[i], this);
@@ -356,18 +383,24 @@ BOOL CBCFTopicForm::Create(CBCFView* pane)
 	m_status.Create(comboStyle, CRect(), this, IDC_PANE_TOPIC_STATUS);
 	m_assigned.Create(comboStyle, CRect(), this, IDC_PANE_TOPIC_ASSIGNED);
 	m_priority.Create(comboStyle, CRect(), this, IDC_PANE_TOPIC_PRIORITY);
-	m_snippet.Create(comboStyle, CRect(), this, IDC_PANE_TOPIC_SNIPPET);
-	CWnd* combos[] = { &m_type, &m_stage, &m_status, &m_assigned, &m_priority, &m_snippet };
+	m_snippetType.Create(comboStyle, CRect(), this, IDC_PANE_TOPIC_SNIPPET);
+	CWnd* combos[] = { &m_type, &m_stage, &m_status, &m_assigned, &m_priority, &m_snippetType };
 	for (CWnd* combo : combos) {
 		SetControlFont(*combo, this);
 	}
+	m_snippetExternal.Create(L"External", WS_CHILD | BS_AUTOCHECKBOX, CRect(), this, 0);
+	SetControlFont(m_snippetExternal, this);
+	m_snippetExternal.EnableWindow(FALSE);
+	m_selectSnippetFile.Create(L"...", WS_CHILD | WS_TABSTOP | BS_PUSHBUTTON,
+		CRect(), this, IDC_PANE_SELECT_SNIPPET_FILE);
+	SetControlFont(m_selectSnippetFile, this);
 	DWORD editStyle = WS_CHILD | WS_TABSTOP | ES_AUTOHSCROLL;
 	m_due.Create(editStyle, CRect(), this, IDC_PANE_TOPIC_DUE);
-	m_reference.Create(editStyle, CRect(), this, IDC_PANE_TOPIC_REFERENCE);
-	m_schema.Create(editStyle, CRect(), this, IDC_PANE_TOPIC_SCHEMA);
+	m_snippetReference.Create(editStyle | ES_READONLY, CRect(), this, IDC_PANE_TOPIC_REFERENCE);
+	m_snippetSchema.Create(editStyle, CRect(), this, IDC_PANE_TOPIC_SCHEMA);
 	m_index.Create(editStyle, CRect(), this, IDC_PANE_TOPIC_INDEX);
 	m_serverId.Create(editStyle, CRect(), this, IDC_PANE_TOPIC_SERVER_ID);
-	CWnd* edits[] = { &m_due, &m_reference, &m_schema, &m_index, &m_serverId };
+	CWnd* edits[] = { &m_due, &m_snippetReference, &m_snippetSchema, &m_index, &m_serverId };
 	for (CWnd* edit : edits) {
 		SetControlFont(*edit, this);
 	}
@@ -415,7 +448,7 @@ void CBCFTopicForm::Load(BCFTopic* topic)
 	LoadExtension(m_status, BCFTopicStatuses);
 	LoadExtension(m_assigned, BCFUsers);
 	LoadExtension(m_priority, BCFPriorities);
-	LoadExtension(m_snippet, BCFSnippetTypes);
+	LoadExtension(m_snippetType, BCFSnippetTypes);
 	m_title.SetWindowText(FromUTF8(topic->GetTitle()));
 	m_description.SetWindowText(FromUTF8(topic->GetDescription()));
 	m_type.SetWindowText(FromUTF8(topic->GetTopicType()));
@@ -427,11 +460,21 @@ void CBCFTopicForm::Load(BCFTopic* topic)
 	m_index.SetWindowText(FromUTF8(topic->GetIndexStr()));
 	m_serverId.SetWindowText(FromUTF8(topic->GetServerAssignedId()));
 	BCFBimSnippet* snippet = topic->GetBimSnippet(false);
-	m_snippet.SetWindowText(snippet ? FromUTF8(snippet->GetSnippetType()) : CString());
-	m_reference.SetWindowText(snippet ? FromUTF8(snippet->GetReference()) : CString());
-	m_schema.SetWindowText(snippet ? FromUTF8(snippet->GetReferenceSchema()) : CString());
-
-	FormatTopicInfo ();
+	m_snippetType.SetWindowText(snippet ? FromUTF8(snippet->GetSnippetType()) : CString());
+	m_snippetSchema.SetWindowText(snippet ? FromUTF8(snippet->GetReferenceSchema()) : CString());
+	m_snippetExternal.SetCheck(snippet && snippet->GetIsExternal() ? BST_CHECKED : BST_UNCHECKED);
+	CString reference = snippet ? FromUTF8(snippet->GetReference()) : CString();
+	if (snippet && !snippet->GetIsExternal()) {
+		fs::path path(static_cast<LPCWSTR>(reference));
+		reference = path.filename().wstring().c_str();
+	}
+	m_snippetReference.SetWindowText(reference);
+	CComboBox* combos[] = { &m_type, &m_stage, &m_status, &m_assigned, &m_priority, &m_snippetType };
+	for (CComboBox* combo : combos) {
+		const int textLength = combo->GetWindowTextLength();
+		combo->SetEditSel(textLength, textLength);
+	}
+	FormatTopicInfo();
 	
 	ReloadComments();
 	m_pane->LoadBimFiles(*topic);
@@ -444,7 +487,7 @@ bool CBCFTopicForm::Commit()
 	if (!m_topic) {
 		return true;
 	}
-	CString title, description, type, stage, status, assigned, priority, due, snippetType, reference, schema, index, serverId;
+	CString title, description, type, stage, status, assigned, priority, due, snippetType, schema, index, serverId;
 	m_title.GetWindowText(title);
 	m_description.GetWindowText(description);
 	m_type.GetWindowText(type);
@@ -453,9 +496,8 @@ bool CBCFTopicForm::Commit()
 	m_assigned.GetWindowText(assigned);
 	m_priority.GetWindowText(priority);
 	m_due.GetWindowText(due);
-	m_snippet.GetWindowText(snippetType);
-	m_reference.GetWindowText(reference);
-	m_schema.GetWindowText(schema);
+	m_snippetType.GetWindowText(snippetType);
+	m_snippetSchema.GetWindowText(schema);
 	m_index.GetWindowText(index);
 	m_serverId.GetWindowText(serverId);
 	bool ok = m_topic->SetTitle(ToUTF8(title).c_str());
@@ -468,15 +510,17 @@ bool CBCFTopicForm::Commit()
 	ok = m_topic->SetDueDate(ToUTF8(due).c_str()) && ok;
 	ok = (index.IsEmpty() ? m_topic->SetIndexStr("") : m_topic->SetIndex(_wtoi(index))) && ok;
 	ok = m_topic->SetServerAssignedId(ToUTF8(serverId).c_str()) && ok;
-	if (snippetType.IsEmpty() && reference.IsEmpty() && schema.IsEmpty()) {
-		if (BCFBimSnippet* snippet = m_topic->GetBimSnippet(false)) {
+	BCFBimSnippet* existingSnippet = m_topic->GetBimSnippet(false);
+	const bool hasReference = existingSnippet && *existingSnippet->GetReference();
+	if (snippetType.IsEmpty() && !hasReference && schema.IsEmpty()) {
+		if (existingSnippet) {
+			BCFBimSnippet* snippet = existingSnippet;
 			ok = snippet->Remove() && ok;
 		}
 	}
 	else {
 		if (BCFBimSnippet* snippet = m_topic->GetBimSnippet(true)) {
 			ok = snippet->SetSnippetType(ToUTF8(snippetType).c_str()) && ok;
-			ok = snippet->SetReference(ToUTF8(reference).c_str()) && ok;
 			ok = snippet->SetReferenceSchema(ToUTF8(schema).c_str()) && ok;
 		}
 		else {
@@ -565,9 +609,36 @@ void CBCFTopicForm::OnViewProject()
 	m_pane->ShowProject();
 }
 
+void CBCFTopicForm::OnSelectSnippetFile()
+{
+	if (!m_topic) {
+		return;
+	}
+
+	BCFBimSnippet* snippet = m_topic->GetBimSnippet(false);
+	CBCFSelectFileDlg dialog(
+		snippet ? FromUTF8(snippet->GetReference()) : CString(),
+		snippet && snippet->GetIsExternal(), this);
+	if (dialog.DoModal() != IDOK) {
+		return;
+	}
+
+	snippet = m_topic->GetBimSnippet(true);
+	bool ok = snippet &&
+		snippet->SetReference(ToUTF8(dialog.GetPathName()).c_str()) &&
+		snippet->SetIsExternal(dialog.IsExternal());
+	if (ok) {
+		m_snippetExternal.SetCheck(dialog.IsExternal() ? BST_CHECKED : BST_UNCHECKED);
+		m_snippetReference.SetWindowText(
+			dialog.IsExternal() ? dialog.GetPathName() : dialog.GetFileName());
+	}
+	m_pane->ShowLog(!ok);
+}
+
 HBRUSH CBCFTopicForm::OnCtlColor(CDC* dc, CWnd* window, UINT controlColor)
 {
 	if (controlColor == CTLCOLOR_STATIC &&
+		window->IsKindOf(RUNTIME_CLASS(CStatic)) &&
 		window->GetSafeHwnd() != m_topicInfo.GetSafeHwnd() &&
 		window->GetSafeHwnd() != m_separator.GetSafeHwnd()) {
 		dc->SetBkMode(TRANSPARENT);
@@ -584,13 +655,23 @@ void CBCFTopicForm::ShowTab(int tab)
 	m_description.ShowWindow(tab == 0 ? SW_SHOW : SW_HIDE);
 	CWnd* attributes[] = {
 		&m_type, &m_stage, &m_status, &m_assigned, &m_priority, &m_due,
-		&m_snippet, &m_reference, &m_schema, &m_index, &m_serverId
+		&m_snippetType, &m_snippetExternal, &m_selectSnippetFile,
+		&m_snippetReference, &m_snippetSchema,
+		&m_index, &m_serverId
 	};
 	for (int i = 0; i < 12; ++i) {
 		m_attributeLabels[i].ShowWindow(tab == 1 ? SW_SHOW : SW_HIDE);
 	}
 	for (CWnd* control : attributes) {
 		control->ShowWindow(tab == 1 ? SW_SHOW : SW_HIDE);
+	}
+	m_snippetGroup.ShowWindow(tab == 1 ? SW_SHOW : SW_HIDE);
+	if (tab == 1) {
+		CComboBox* combos[] = { &m_type, &m_stage, &m_status, &m_assigned, &m_priority, &m_snippetType };
+		for (CComboBox* combo : combos) {
+			const int textLength = combo->GetWindowTextLength();
+			combo->SetEditSel(textLength, textLength);
+		}
 	}
 	m_comments.ShowWindow(tab == 2 ? SW_SHOW : SW_HIDE);
 	m_documentsPlaceholder.ShowWindow(tab == 3 ? SW_SHOW : SW_HIDE);
@@ -604,7 +685,7 @@ void CBCFTopicForm::AdjustLayout()
 	if (!m_tabs.GetSafeHwnd()) {
 		return;
 	}
-
+	
 	CRect client;
 	GetClientRect(client);
 
@@ -655,29 +736,73 @@ void CBCFTopicForm::AdjustLayout()
 			max(rowHeight, static_cast<int>(page.bottom) - descriptionTop));
 	}
 	else if (m_tabs.GetCurSel() == 1) {
-		CWnd* controls[] = {
-			&m_type, &m_stage, &m_status, &m_assigned, &m_priority, &m_due,
-			&m_snippet, &m_reference, &m_schema, &m_index, &m_serverId
+		CWnd* leftControls[] = {
+			&m_type, &m_stage, &m_status, &m_assigned, &m_priority, &m_due, &m_index, &m_serverId
 		};
+		const int leftLabelIndices[] = { 0, 1, 2, 3, 4, 5, 9, 10 };
+		CWnd* snippetControls[] = {
+			&m_snippetType, &m_snippetReference, &m_snippetExternal, &m_snippetSchema
+		};
+		const int snippetLabelIndices[] = { 6, 7, -1, 8 };
 		int labelWidth = 0;
-		for (size_t i = 0; i < _countof(controls); ++i) {
-			labelWidth = max(labelWidth, getLabelWidth(m_attributeLabels[i]));
+		for (int labelIndex : leftLabelIndices) {
+			labelWidth = max(labelWidth, getLabelWidth(m_attributeLabels[labelIndex]));
 		}
 		labelWidth += margin;
 
-		const int rowsPerColumn = (static_cast<int>(_countof(controls)) + 1) / 2;
 		const int columnWidth = max(labelWidth + 3 * rowHeight, page.Width() / 2);
-		for (size_t i = 0; i < _countof(controls); ++i) {
-			const int column = static_cast<int>(i) / rowsPerColumn;
-			const int row = static_cast<int>(i) % rowsPerColumn;
-			const int left = page.left + column * columnWidth;
-			const int width = column == 0 ? columnWidth - margin : page.right - left;
-			const int top = page.top + row * (rowHeight + margin / 2);
-			m_attributeLabels[i].MoveWindow(left, top + labelOffset, labelWidth, textHeight);
-			const bool isEdit = controls[i]->IsKindOf(RUNTIME_CLASS(CEdit)) != FALSE;
-			controls[i]->MoveWindow(left + labelWidth, top + labelOffset,
-				max(rowHeight, width - labelWidth),
-				isEdit ? rowHeight - labelOffset : rowsPerColumn * rowHeight);
+		for (size_t i = 0; i < _countof(leftControls); ++i) {
+			const int top = page.top + static_cast<int>(i) * (rowHeight + margin / 2);
+			m_attributeLabels[leftLabelIndices[i]].MoveWindow(
+				page.left, top + labelOffset, labelWidth, textHeight);
+			const bool isEdit = leftControls[i]->IsKindOf(RUNTIME_CLASS(CEdit)) != FALSE;
+			leftControls[i]->MoveWindow(page.left + labelWidth, top + labelOffset,
+				max(rowHeight, columnWidth - margin - labelWidth),
+				isEdit ? rowHeight - labelOffset : static_cast<int>(_countof(leftControls)) * rowHeight);
+		}
+
+		const int groupLeft = page.left + columnWidth;
+		const int groupWidth = max(rowHeight, static_cast<int>(page.right) - groupLeft);
+		const int groupHeight = textHeight + margin +
+			static_cast<int>(_countof(snippetControls)) * (rowHeight + margin / 2) + margin;
+		m_snippetGroup.MoveWindow(groupLeft, page.top, groupWidth, groupHeight);
+
+		int snippetLabelWidth = 0;
+		for (int labelIndex : snippetLabelIndices) {
+			if (labelIndex >= 0) {
+				snippetLabelWidth = max(snippetLabelWidth, getLabelWidth(m_attributeLabels[labelIndex]));
+			}
+		}
+		snippetLabelWidth += margin;
+		const int groupContentLeft = groupLeft + margin;
+		const int groupContentTop = page.top + textHeight + margin / 2;
+		const int groupContentWidth = max(rowHeight, groupWidth - 2 * margin);
+		for (size_t i = 0; i < _countof(snippetControls); ++i) {
+			const int top = groupContentTop + static_cast<int>(i) * (rowHeight + margin / 2);
+			if (snippetLabelIndices[i] >= 0) {
+				m_attributeLabels[snippetLabelIndices[i]].MoveWindow(
+					groupContentLeft, top + labelOffset, snippetLabelWidth, textHeight);
+			}
+			const bool isEdit = snippetControls[i]->IsKindOf(RUNTIME_CLASS(CEdit)) != FALSE;
+			const int verticalOffset = snippetControls[i] == &m_snippetExternal ? 0 : labelOffset;
+			int controlWidth = max(rowHeight, groupContentWidth - snippetLabelWidth);
+			if (snippetControls[i] == &m_snippetExternal) {
+				CString text;
+				m_snippetExternal.GetWindowText(text);
+				controlWidth = ::GetSystemMetrics(SM_CXMENUCHECK) +
+					static_cast<int>(dc.GetTextExtent(text).cx) + margin;
+			}
+			snippetControls[i]->MoveWindow(groupContentLeft + snippetLabelWidth, top + verticalOffset,
+				controlWidth,
+				isEdit ? rowHeight - labelOffset :
+				(snippetControls[i] == &m_snippetExternal
+					? rowHeight
+					: static_cast<int>(_countof(leftControls)) * rowHeight));
+			if (snippetControls[i] == &m_snippetExternal) {
+				const int buttonLeft = groupContentLeft + snippetLabelWidth + controlWidth + margin / 2;
+				m_selectSnippetFile.MoveWindow(
+					buttonLeft, top, rowHeight, rowHeight);
+			}
 		}
 	}
 	else if (m_tabs.GetCurSel() == 2) {
@@ -688,6 +813,14 @@ void CBCFTopicForm::AdjustLayout()
 	}
 	else if (m_tabs.GetCurSel() == 4) {
 		m_linksPlaceholder.MoveWindow(page.left, page.top, page.Width(), textHeight);
+	}
+
+	if (m_tabs.GetCurSel() == 1) {
+		CComboBox* combos[] = { &m_type, &m_stage, &m_status, &m_assigned, &m_priority, &m_snippetType };
+		for (CComboBox* combo : combos) {
+			const int textLength = combo->GetWindowTextLength();
+			combo->SetEditSel(textLength, textLength);
+		}
 	}
 
 	if (oldFont) {

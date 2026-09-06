@@ -9,6 +9,27 @@ class CMySTEPViewerDoc;
 class _model;
 class CBCFView;
 
+class CBCFSelectFileDlg : public CFileDialog
+{
+public:
+	CBCFSelectFileDlg(LPCTSTR filePath, bool external, CWnd* parent);
+
+	bool IsExternal() const { return m_external; }
+
+protected:
+	virtual BOOL OnFileNameOK() override;
+
+private:
+	enum
+	{
+		ModeControl = 1,
+		ExternalFileMode,
+		EmbedFileMode
+	};
+
+	bool m_external;
+};
+
 class CBCFEdit : public CEdit
 {
 protected:
@@ -75,6 +96,7 @@ protected:
 	afx_msg void OnCommentChanged();
 	afx_msg void OnCommentDoubleClick();
 	afx_msg void OnViewProject();
+	afx_msg void OnSelectSnippetFile();
 	afx_msg HBRUSH OnCtlColor(CDC* dc, CWnd* window, UINT controlColor);
 	DECLARE_MESSAGE_MAP()
 
@@ -100,9 +122,12 @@ private:
 	CComboBox m_assigned;
 	CComboBox m_priority;
 	CBCFEdit m_due;
-	CComboBox m_snippet;
-	CBCFEdit m_reference;
-	CBCFEdit m_schema;
+	CButton m_snippetGroup;
+	CComboBox m_snippetType;
+	CButton m_snippetExternal;
+	CButton m_selectSnippetFile;
+	CBCFEdit m_snippetReference;
+	CBCFEdit m_snippetSchema;
 	CBCFEdit m_index;
 	CBCFEdit m_serverId;
 	CBCFCommentsListBox m_comments;
