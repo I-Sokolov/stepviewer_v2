@@ -74,6 +74,7 @@ protected:
 	afx_msg void OnTabChanged(NMHDR* header, LRESULT* result);
 	afx_msg void OnCommentChanged();
 	afx_msg void OnCommentDoubleClick();
+	afx_msg void OnViewProject();
 	afx_msg HBRUSH OnCtlColor(CDC* dc, CWnd* window, UINT controlColor);
 	DECLARE_MESSAGE_MAP()
 
@@ -81,13 +82,14 @@ private:
 	void AdjustLayout();
 	void ShowTab(int tab);
 	void LoadExtension(CComboBox& combo, BCFEnumeration enumeration);
-	void UpdateMetadata();
+	void FormatTopicInfo();
 
 	CBCFView* m_pane = nullptr;
 	BCFTopic* m_topic = nullptr;
+	CButton m_viewProject;
 	CStatic m_topicInfo;
+	CStatic m_separator;
 	CTabCtrl m_tabs;
-	CStatic m_titleLabel;
 	CBCFEdit m_title;
 	CStatic m_descriptionLabel;
 	CBCFEdit m_description;

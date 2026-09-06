@@ -51,6 +51,7 @@ namespace
 		IDC_PANE_PROJECT_NAME,
 		IDC_PANE_TOPICS,
 		IDC_PANE_TABS,
+		IDC_PANE_VIEW_PROJECT,
 		IDC_PANE_TOPIC_TITLE,
 		IDC_PANE_TOPIC_DESCRIPTION,
 		IDC_PANE_TOPIC_TYPE,
@@ -302,6 +303,7 @@ void CBCFProjectForm::OnTopicDoubleClick(NMHDR*, LRESULT* result)
 BEGIN_MESSAGE_MAP(CBCFTopicForm, CWnd)
 	ON_WM_SIZE()
 	ON_WM_CTLCOLOR()
+	ON_BN_CLICKED(IDC_PANE_VIEW_PROJECT, &CBCFTopicForm::OnViewProject)
 	ON_NOTIFY(TCN_SELCHANGE, IDC_PANE_TABS, &CBCFTopicForm::OnTabChanged)
 	ON_CONTROL(LBN_SELCHANGE, IDC_PANE_COMMENTS, &CBCFTopicForm::OnCommentChanged)
 	ON_CONTROL(LBN_DBLCLK, IDC_PANE_COMMENTS, &CBCFTopicForm::OnCommentDoubleClick)
@@ -315,18 +317,21 @@ BOOL CBCFTopicForm::Create(CBCFView* pane)
 		return FALSE;
 	}
 
+	m_viewProject.Create(L"<<", WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_PUSHBUTTON,
+		CRect(), this, IDC_PANE_VIEW_PROJECT);
+	SetControlFont(m_viewProject, this);
 	CreateStaticLabel(m_topicInfo, L"Topic", this);
+	m_separator.Create(L"", WS_CHILD | WS_VISIBLE | SS_ETCHEDHORZ, CRect(), this);
 
 	m_tabs.Create(WS_CHILD | WS_VISIBLE | WS_TABSTOP | TCS_TABS, CRect(), this, IDC_PANE_TABS);	
 	SetControlFont(m_tabs, this);
 	
-	m_tabs.InsertItem(0, L"Topic");
+	m_tabs.InsertItem(0, L"Title");
 	m_tabs.InsertItem(1, L"Attributes");
 	m_tabs.InsertItem(2, L"Comments");
 	m_tabs.InsertItem(3, L"Documents");
 	m_tabs.InsertItem(4, L"Links");
 
-	CreateStaticLabel(m_titleLabel, L"Title:", this);
 	m_title.Create(WS_CHILD | WS_TABSTOP | ES_AUTOHSCROLL, CRect(), this, IDC_PANE_TOPIC_TITLE);
 
 	CreateStaticLabel(m_descriptionLabel, L"Description:", this);
@@ -373,7 +378,7 @@ BOOL CBCFTopicForm::Create(CBCFView* pane)
 	CreateStaticLabel(m_linksPlaceholder, L"Links are not available in this version.", this);
 
 	CStatic* tabLabels[] = {
-		&m_titleLabel, &m_descriptionLabel, &m_documentsPlaceholder, &m_linksPlaceholder
+		&m_descriptionLabel, &m_documentsPlaceholder, &m_linksPlaceholder
 	};
 	for (CStatic* label : tabLabels) {
 		label->ModifyStyleEx(0, WS_EX_TRANSPARENT);
@@ -425,7 +430,9 @@ void CBCFTopicForm::Load(BCFTopic* topic)
 	m_snippet.SetWindowText(snippet ? FromUTF8(snippet->GetSnippetType()) : CString());
 	m_reference.SetWindowText(snippet ? FromUTF8(snippet->GetReference()) : CString());
 	m_schema.SetWindowText(snippet ? FromUTF8(snippet->GetReferenceSchema()) : CString());
-	UpdateMetadata();
+
+	FormatTopicInfo ();
+	
 	ReloadComments();
 	m_pane->LoadBimFiles(*topic);
 	m_tabs.SetCurSel(0);
@@ -476,24 +483,29 @@ bool CBCFTopicForm::Commit()
 			ok = false;
 		}
 	}
-	m_pane->ShowLog(!ok);
-	UpdateMetadata();
+
+	FormatTopicInfo ();
+	
+	m_pane->ShowLog (!ok);
 	return ok;
 }
 
-void CBCFTopicForm::UpdateMetadata()
+void CBCFTopicForm::FormatTopicInfo ()
 {
 	if (!m_topic) {
 		return;
 	}
+
 	CString value;
-	value.Format(L"Topic %s. Created by %s %s", FromUTF8(m_topic->GetGuid()).GetString(),
+	value.Format(L"Topic %s created by %s %s", FromUTF8(m_topic->GetGuid()).GetString(),
 		FromUTF8(m_topic->GetCreationAuthor()).GetString(),
 		CBCFProjectDlg::FormatDateTime(m_topic->GetCreationDate()).GetString());
+
 	if (*m_topic->GetModifiedAuthor() || *m_topic->GetModifiedDate()) {
 		value.AppendFormat(L", modified by %s %s", FromUTF8(m_topic->GetModifiedAuthor()).GetString(),
 			CBCFProjectDlg::FormatDateTime(m_topic->GetModifiedDate()).GetString());
 	}
+
 	m_topicInfo.SetWindowText(value);
 }
 
@@ -548,10 +560,16 @@ void CBCFTopicForm::OnTabChanged(NMHDR*, LRESULT* result)
 	*result = 0;
 }
 
+void CBCFTopicForm::OnViewProject()
+{
+	m_pane->ShowProject();
+}
+
 HBRUSH CBCFTopicForm::OnCtlColor(CDC* dc, CWnd* window, UINT controlColor)
 {
 	if (controlColor == CTLCOLOR_STATIC &&
-		window->GetSafeHwnd() != m_topicInfo.GetSafeHwnd()) {
+		window->GetSafeHwnd() != m_topicInfo.GetSafeHwnd() &&
+		window->GetSafeHwnd() != m_separator.GetSafeHwnd()) {
 		dc->SetBkMode(TRANSPARENT);
 		return static_cast<HBRUSH>(::GetStockObject(HOLLOW_BRUSH));
 	}
@@ -561,7 +579,6 @@ HBRUSH CBCFTopicForm::OnCtlColor(CDC* dc, CWnd* window, UINT controlColor)
 void CBCFTopicForm::ShowTab(int tab)
 {
 	AdjustLayout();
-	m_titleLabel.ShowWindow(tab == 0 ? SW_SHOW : SW_HIDE);
 	m_title.ShowWindow(tab == 0 ? SW_SHOW : SW_HIDE);
 	m_descriptionLabel.ShowWindow(tab == 0 ? SW_SHOW : SW_HIDE);
 	m_description.ShowWindow(tab == 0 ? SW_SHOW : SW_HIDE);
@@ -597,14 +614,22 @@ void CBCFTopicForm::AdjustLayout()
 	TEXTMETRIC textMetrics = {};
 	dc.GetTextMetrics(&textMetrics);
 	const int textHeight = textMetrics.tmAscent + textMetrics.tmDescent + textMetrics.tmExternalLeading;
-	const int rowHeight = textHeight + textHeight / 2;
+	const int rowHeight = textHeight + textHeight / 5;
 	const int margin = rowHeight / 3;
 	const int labelOffset = (rowHeight - textHeight) / 2;
-	const int tabsTop = margin + textHeight + margin;
+	const int separatorHeight = max(static_cast<int>(textMetrics.tmInternalLeading), rowHeight / 8);
+	const int separatorTop = rowHeight + margin / 2;
+	const int tabsTop = separatorTop + separatorHeight + margin / 2;
 	const int tabsWidth = max(rowHeight, client.Width() - 2 * margin);
 	const int tabsHeight = max(2 * rowHeight, client.Height() - tabsTop - margin);
 
-	m_topicInfo.MoveWindow(margin, margin, tabsWidth, textHeight);
+	CString buttonText;
+	m_viewProject.GetWindowText(buttonText);
+	const int buttonWidth = static_cast<int>(dc.GetTextExtent(buttonText).cx) + 2 * margin;
+	m_viewProject.MoveWindow(0, 0, buttonWidth, rowHeight);
+	m_topicInfo.MoveWindow(buttonWidth + margin, labelOffset,
+		max(rowHeight, client.Width() - buttonWidth - 2 * margin), textHeight);
+	m_separator.MoveWindow(0, separatorTop, client.Width(), separatorHeight);
 	m_tabs.MoveWindow(margin, tabsTop, tabsWidth, tabsHeight);
 
 	CRect page(0, 0, tabsWidth, tabsHeight);
@@ -619,10 +644,8 @@ void CBCFTopicForm::AdjustLayout()
 	};
 
 	if (m_tabs.GetCurSel() == 0) {
-		const int titleLabelWidth = getLabelWidth(m_titleLabel) + margin;
-		m_titleLabel.MoveWindow(page.left, page.top + labelOffset, titleLabelWidth, textHeight);
-		m_title.MoveWindow(page.left + titleLabelWidth, page.top + labelOffset,
-			max(rowHeight, page.Width() - titleLabelWidth), rowHeight - labelOffset);
+		m_title.MoveWindow(page.left, page.top + labelOffset,
+			page.Width(), rowHeight - labelOffset);
 
 		const int descriptionLabelTop = page.top + rowHeight + margin;
 		m_descriptionLabel.MoveWindow(page.left, descriptionLabelTop,
