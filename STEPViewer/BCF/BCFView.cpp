@@ -99,6 +99,19 @@ namespace
 		control.SetFont(font);
 	}
 
+	void SetComboValue(CComboBox& combo, const CString& value)
+	{
+		if (value.IsEmpty()) {
+			combo.SetCurSel(-1);
+			return;
+		}
+		int item = combo.FindStringExact(-1, value);
+		if (item == CB_ERR) {
+			item = combo.AddString(value);
+		}
+		combo.SetCurSel(item);
+	}
+
 	BOOL CreateStaticLabel(CStatic& label, LPCTSTR text, CWnd* parent)
 	{
 		BOOL result = label.Create(text, WS_CHILD | WS_VISIBLE | SS_LEFT, CRect(0, 0, 0, 0), parent);
@@ -356,9 +369,10 @@ BOOL CBCFTopicForm::Create(CBCFView* pane)
 	
 	m_tabs.InsertItem(0, L"Title");
 	m_tabs.InsertItem(1, L"Attributes");
-	m_tabs.InsertItem(2, L"Comments");
-	m_tabs.InsertItem(3, L"Documents");
-	m_tabs.InsertItem(4, L"Links");
+	m_tabs.InsertItem(2, L"Snippet");
+	m_tabs.InsertItem(3, L"Comments");
+	m_tabs.InsertItem(4, L"Documents");
+	m_tabs.InsertItem(5, L"Links");
 
 	m_title.Create(WS_CHILD | WS_TABSTOP | ES_AUTOHSCROLL, CRect(), this, IDC_PANE_TOPIC_TITLE);
 
@@ -374,16 +388,13 @@ BOOL CBCFTopicForm::Create(CBCFView* pane)
 		L"Type:", L"File:", L"Schema:", L"Index:", L"Server Id:", L""
 	};
 
-	m_snippetGroup.Create(L"Snippet", WS_CHILD | BS_GROUPBOX, CRect(), this, 0);
-	SetControlFont(m_snippetGroup, this);
-
 	for (int i = 0; i < 12; ++i) {
 		CreateStaticLabel(m_attributeLabels[i], labels[i], this);
 	}
 	CreateStaticLabel(m_labelsLabel, L"Labels:", this);
 	m_labelsLabel.ModifyStyleEx(0, WS_EX_TRANSPARENT);
 
-	DWORD comboStyle = WS_CHILD | WS_TABSTOP | WS_VSCROLL | CBS_DROPDOWN;
+	DWORD comboStyle = WS_CHILD | WS_TABSTOP | WS_VSCROLL | CBS_DROPDOWNLIST;
 	m_type.Create(comboStyle, CRect(), this, IDC_PANE_TOPIC_TYPE);
 	m_stage.Create(comboStyle, CRect(), this, IDC_PANE_TOPIC_STAGE);
 	m_status.Create(comboStyle, CRect(), this, IDC_PANE_TOPIC_STATUS);
@@ -477,17 +488,17 @@ void CBCFTopicForm::Load(BCFTopic* topic)
 	LoadExtension(m_snippetType, BCFSnippetTypes);
 	m_title.SetWindowText(FromUTF8(topic->GetTitle()));
 	m_description.SetWindowText(FromUTF8(topic->GetDescription()));
-	m_type.SetWindowText(FromUTF8(topic->GetTopicType()));
-	m_stage.SetWindowText(FromUTF8(topic->GetStage()));
-	m_status.SetWindowText(FromUTF8(topic->GetTopicStatus()));
-	m_assigned.SetWindowText(FromUTF8(topic->GetAssignedTo()));
-	m_priority.SetWindowText(FromUTF8(topic->GetPriority()));
+	SetComboValue(m_type, FromUTF8(topic->GetTopicType()));
+	SetComboValue(m_stage, FromUTF8(topic->GetStage()));
+	SetComboValue(m_status, FromUTF8(topic->GetTopicStatus()));
+	SetComboValue(m_assigned, FromUTF8(topic->GetAssignedTo()));
+	SetComboValue(m_priority, FromUTF8(topic->GetPriority()));
 	m_due.SetWindowText(FromUTF8(topic->GetDueDate()));
 	m_index.SetWindowText(FromUTF8(topic->GetIndexStr()));
 	m_serverId.SetWindowText(FromUTF8(topic->GetServerAssignedId()));
 	UpdateLabels();
 	BCFBimSnippet* snippet = topic->GetBimSnippet(false);
-	m_snippetType.SetWindowText(snippet ? FromUTF8(snippet->GetSnippetType()) : CString());
+	SetComboValue(m_snippetType, snippet ? FromUTF8(snippet->GetSnippetType()) : CString());
 	m_snippetSchema.SetWindowText(snippet ? FromUTF8(snippet->GetReferenceSchema()) : CString());
 	m_snippetExternal.SetCheck(snippet && snippet->GetIsExternal() ? BST_CHECKED : BST_UNCHECKED);
 	CString reference = snippet ? FromUTF8(snippet->GetReference()) : CString();
@@ -496,11 +507,6 @@ void CBCFTopicForm::Load(BCFTopic* topic)
 		reference = path.filename().wstring().c_str();
 	}
 	m_snippetReference.SetWindowText(reference);
-	CComboBox* combos[] = { &m_type, &m_stage, &m_status, &m_assigned, &m_priority, &m_snippetType };
-	for (CComboBox* combo : combos) {
-		const int textLength = combo->GetWindowTextLength();
-		combo->SetEditSel(textLength, textLength);
-	}
 	FormatTopicInfo();
 	
 	ReloadComments();
@@ -687,31 +693,30 @@ void CBCFTopicForm::ShowTab(int tab)
 	m_title.ShowWindow(tab == 0 ? SW_SHOW : SW_HIDE);
 	m_descriptionLabel.ShowWindow(tab == 0 ? SW_SHOW : SW_HIDE);
 	m_description.ShowWindow(tab == 0 ? SW_SHOW : SW_HIDE);
-	CWnd* attributes[] = {
+	CWnd* attributeControls[] = {
 		&m_type, &m_stage, &m_status, &m_assigned, &m_priority, &m_due,
-		&m_snippetType, &m_snippetExternal, &m_selectSnippetFile,
-		&m_snippetReference, &m_snippetSchema,
 		&m_index, &m_serverId, &m_selectTopicLabels
 	};
 	for (int i = 0; i < 12; ++i) {
-		m_attributeLabels[i].ShowWindow(tab == 1 ? SW_SHOW : SW_HIDE);
+		const bool snippetLabel = i >= 6 && i <= 8;
+		m_attributeLabels[i].ShowWindow(
+			(snippetLabel ? tab == 2 : tab == 1) ? SW_SHOW : SW_HIDE);
 	}
-	for (CWnd* control : attributes) {
+	for (CWnd* control : attributeControls) {
 		control->ShowWindow(tab == 1 ? SW_SHOW : SW_HIDE);
 	}
 	m_labelsLabel.ShowWindow(tab == 1 ? SW_SHOW : SW_HIDE);
 	m_labels.ShowWindow(tab == 1 ? SW_SHOW : SW_HIDE);
-	m_snippetGroup.ShowWindow(tab == 1 ? SW_SHOW : SW_HIDE);
-	if (tab == 1) {
-		CComboBox* combos[] = { &m_type, &m_stage, &m_status, &m_assigned, &m_priority, &m_snippetType };
-		for (CComboBox* combo : combos) {
-			const int textLength = combo->GetWindowTextLength();
-			combo->SetEditSel(textLength, textLength);
-		}
+	CWnd* snippetControls[] = {
+		&m_snippetType, &m_snippetReference, &m_snippetExternal,
+		&m_snippetSchema, &m_selectSnippetFile
+	};
+	for (CWnd* control : snippetControls) {
+		control->ShowWindow(tab == 2 ? SW_SHOW : SW_HIDE);
 	}
-	m_comments.ShowWindow(tab == 2 ? SW_SHOW : SW_HIDE);
-	m_documentsPlaceholder.ShowWindow(tab == 3 ? SW_SHOW : SW_HIDE);
-	m_linksPlaceholder.ShowWindow(tab == 4 ? SW_SHOW : SW_HIDE);
+	m_comments.ShowWindow(tab == 3 ? SW_SHOW : SW_HIDE);
+	m_documentsPlaceholder.ShowWindow(tab == 4 ? SW_SHOW : SW_HIDE);
+	m_linksPlaceholder.ShowWindow(tab == 5 ? SW_SHOW : SW_HIDE);
 	RedrawWindow(nullptr, nullptr,
 		RDW_INVALIDATE | RDW_ERASE | RDW_FRAME | RDW_ALLCHILDREN | RDW_UPDATENOW);
 }
@@ -733,6 +738,7 @@ void CBCFTopicForm::AdjustLayout()
 	const int textHeight = textMetrics.tmAscent + textMetrics.tmDescent + textMetrics.tmExternalLeading;
 	const int rowHeight = textHeight + textHeight / 5;
 	const int margin = rowHeight / 3;
+	const int rowSpacing = margin;
 	const int labelOffset = (rowHeight - textHeight) / 2;
 	const int separatorHeight = max(static_cast<int>(textMetrics.tmInternalLeading), rowHeight / 8);
 	const int separatorTop = rowHeight + margin / 2;
@@ -764,111 +770,114 @@ void CBCFTopicForm::AdjustLayout()
 		m_title.MoveWindow(page.left, page.top + labelOffset,
 			page.Width(), rowHeight - labelOffset);
 
-		const int descriptionLabelTop = page.top + rowHeight + margin;
+		const int descriptionLabelTop = page.top + rowHeight + rowSpacing;
 		m_descriptionLabel.MoveWindow(page.left, descriptionLabelTop,
 			getLabelWidth(m_descriptionLabel), textHeight);
-		const int descriptionTop = descriptionLabelTop + textHeight + margin / 2;
+		const int descriptionTop = descriptionLabelTop + textHeight + rowSpacing;
 		m_description.MoveWindow(page.left, descriptionTop, page.Width(),
 			max(rowHeight, static_cast<int>(page.bottom) - descriptionTop));
 	}
 	else if (m_tabs.GetCurSel() == 1) {
-		CWnd* leftControls[] = {
-			&m_type, &m_stage, &m_status, &m_assigned, &m_priority, &m_due, &m_index, &m_serverId
+		CStatic* labels[] = {
+			&m_attributeLabels[0], &m_attributeLabels[1], &m_attributeLabels[2],
+			&m_attributeLabels[3], &m_attributeLabels[4], &m_attributeLabels[5],
+			&m_labelsLabel, &m_attributeLabels[9], &m_attributeLabels[10]
 		};
-		const int leftLabelIndices[] = { 0, 1, 2, 3, 4, 5, 9, 10 };
-		CWnd* snippetControls[] = {
-			&m_snippetType, &m_snippetReference, &m_snippetExternal, &m_snippetSchema
+		CWnd* controls[] = {
+			&m_type, &m_stage, &m_status,
+			&m_assigned, &m_priority, &m_due,
+			&m_labels, &m_index, &m_serverId
 		};
-		const int snippetLabelIndices[] = { 6, 7, -1, 8 };
-		int labelWidth = 0;
-		for (int labelIndex : leftLabelIndices) {
-			labelWidth = max(labelWidth, getLabelWidth(m_attributeLabels[labelIndex]));
+		const int rowsPerColumn = 3;
+		const int columnWidth = page.Width() / 3;
+		int labelWidths[3] = {};
+		for (size_t i = 0; i < _countof(labels); ++i) {
+			const int column = static_cast<int>(i) / rowsPerColumn;
+			labelWidths[column] = max(labelWidths[column], getLabelWidth(*labels[i]));
 		}
-		labelWidth += margin;
-
-		const int columnWidth = max(labelWidth + 3 * rowHeight, page.Width() / 2);
-		for (size_t i = 0; i < _countof(leftControls); ++i) {
-			const int top = page.top + static_cast<int>(i) * (rowHeight + margin / 2);
-			m_attributeLabels[leftLabelIndices[i]].MoveWindow(
-				page.left, top + labelOffset, labelWidth, textHeight);
-			const bool isEdit = leftControls[i]->IsKindOf(RUNTIME_CLASS(CEdit)) != FALSE;
-			leftControls[i]->MoveWindow(page.left + labelWidth, top + labelOffset,
-				max(rowHeight, columnWidth - margin - labelWidth),
-				isEdit ? rowHeight - labelOffset : static_cast<int>(_countof(leftControls)) * rowHeight);
+		for (int& width : labelWidths) {
+			width += margin;
 		}
 
-		const int groupLeft = page.left + columnWidth;
-		const int groupWidth = max(rowHeight, static_cast<int>(page.right) - groupLeft);
-		const int labelsLabelWidth = getLabelWidth(m_labelsLabel) + margin;
-		m_labelsLabel.MoveWindow(
-			groupLeft, page.top + labelOffset, labelsLabelWidth, textHeight);
-		const int labelsButtonWidth = rowHeight;
-		m_labels.MoveWindow(
-			groupLeft + labelsLabelWidth, page.top + labelOffset,
-			max(rowHeight, groupWidth - labelsLabelWidth - labelsButtonWidth - margin / 2),
-			rowHeight - labelOffset);
-		m_selectTopicLabels.MoveWindow(
-			groupLeft + groupWidth - labelsButtonWidth, page.top,
-			labelsButtonWidth, rowHeight);
-		const int groupTop = page.top + rowHeight + margin / 2;
-		const int groupHeight = textHeight + margin +
-			static_cast<int>(_countof(snippetControls)) * (rowHeight + margin / 2) + margin;
-		m_snippetGroup.MoveWindow(groupLeft, groupTop, groupWidth, groupHeight);
-
-		int snippetLabelWidth = 0;
-		for (int labelIndex : snippetLabelIndices) {
-			if (labelIndex >= 0) {
-				snippetLabelWidth = max(snippetLabelWidth, getLabelWidth(m_attributeLabels[labelIndex]));
+		for (size_t i = 0; i < _countof(controls); ++i) {
+			const int column = static_cast<int>(i) / rowsPerColumn;
+			const int row = static_cast<int>(i) % rowsPerColumn;
+			const int left = page.left + column * columnWidth;
+			const int width = column == 2 ? static_cast<int>(page.right) - left : columnWidth - margin;
+			const int top = page.top + row * (rowHeight + rowSpacing);
+			labels[i]->MoveWindow(
+				left, top + labelOffset, labelWidths[column], textHeight);
+			const int controlLeft = left + labelWidths[column];
+			int controlWidth = max(rowHeight, width - labelWidths[column]);
+			if (controls[i] == &m_labels) {
+				controlWidth = max(rowHeight, controlWidth - rowHeight - margin / 2);
+				m_selectTopicLabels.MoveWindow(
+					left + width - rowHeight, top, rowHeight, rowHeight);
 			}
-		}
-		snippetLabelWidth += margin;
-		const int groupContentLeft = groupLeft + margin;
-		const int groupContentTop = groupTop + textHeight + margin / 2;
-		const int groupContentWidth = max(rowHeight, groupWidth - 2 * margin);
-		for (size_t i = 0; i < _countof(snippetControls); ++i) {
-			const int top = groupContentTop + static_cast<int>(i) * (rowHeight + margin / 2);
-			if (snippetLabelIndices[i] >= 0) {
-				m_attributeLabels[snippetLabelIndices[i]].MoveWindow(
-					groupContentLeft, top + labelOffset, snippetLabelWidth, textHeight);
-			}
-			const bool isEdit = snippetControls[i]->IsKindOf(RUNTIME_CLASS(CEdit)) != FALSE;
-			const int verticalOffset = snippetControls[i] == &m_snippetExternal ? 0 : labelOffset;
-			int controlWidth = max(rowHeight, groupContentWidth - snippetLabelWidth);
-			if (snippetControls[i] == &m_snippetExternal) {
-				CString text;
-				m_snippetExternal.GetWindowText(text);
-				controlWidth = ::GetSystemMetrics(SM_CXMENUCHECK) +
-					static_cast<int>(dc.GetTextExtent(text).cx) + margin;
-			}
-			snippetControls[i]->MoveWindow(groupContentLeft + snippetLabelWidth, top + verticalOffset,
-				controlWidth,
-				isEdit ? rowHeight - labelOffset :
-				(snippetControls[i] == &m_snippetExternal
-					? rowHeight
-					: static_cast<int>(_countof(leftControls)) * rowHeight));
-			if (snippetControls[i] == &m_snippetExternal) {
-				const int buttonLeft = groupContentLeft + snippetLabelWidth + controlWidth + margin / 2;
-				m_selectSnippetFile.MoveWindow(
-					buttonLeft, top, rowHeight, rowHeight);
-			}
+			const bool isEdit = controls[i]->IsKindOf(RUNTIME_CLASS(CEdit)) != FALSE;
+			controls[i]->MoveWindow(
+				controlLeft, top + labelOffset, controlWidth,
+				isEdit ? rowHeight - labelOffset : rowsPerColumn * rowHeight);
 		}
 	}
 	else if (m_tabs.GetCurSel() == 2) {
-		m_comments.MoveWindow(page);
+		const int labelIndices[] = { 7, 6, 8 };
+		int labelWidth = 0;
+		for (int labelIndex : labelIndices) {
+			labelWidth = max(labelWidth, getLabelWidth(m_attributeLabels[labelIndex]));
+		}
+		labelWidth += margin;
+		const int controlLeft = page.left + labelWidth;
+
+		const int fileTop = page.top;
+		m_attributeLabels[7].MoveWindow(
+			page.left, fileTop + labelOffset, labelWidth, textHeight);
+		m_selectSnippetFile.MoveWindow(
+			page.right - rowHeight, fileTop, rowHeight, rowHeight);
+		m_snippetReference.MoveWindow(
+			controlLeft, fileTop + labelOffset,
+			max(rowHeight, static_cast<int>(page.right) - controlLeft - rowHeight - margin / 2),
+			rowHeight - labelOffset);
+
+		const int typeTop = fileTop + rowHeight + rowSpacing;
+		m_attributeLabels[6].MoveWindow(
+			page.left, typeTop + labelOffset, labelWidth, textHeight);
+		CString externalText;
+		m_snippetExternal.GetWindowText(externalText);
+		const int externalWidth = ::GetSystemMetrics(SM_CXMENUCHECK) +
+			static_cast<int>(dc.GetTextExtent(externalText).cx) + margin;
+		int typeWidth = 0;
+		CString typeText;
+		m_snippetType.GetWindowText(typeText);
+		typeWidth = static_cast<int>(dc.GetTextExtent(typeText).cx);
+		for (int i = 0; i < m_snippetType.GetCount(); ++i) {
+			m_snippetType.GetLBText(i, typeText);
+			typeWidth = max(typeWidth, static_cast<int>(dc.GetTextExtent(typeText).cx));
+		}
+		typeWidth += ::GetSystemMetrics(SM_CXVSCROLL) + 2 * margin;
+		typeWidth = min(typeWidth,
+			max(rowHeight, static_cast<int>(page.right) - controlLeft - externalWidth - rowSpacing));
+		m_snippetType.MoveWindow(
+			controlLeft, typeTop + labelOffset, typeWidth, 3 * rowHeight);
+		m_snippetExternal.MoveWindow(
+			controlLeft + typeWidth + rowSpacing, typeTop, externalWidth, rowHeight);
+
+		const int schemaTop = typeTop + rowHeight + rowSpacing;
+		m_attributeLabels[8].MoveWindow(
+			page.left, schemaTop + labelOffset, labelWidth, textHeight);
+		m_snippetSchema.MoveWindow(
+			controlLeft, schemaTop + labelOffset,
+			max(rowHeight, static_cast<int>(page.right) - controlLeft),
+			rowHeight - labelOffset);
 	}
 	else if (m_tabs.GetCurSel() == 3) {
-		m_documentsPlaceholder.MoveWindow(page.left, page.top, page.Width(), textHeight);
+		m_comments.MoveWindow(page);
 	}
 	else if (m_tabs.GetCurSel() == 4) {
-		m_linksPlaceholder.MoveWindow(page.left, page.top, page.Width(), textHeight);
+		m_documentsPlaceholder.MoveWindow(page.left, page.top, page.Width(), textHeight);
 	}
-
-	if (m_tabs.GetCurSel() == 1) {
-		CComboBox* combos[] = { &m_type, &m_stage, &m_status, &m_assigned, &m_priority, &m_snippetType };
-		for (CComboBox* combo : combos) {
-			const int textLength = combo->GetWindowTextLength();
-			combo->SetEditSel(textLength, textLength);
-		}
+	else if (m_tabs.GetCurSel() == 5) {
+		m_linksPlaceholder.MoveWindow(page.left, page.top, page.Width(), textHeight);
 	}
 
 	if (oldFont) {

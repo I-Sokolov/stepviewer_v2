@@ -127,7 +127,6 @@ private:
 	CStatic m_labelsLabel;
 	CBCFEdit m_labels;
 	CButton m_selectTopicLabels;
-	CButton m_snippetGroup;
 	CComboBox m_snippetType;
 	CButton m_snippetExternal;
 	CButton m_selectSnippetFile;

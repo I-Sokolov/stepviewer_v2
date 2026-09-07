@@ -7,41 +7,6 @@
 #include <unordered_set>
 #include <vector>
 
-namespace
-{
-	class CCreateLabelDlg : public CDialogEx
-	{
-	public:
-		explicit CCreateLabelDlg(CWnd* parent)
-			: CDialogEx(IDD_BCF_CREATE_LABEL, parent)
-		{
-		}
-
-		CString GetLabel() const { return m_label; }
-
-	protected:
-		virtual void DoDataExchange(CDataExchange* dataExchange) override
-		{
-			CDialogEx::DoDataExchange(dataExchange);
-			DDX_Text(dataExchange, IDC_BCF_NEW_LABEL, m_label);
-		}
-
-		virtual void OnOK() override
-		{
-			UpdateData(TRUE);
-			m_label.Trim();
-			if (m_label.IsEmpty()) {
-				AfxMessageBox(L"Enter label.", MB_ICONEXCLAMATION);
-				return;
-			}
-			CDialogEx::OnOK();
-		}
-
-	private:
-		CString m_label;
-	};
-}
-
 IMPLEMENT_DYNAMIC(CBCFTopicLabelsDlg, CDialogEx)
 
 CBCFTopicLabelsDlg::CBCFTopicLabelsDlg(BCFTopic& topic, CWnd* parent)
@@ -57,7 +22,6 @@ void CBCFTopicLabelsDlg::DoDataExchange(CDataExchange* dataExchange)
 }
 
 BEGIN_MESSAGE_MAP(CBCFTopicLabelsDlg, CDialogEx)
-	ON_BN_CLICKED(IDC_BCF_CREATE_LABEL, &CBCFTopicLabelsDlg::OnCreateLabel)
 END_MESSAGE_MAP()
 
 BOOL CBCFTopicLabelsDlg::OnInitDialog()
@@ -85,27 +49,6 @@ BOOL CBCFTopicLabelsDlg::OnInitDialog()
 	}
 
 	return TRUE;
-}
-
-void CBCFTopicLabelsDlg::OnCreateLabel()
-{
-	CCreateLabelDlg dialog(this);
-	if (dialog.DoModal() != IDOK) {
-		return;
-	}
-
-	CString label = dialog.GetLabel();
-	int item = m_labels.FindStringExact(-1, label);
-	if (item == LB_ERR) {
-		BCFExtensions& extensions = m_topic.GetProject().GetExtensions();
-		if (!extensions.AddElement(BCFTopicLabels, ToUTF8(label).c_str())) {
-			AfxMessageBox(L"Failed to create label.", MB_ICONERROR);
-			return;
-		}
-		item = m_labels.AddString(label);
-	}
-	m_labels.SetCheck(item, BST_CHECKED);
-	m_labels.SetCurSel(item);
 }
 
 void CBCFTopicLabelsDlg::OnOK()

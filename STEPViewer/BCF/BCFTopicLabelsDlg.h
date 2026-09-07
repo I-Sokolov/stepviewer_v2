@@ -17,7 +17,6 @@ protected:
 	virtual void DoDataExchange(CDataExchange* dataExchange) override;
 	virtual BOOL OnInitDialog() override;
 	virtual void OnOK() override;
-	afx_msg void OnCreateLabel();
 
 	DECLARE_MESSAGE_MAP()
 
