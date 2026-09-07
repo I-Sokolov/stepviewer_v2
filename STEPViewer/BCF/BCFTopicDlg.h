@@ -13,6 +13,7 @@ class CBCFCommentsListBox : public CListBox
 {
 public:
 	int AddComment(BCFComment& comment);
+	int AddAction(LPCTSTR text);
 
 protected:
 	virtual void DrawItem(LPDRAWITEMSTRUCT drawItem);
@@ -23,6 +24,7 @@ protected:
 
 private:
 	int MeasureCommentHeight(BCFComment* comment) const;
+	int MeasureActionHeight() const;
 	void UpdateItemHeights();
 };
 

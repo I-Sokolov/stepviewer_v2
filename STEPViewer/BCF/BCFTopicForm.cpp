@@ -72,10 +72,10 @@ BOOL CBCFTopicForm::Create(CBCFView* pane)
 	m_tabs.InsertItem(1, L"Attributes");
 	m_tabs.InsertItem(2, L"BIM Files");
 	m_tabs.InsertItem(3, L"Snippet");
-	m_tabs.InsertItem(4, L"Comments");
-	m_tabs.InsertItem(5, L"Documents");
-	m_tabs.InsertItem(6, L"Links");
-	m_tabs.InsertItem(7, L"Related Topics");
+	m_tabs.InsertItem(4, L"Documents");
+	m_tabs.InsertItem(5, L"Links");
+	m_tabs.InsertItem(6, L"Related Topics");
+	m_tabs.InsertItem(7, L"Comments");
 
 	m_title.Create(WS_CHILD | WS_TABSTOP | ES_AUTOHSCROLL, CRect(), this, IDC_PANE_TOPIC_TITLE);
 
@@ -338,6 +338,7 @@ void CBCFTopicForm::ReloadComments(BCFComment* selectComment)
 				selected = item;
 			}
 		}
+		m_comments.AddAction(L"<< Add comment >>");
 	}
 	if (selected < 0 && m_comments.GetCount() > 0) {
 		selected = 0;
@@ -367,9 +368,19 @@ void CBCFTopicForm::OnCommentChanged()
 void CBCFTopicForm::OnCommentDoubleClick()
 {
 	int selection = m_comments.GetCurSel();
-	if (selection != LB_ERR) {
-		m_pane->ShowComment(static_cast<BCFComment*>(m_comments.GetItemDataPtr(selection)));
+	if (selection == LB_ERR || !m_topic) {
+		return;
 	}
+	BCFComment* comment = static_cast<BCFComment*>(m_comments.GetItemDataPtr(selection));
+	if (!comment) {
+		comment = m_topic->AddComment();
+		m_pane->ShowLog(!comment);
+		if (!comment) {
+			return;
+		}
+		ReloadComments(comment);
+	}
+	m_pane->ShowComment(comment);
 }
 
 void CBCFTopicForm::OnTabChanged(NMHDR*, LRESULT* result)
@@ -732,16 +743,16 @@ void CBCFTopicForm::ShowTab(int tab)
 	}
 	m_bimFiles.ShowWindow(tab == 2 ? SW_SHOW : SW_HIDE);
 	m_addBimFiles.ShowWindow(tab == 2 ? SW_SHOW : SW_HIDE);
-	m_comments.ShowWindow(tab == 4 ? SW_SHOW : SW_HIDE);
-	m_documents.ShowWindow(tab == 5 ? SW_SHOW : SW_HIDE);
-	m_addDocument.ShowWindow(tab == 5 ? SW_SHOW : SW_HIDE);
-	m_removeDocument.ShowWindow(tab == 5 ? SW_SHOW : SW_HIDE);
-	m_links.ShowWindow(tab == 6 ? SW_SHOW : SW_HIDE);
-	m_addLink.ShowWindow(tab == 6 ? SW_SHOW : SW_HIDE);
-	m_removeLink.ShowWindow(tab == 6 ? SW_SHOW : SW_HIDE);
-	m_relatedTopics.ShowWindow(tab == 7 ? SW_SHOW : SW_HIDE);
-	m_addRelatedTopic.ShowWindow(tab == 7 ? SW_SHOW : SW_HIDE);
-	m_removeRelatedTopic.ShowWindow(tab == 7 ? SW_SHOW : SW_HIDE);
+	m_documents.ShowWindow(tab == 4 ? SW_SHOW : SW_HIDE);
+	m_addDocument.ShowWindow(tab == 4 ? SW_SHOW : SW_HIDE);
+	m_removeDocument.ShowWindow(tab == 4 ? SW_SHOW : SW_HIDE);
+	m_links.ShowWindow(tab == 5 ? SW_SHOW : SW_HIDE);
+	m_addLink.ShowWindow(tab == 5 ? SW_SHOW : SW_HIDE);
+	m_removeLink.ShowWindow(tab == 5 ? SW_SHOW : SW_HIDE);
+	m_relatedTopics.ShowWindow(tab == 6 ? SW_SHOW : SW_HIDE);
+	m_addRelatedTopic.ShowWindow(tab == 6 ? SW_SHOW : SW_HIDE);
+	m_removeRelatedTopic.ShowWindow(tab == 6 ? SW_SHOW : SW_HIDE);
+	m_comments.ShowWindow(tab == 7 ? SW_SHOW : SW_HIDE);
 	RedrawWindow(nullptr, nullptr,
 		RDW_INVALIDATE | RDW_ERASE | RDW_FRAME | RDW_ALLCHILDREN | RDW_UPDATENOW);
 }
@@ -905,18 +916,29 @@ void CBCFTopicForm::AdjustLayout()
 			rowHeight - labelOffset);
 	}
 	else if (m_tabs.GetCurSel() == 4) {
-		m_comments.MoveWindow(page);
+		CListBox* list = &m_documents;
+		CButton* addButton = &m_addDocument;
+		CButton* removeButton = &m_removeDocument;
+		CString addText;
+		CString removeText;
+		addButton->GetWindowText(addText);
+		removeButton->GetWindowText(removeText);
+		const int addWidth = max(rowHeight,
+			static_cast<int>(dc.GetTextExtent(addText).cx) + 2 * margin);
+		const int removeWidth = max(rowHeight,
+			static_cast<int>(dc.GetTextExtent(removeText).cx) + 2 * margin);
+		const int removeLeft = page.right - removeWidth;
+		const int addLeft = removeLeft - rowSpacing - addWidth;
+		addButton->MoveWindow(addLeft, page.bottom - rowHeight, addWidth, rowHeight);
+		removeButton->MoveWindow(removeLeft, page.bottom - rowHeight, removeWidth, rowHeight);
+		list->MoveWindow(page.left, page.top, page.Width(),
+			max(rowHeight, page.Height() - rowHeight - rowSpacing));
 	}
-	else if (m_tabs.GetCurSel() >= 5 && m_tabs.GetCurSel() <= 7) {
+	else if (m_tabs.GetCurSel() >= 5 && m_tabs.GetCurSel() <= 6) {
 		CListBox* list = nullptr;
 		CButton* addButton = nullptr;
 		CButton* removeButton = nullptr;
 		if (m_tabs.GetCurSel() == 5) {
-			list = &m_documents;
-			addButton = &m_addDocument;
-			removeButton = &m_removeDocument;
-		}
-		else if (m_tabs.GetCurSel() == 6) {
 			list = &m_links;
 			addButton = &m_addLink;
 			removeButton = &m_removeLink;
@@ -940,6 +962,9 @@ void CBCFTopicForm::AdjustLayout()
 		removeButton->MoveWindow(removeLeft, page.bottom - rowHeight, removeWidth, rowHeight);
 		list->MoveWindow(page.left, page.top, page.Width(),
 			max(rowHeight, page.Height() - rowHeight - rowSpacing));
+	}
+	else if (m_tabs.GetCurSel() == 7) {
+		m_comments.MoveWindow(page);
 	}
 
 	if (oldFont) {

@@ -56,6 +56,27 @@ int CBCFCommentsListBox::AddComment(BCFComment& comment)
 	return item;
 }
 
+int CBCFCommentsListBox::AddAction(LPCTSTR text)
+{
+	const int item = AddString(text);
+	if (item != LB_ERR && item != LB_ERRSPACE) {
+		SetItemDataPtr(item, nullptr);
+		SetItemHeight(item, MeasureActionHeight());
+	}
+	return item;
+}
+
+int CBCFCommentsListBox::MeasureActionHeight() const
+{
+	CClientDC dc(const_cast<CBCFCommentsListBox*>(this));
+	CFont* oldFont = dc.SelectObject(GetFont());
+	TEXTMETRIC metrics = {};
+	dc.GetTextMetrics(&metrics);
+	dc.SelectObject(oldFont);
+	const int scale = dc.GetDeviceCaps(LOGPIXELSY);
+	return metrics.tmHeight + 2 * MulDiv(12, scale, 96);
+}
+
 int CBCFCommentsListBox::MeasureCommentHeight(BCFComment* comment) const
 {
 	CClientDC dc(const_cast<CBCFCommentsListBox*>(this));
@@ -94,7 +115,12 @@ void CBCFCommentsListBox::MeasureItem(LPMEASUREITEMSTRUCT measureItem)
 			comment = static_cast<BCFComment*>(data);
 		}
 	}
-	measureItem->itemHeight = MeasureCommentHeight(comment);
+	if (comment) {
+		measureItem->itemHeight = MeasureCommentHeight(comment);
+	}
+	else {
+		measureItem->itemHeight = MeasureActionHeight();
+	}
 }
 
 void CBCFCommentsListBox::DrawItem(LPDRAWITEMSTRUCT drawItem)
@@ -151,6 +177,15 @@ void CBCFCommentsListBox::DrawItem(LPDRAWITEMSTRUCT drawItem)
 		dc.DrawText(metadata, metadataRect, DT_WORDBREAK | DT_NOPREFIX);
 		dc.SelectObject(oldFont);
 	}
+	else {
+		CString text;
+		GetText(drawItem->itemID, text);
+		CFont* oldFont = dc.SelectObject(GetFont());
+		dc.SetBkMode(TRANSPARENT);
+		dc.SetTextColor(textColor);
+		dc.DrawText(text, cardRect, DT_CENTER | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX);
+		dc.SelectObject(oldFont);
+	}
 
 	if ((drawItem->itemState & ODS_FOCUS) != 0) {
 		cardRect.DeflateRect(1, 1);
@@ -166,7 +201,13 @@ void CBCFCommentsListBox::UpdateItemHeights()
 	for (int item = 0; item < GetCount(); ++item) {
 		auto data = GetItemDataPtr(item);
 		if (data != reinterpret_cast<void*>(LB_ERR)) {
-			SetItemHeight(item, MeasureCommentHeight(static_cast<BCFComment*>(data)));
+			BCFComment* comment = static_cast<BCFComment*>(data);
+			if (comment) {
+				SetItemHeight(item, MeasureCommentHeight(comment));
+			}
+			else {
+				SetItemHeight(item, MeasureActionHeight());
+			}
 		}
 	}
 	Invalidate();
