@@ -98,6 +98,8 @@ protected:
 	afx_msg void OnViewProject();
 	afx_msg void OnSelectSnippetFile();
 	afx_msg void OnSelectTopicLabels();
+	afx_msg void OnAddBimFiles();
+	afx_msg void OnCheckBimFiles();
 	afx_msg HBRUSH OnCtlColor(CDC* dc, CWnd* window, UINT controlColor);
 	DECLARE_MESSAGE_MAP()
 
@@ -107,6 +109,8 @@ private:
 	void LoadExtension(CComboBox& combo, BCFEnumeration enumeration);
 	void FormatTopicInfo();
 	void UpdateLabels();
+	void ReloadBimFiles();
+	bool AddBimFile(const CString& path);
 
 	CBCFView* m_pane = nullptr;
 	BCFTopic* m_topic = nullptr;
@@ -134,6 +138,9 @@ private:
 	CBCFEdit m_snippetSchema;
 	CBCFEdit m_index;
 	CBCFEdit m_serverId;
+	CCheckListBox m_bimFiles;
+	CButton m_addBimFiles;
+	std::map<_model*, BCFBimFile*> m_usedBimModels;
 	CBCFCommentsListBox m_comments;
 	CStatic m_documentsPlaceholder;
 	CStatic m_linksPlaceholder;

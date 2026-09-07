@@ -69,6 +69,8 @@ namespace
 		IDC_PANE_TOPIC_SERVER_ID,
 		IDC_PANE_SELECT_SNIPPET_FILE,
 		IDC_PANE_SELECT_TOPIC_LABELS,
+		IDC_PANE_BIM_FILES,
+		IDC_PANE_ADD_BIM_FILES,
 		IDC_PANE_COMMENTS,
 		IDC_PANE_COMMENT_TEXT
 	};
@@ -345,6 +347,8 @@ BEGIN_MESSAGE_MAP(CBCFTopicForm, CWnd)
 	ON_BN_CLICKED(IDC_PANE_VIEW_PROJECT, &CBCFTopicForm::OnViewProject)
 	ON_BN_CLICKED(IDC_PANE_SELECT_SNIPPET_FILE, &CBCFTopicForm::OnSelectSnippetFile)
 	ON_BN_CLICKED(IDC_PANE_SELECT_TOPIC_LABELS, &CBCFTopicForm::OnSelectTopicLabels)
+	ON_BN_CLICKED(IDC_PANE_ADD_BIM_FILES, &CBCFTopicForm::OnAddBimFiles)
+	ON_CONTROL(CLBN_CHKCHANGE, IDC_PANE_BIM_FILES, &CBCFTopicForm::OnCheckBimFiles)
 	ON_NOTIFY(TCN_SELCHANGE, IDC_PANE_TABS, &CBCFTopicForm::OnTabChanged)
 	ON_CONTROL(LBN_SELCHANGE, IDC_PANE_COMMENTS, &CBCFTopicForm::OnCommentChanged)
 	ON_CONTROL(LBN_DBLCLK, IDC_PANE_COMMENTS, &CBCFTopicForm::OnCommentDoubleClick)
@@ -369,10 +373,11 @@ BOOL CBCFTopicForm::Create(CBCFView* pane)
 	
 	m_tabs.InsertItem(0, L"Title");
 	m_tabs.InsertItem(1, L"Attributes");
-	m_tabs.InsertItem(2, L"Snippet");
-	m_tabs.InsertItem(3, L"Comments");
-	m_tabs.InsertItem(4, L"Documents");
-	m_tabs.InsertItem(5, L"Links");
+	m_tabs.InsertItem(2, L"BIM Files");
+	m_tabs.InsertItem(3, L"Snippet");
+	m_tabs.InsertItem(4, L"Comments");
+	m_tabs.InsertItem(5, L"Documents");
+	m_tabs.InsertItem(6, L"Links");
 
 	m_title.Create(WS_CHILD | WS_TABSTOP | ES_AUTOHSCROLL, CRect(), this, IDC_PANE_TOPIC_TITLE);
 
@@ -427,6 +432,14 @@ BOOL CBCFTopicForm::Create(CBCFView* pane)
 	for (CWnd* edit : edits) {
 		SetControlFont(*edit, this);
 	}
+	m_bimFiles.Create(WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VSCROLL |
+		LBS_OWNERDRAWFIXED | LBS_HASSTRINGS | LBS_NOINTEGRALHEIGHT,
+		CRect(), this, IDC_PANE_BIM_FILES);
+	m_bimFiles.SetCheckStyle(BS_AUTOCHECKBOX);
+	SetControlFont(m_bimFiles, this);
+	m_addBimFiles.Create(L"Add...", WS_CHILD | WS_TABSTOP | BS_PUSHBUTTON,
+		CRect(), this, IDC_PANE_ADD_BIM_FILES);
+	SetControlFont(m_addBimFiles, this);
 	m_comments.Create(WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VSCROLL | LBS_NOTIFY | LBS_OWNERDRAWVARIABLE |
 		LBS_HASSTRINGS | LBS_NOINTEGRALHEIGHT, CRect(), this, IDC_PANE_COMMENTS);
 	SetControlFont(m_comments, this);
@@ -511,6 +524,7 @@ void CBCFTopicForm::Load(BCFTopic* topic)
 	
 	ReloadComments();
 	m_pane->LoadBimFiles(*topic);
+	ReloadBimFiles();
 	m_tabs.SetCurSel(0);
 	ShowTab(0);
 }
@@ -675,6 +689,94 @@ void CBCFTopicForm::OnSelectTopicLabels()
 	}
 }
 
+void CBCFTopicForm::ReloadBimFiles()
+{
+	m_usedBimModels.clear();
+	if (m_topic) {
+		for (uint16_t i = 0; BCFBimFile* file = m_topic->GetBimFile(i); ++i) {
+			if (_model* model = m_pane->GetBimModel(*file)) {
+				m_usedBimModels[model] = file;
+			}
+		}
+	}
+
+	m_bimFiles.SetRedraw(FALSE);
+	const int selection = m_bimFiles.GetCurSel();
+	const int topIndex = m_bimFiles.GetTopIndex();
+	m_bimFiles.ResetContent();
+	if (m_pane->GetDocument()) {
+		for (_model* model : m_pane->GetDocument()->getModels()) {
+			if (model) {
+				const int item = m_bimFiles.AddString(model->getPath());
+				m_bimFiles.SetItemDataPtr(item, model);
+				m_bimFiles.SetCheck(item, m_usedBimModels.count(model) ? BST_CHECKED : BST_UNCHECKED);
+			}
+		}
+	}
+	if (selection != LB_ERR && selection < m_bimFiles.GetCount()) {
+		m_bimFiles.SetCurSel(selection);
+	}
+	if (topIndex != LB_ERR && topIndex < m_bimFiles.GetCount()) {
+		m_bimFiles.SetTopIndex(topIndex);
+	}
+	m_bimFiles.SetRedraw(TRUE);
+	m_bimFiles.Invalidate();
+}
+
+bool CBCFTopicForm::AddBimFile(const CString& path)
+{
+	if (!m_topic || !m_topic->AddBimFile(ToUTF8(path).c_str(), false)) {
+		m_pane->ShowLog(true);
+		return false;
+	}
+	return true;
+}
+
+void CBCFTopicForm::OnAddBimFiles()
+{
+	if (!m_topic) {
+		return;
+	}
+	CFileDialog dialog(TRUE, nullptr, L"",
+		OFN_FILEMUSTEXIST | OFN_HIDEREADONLY | OFN_ALLOWMULTISELECT, BIM_MODELS_FILTER);
+	if (dialog.DoModal() != IDOK) {
+		return;
+	}
+
+	bool ok = true;
+	for (POSITION position = dialog.GetStartPosition(); position;) {
+		CString path = dialog.GetNextPathName(position);
+		ok = AddBimFile(path) && ok;
+		AfxGetApp()->AddToRecentFileList(path);
+	}
+	m_pane->LoadBimFiles(*m_topic);
+	ReloadBimFiles();
+	m_pane->ShowLog(!ok);
+}
+
+void CBCFTopicForm::OnCheckBimFiles()
+{
+	if (!m_topic) {
+		return;
+	}
+	for (int i = 0; i < m_bimFiles.GetCount(); ++i) {
+		_model* model = static_cast<_model*>(m_bimFiles.GetItemDataPtr(i));
+		auto found = m_usedBimModels.find(model);
+		if (m_bimFiles.GetCheck(i) == BST_CHECKED && found == m_usedBimModels.end()) {
+			AddBimFile(model->getPath());
+			ReloadBimFiles();
+			return;
+		}
+		if (m_bimFiles.GetCheck(i) == BST_UNCHECKED && found != m_usedBimModels.end()) {
+			if (!found->second->Remove()) {
+				m_pane->ShowLog(true);
+			}
+			ReloadBimFiles();
+			return;
+		}
+	}
+}
+
 HBRUSH CBCFTopicForm::OnCtlColor(CDC* dc, CWnd* window, UINT controlColor)
 {
 	if (controlColor == CTLCOLOR_STATIC &&
@@ -700,7 +802,7 @@ void CBCFTopicForm::ShowTab(int tab)
 	for (int i = 0; i < 12; ++i) {
 		const bool snippetLabel = i >= 6 && i <= 8;
 		m_attributeLabels[i].ShowWindow(
-			(snippetLabel ? tab == 2 : tab == 1) ? SW_SHOW : SW_HIDE);
+			(snippetLabel ? tab == 3 : tab == 1) ? SW_SHOW : SW_HIDE);
 	}
 	for (CWnd* control : attributeControls) {
 		control->ShowWindow(tab == 1 ? SW_SHOW : SW_HIDE);
@@ -712,11 +814,13 @@ void CBCFTopicForm::ShowTab(int tab)
 		&m_snippetSchema, &m_selectSnippetFile
 	};
 	for (CWnd* control : snippetControls) {
-		control->ShowWindow(tab == 2 ? SW_SHOW : SW_HIDE);
+		control->ShowWindow(tab == 3 ? SW_SHOW : SW_HIDE);
 	}
-	m_comments.ShowWindow(tab == 3 ? SW_SHOW : SW_HIDE);
-	m_documentsPlaceholder.ShowWindow(tab == 4 ? SW_SHOW : SW_HIDE);
-	m_linksPlaceholder.ShowWindow(tab == 5 ? SW_SHOW : SW_HIDE);
+	m_bimFiles.ShowWindow(tab == 2 ? SW_SHOW : SW_HIDE);
+	m_addBimFiles.ShowWindow(tab == 2 ? SW_SHOW : SW_HIDE);
+	m_comments.ShowWindow(tab == 4 ? SW_SHOW : SW_HIDE);
+	m_documentsPlaceholder.ShowWindow(tab == 5 ? SW_SHOW : SW_HIDE);
+	m_linksPlaceholder.ShowWindow(tab == 6 ? SW_SHOW : SW_HIDE);
 	RedrawWindow(nullptr, nullptr,
 		RDW_INVALIDATE | RDW_ERASE | RDW_FRAME | RDW_ALLCHILDREN | RDW_UPDATENOW);
 }
@@ -821,6 +925,15 @@ void CBCFTopicForm::AdjustLayout()
 		}
 	}
 	else if (m_tabs.GetCurSel() == 2) {
+		const int addButtonWidth = max(
+			rowHeight, static_cast<int>(dc.GetTextExtent(L"Add...").cx) + 2 * margin);
+		m_addBimFiles.MoveWindow(
+			page.left, page.bottom - rowHeight, addButtonWidth, rowHeight);
+		m_bimFiles.MoveWindow(
+			page.left, page.top, page.Width(),
+			max(rowHeight, page.Height() - rowHeight - rowSpacing));
+	}
+	else if (m_tabs.GetCurSel() == 3) {
 		const int labelIndices[] = { 7, 6, 8 };
 		int labelWidth = 0;
 		for (int labelIndex : labelIndices) {
@@ -870,13 +983,13 @@ void CBCFTopicForm::AdjustLayout()
 			max(rowHeight, static_cast<int>(page.right) - controlLeft),
 			rowHeight - labelOffset);
 	}
-	else if (m_tabs.GetCurSel() == 3) {
+	else if (m_tabs.GetCurSel() == 4) {
 		m_comments.MoveWindow(page);
 	}
-	else if (m_tabs.GetCurSel() == 4) {
+	else if (m_tabs.GetCurSel() == 5) {
 		m_documentsPlaceholder.MoveWindow(page.left, page.top, page.Width(), textHeight);
 	}
-	else if (m_tabs.GetCurSel() == 5) {
+	else if (m_tabs.GetCurSel() == 6) {
 		m_linksPlaceholder.MoveWindow(page.left, page.top, page.Width(), textHeight);
 	}
 
