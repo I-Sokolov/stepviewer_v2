@@ -2,6 +2,7 @@
 
 #include "BCFView.h"
 #include "BCFViewPointMgr.h"
+#include "BCFTopicLabelsDlg.h"
 #include "STEPViewerDoc.h"
 #include "Resource.h"
 #include "_ap_model_factory.h"
@@ -23,6 +24,7 @@ public:
 		CMFCMenuBar::SetShowAllCommands(showAllCommands);
 		return created;
 	}
+
 };
 
 class CBCFMenuButton : public CMFCToolBarMenuButton
@@ -66,6 +68,7 @@ namespace
 		IDC_PANE_TOPIC_INDEX,
 		IDC_PANE_TOPIC_SERVER_ID,
 		IDC_PANE_SELECT_SNIPPET_FILE,
+		IDC_PANE_SELECT_TOPIC_LABELS,
 		IDC_PANE_COMMENTS,
 		IDC_PANE_COMMENT_TEXT
 	};
@@ -328,6 +331,7 @@ BEGIN_MESSAGE_MAP(CBCFTopicForm, CWnd)
 	ON_WM_CTLCOLOR()
 	ON_BN_CLICKED(IDC_PANE_VIEW_PROJECT, &CBCFTopicForm::OnViewProject)
 	ON_BN_CLICKED(IDC_PANE_SELECT_SNIPPET_FILE, &CBCFTopicForm::OnSelectSnippetFile)
+	ON_BN_CLICKED(IDC_PANE_SELECT_TOPIC_LABELS, &CBCFTopicForm::OnSelectTopicLabels)
 	ON_NOTIFY(TCN_SELCHANGE, IDC_PANE_TABS, &CBCFTopicForm::OnTabChanged)
 	ON_CONTROL(LBN_SELCHANGE, IDC_PANE_COMMENTS, &CBCFTopicForm::OnCommentChanged)
 	ON_CONTROL(LBN_DBLCLK, IDC_PANE_COMMENTS, &CBCFTopicForm::OnCommentDoubleClick)
@@ -376,6 +380,8 @@ BOOL CBCFTopicForm::Create(CBCFView* pane)
 	for (int i = 0; i < 12; ++i) {
 		CreateStaticLabel(m_attributeLabels[i], labels[i], this);
 	}
+	CreateStaticLabel(m_labelsLabel, L"Labels:", this);
+	m_labelsLabel.ModifyStyleEx(0, WS_EX_TRANSPARENT);
 
 	DWORD comboStyle = WS_CHILD | WS_TABSTOP | WS_VSCROLL | CBS_DROPDOWN;
 	m_type.Create(comboStyle, CRect(), this, IDC_PANE_TOPIC_TYPE);
@@ -396,11 +402,17 @@ BOOL CBCFTopicForm::Create(CBCFView* pane)
 	SetControlFont(m_selectSnippetFile, this);
 	DWORD editStyle = WS_CHILD | WS_TABSTOP | ES_AUTOHSCROLL;
 	m_due.Create(editStyle, CRect(), this, IDC_PANE_TOPIC_DUE);
+	m_labels.Create(editStyle | ES_READONLY, CRect(), this, 0);
+	m_selectTopicLabels.Create(L"...", WS_CHILD | WS_TABSTOP | BS_PUSHBUTTON,
+		CRect(), this, IDC_PANE_SELECT_TOPIC_LABELS);
+	SetControlFont(m_selectTopicLabels, this);
 	m_snippetReference.Create(editStyle | ES_READONLY, CRect(), this, IDC_PANE_TOPIC_REFERENCE);
 	m_snippetSchema.Create(editStyle, CRect(), this, IDC_PANE_TOPIC_SCHEMA);
 	m_index.Create(editStyle, CRect(), this, IDC_PANE_TOPIC_INDEX);
 	m_serverId.Create(editStyle, CRect(), this, IDC_PANE_TOPIC_SERVER_ID);
-	CWnd* edits[] = { &m_due, &m_snippetReference, &m_snippetSchema, &m_index, &m_serverId };
+	CWnd* edits[] = {
+		&m_due, &m_labels, &m_snippetReference, &m_snippetSchema, &m_index, &m_serverId
+	};
 	for (CWnd* edit : edits) {
 		SetControlFont(*edit, this);
 	}
@@ -437,6 +449,20 @@ void CBCFTopicForm::LoadExtension(CComboBox& combo, BCFEnumeration enumeration)
 	}
 }
 
+void CBCFTopicForm::UpdateLabels()
+{
+	CString labelsText;
+	if (m_topic) {
+		for (uint16_t i = 0; const char* label = m_topic->GetLabel(i); ++i) {
+			if (i != 0) {
+				labelsText += L", ";
+			}
+			labelsText += FromUTF8(label);
+		}
+	}
+	m_labels.SetWindowText(labelsText);
+}
+
 void CBCFTopicForm::Load(BCFTopic* topic)
 {
 	m_topic = topic;
@@ -459,6 +485,7 @@ void CBCFTopicForm::Load(BCFTopic* topic)
 	m_due.SetWindowText(FromUTF8(topic->GetDueDate()));
 	m_index.SetWindowText(FromUTF8(topic->GetIndexStr()));
 	m_serverId.SetWindowText(FromUTF8(topic->GetServerAssignedId()));
+	UpdateLabels();
 	BCFBimSnippet* snippet = topic->GetBimSnippet(false);
 	m_snippetType.SetWindowText(snippet ? FromUTF8(snippet->GetSnippetType()) : CString());
 	m_snippetSchema.SetWindowText(snippet ? FromUTF8(snippet->GetReferenceSchema()) : CString());
@@ -635,6 +662,13 @@ void CBCFTopicForm::OnSelectSnippetFile()
 	m_pane->ShowLog(!ok);
 }
 
+void CBCFTopicForm::OnSelectTopicLabels()
+{
+	if (m_topic && CBCFTopicLabelsDlg(*m_topic, this).DoModal() == IDOK) {
+		UpdateLabels();
+	}
+}
+
 HBRUSH CBCFTopicForm::OnCtlColor(CDC* dc, CWnd* window, UINT controlColor)
 {
 	if (controlColor == CTLCOLOR_STATIC &&
@@ -657,7 +691,7 @@ void CBCFTopicForm::ShowTab(int tab)
 		&m_type, &m_stage, &m_status, &m_assigned, &m_priority, &m_due,
 		&m_snippetType, &m_snippetExternal, &m_selectSnippetFile,
 		&m_snippetReference, &m_snippetSchema,
-		&m_index, &m_serverId
+		&m_index, &m_serverId, &m_selectTopicLabels
 	};
 	for (int i = 0; i < 12; ++i) {
 		m_attributeLabels[i].ShowWindow(tab == 1 ? SW_SHOW : SW_HIDE);
@@ -665,6 +699,8 @@ void CBCFTopicForm::ShowTab(int tab)
 	for (CWnd* control : attributes) {
 		control->ShowWindow(tab == 1 ? SW_SHOW : SW_HIDE);
 	}
+	m_labelsLabel.ShowWindow(tab == 1 ? SW_SHOW : SW_HIDE);
+	m_labels.ShowWindow(tab == 1 ? SW_SHOW : SW_HIDE);
 	m_snippetGroup.ShowWindow(tab == 1 ? SW_SHOW : SW_HIDE);
 	if (tab == 1) {
 		CComboBox* combos[] = { &m_type, &m_stage, &m_status, &m_assigned, &m_priority, &m_snippetType };
@@ -763,9 +799,21 @@ void CBCFTopicForm::AdjustLayout()
 
 		const int groupLeft = page.left + columnWidth;
 		const int groupWidth = max(rowHeight, static_cast<int>(page.right) - groupLeft);
+		const int labelsLabelWidth = getLabelWidth(m_labelsLabel) + margin;
+		m_labelsLabel.MoveWindow(
+			groupLeft, page.top + labelOffset, labelsLabelWidth, textHeight);
+		const int labelsButtonWidth = rowHeight;
+		m_labels.MoveWindow(
+			groupLeft + labelsLabelWidth, page.top + labelOffset,
+			max(rowHeight, groupWidth - labelsLabelWidth - labelsButtonWidth - margin / 2),
+			rowHeight - labelOffset);
+		m_selectTopicLabels.MoveWindow(
+			groupLeft + groupWidth - labelsButtonWidth, page.top,
+			labelsButtonWidth, rowHeight);
+		const int groupTop = page.top + rowHeight + margin / 2;
 		const int groupHeight = textHeight + margin +
 			static_cast<int>(_countof(snippetControls)) * (rowHeight + margin / 2) + margin;
-		m_snippetGroup.MoveWindow(groupLeft, page.top, groupWidth, groupHeight);
+		m_snippetGroup.MoveWindow(groupLeft, groupTop, groupWidth, groupHeight);
 
 		int snippetLabelWidth = 0;
 		for (int labelIndex : snippetLabelIndices) {
@@ -775,7 +823,7 @@ void CBCFTopicForm::AdjustLayout()
 		}
 		snippetLabelWidth += margin;
 		const int groupContentLeft = groupLeft + margin;
-		const int groupContentTop = page.top + textHeight + margin / 2;
+		const int groupContentTop = groupTop + textHeight + margin / 2;
 		const int groupContentWidth = max(rowHeight, groupWidth - 2 * margin);
 		for (size_t i = 0; i < _countof(snippetControls); ++i) {
 			const int top = groupContentTop + static_cast<int>(i) * (rowHeight + margin / 2);

@@ -97,6 +97,7 @@ protected:
 	afx_msg void OnCommentDoubleClick();
 	afx_msg void OnViewProject();
 	afx_msg void OnSelectSnippetFile();
+	afx_msg void OnSelectTopicLabels();
 	afx_msg HBRUSH OnCtlColor(CDC* dc, CWnd* window, UINT controlColor);
 	DECLARE_MESSAGE_MAP()
 
@@ -105,6 +106,7 @@ private:
 	void ShowTab(int tab);
 	void LoadExtension(CComboBox& combo, BCFEnumeration enumeration);
 	void FormatTopicInfo();
+	void UpdateLabels();
 
 	CBCFView* m_pane = nullptr;
 	BCFTopic* m_topic = nullptr;
@@ -122,6 +124,9 @@ private:
 	CComboBox m_assigned;
 	CComboBox m_priority;
 	CBCFEdit m_due;
+	CStatic m_labelsLabel;
+	CBCFEdit m_labels;
+	CButton m_selectTopicLabels;
 	CButton m_snippetGroup;
 	CComboBox m_snippetType;
 	CButton m_snippetExternal;

@@ -668,6 +668,7 @@
     <ClInclude Include="BCF\BCFAddReferenceLink.h" />
     <ClInclude Include="BCF\BCFAddRelatedTopic.h" />
     <ClInclude Include="BCF\BCFBimFiles.h" />
+    <ClInclude Include="BCF\BCFTopicLabelsDlg.h" />
     <ClInclude Include="BCF\BCFView.h" />
     <ClInclude Include="BCF\BCFProjectDlg.h" />
     <ClInclude Include="BCF\BCFTopicDlg.h" />
@@ -1240,6 +1241,7 @@
     <ClCompile Include="BCF\BCFAddReferenceLink.cpp" />
     <ClCompile Include="BCF\BCFAddRelatedTopic.cpp" />
     <ClCompile Include="BCF\BCFBimFiles.cpp" />
+    <ClCompile Include="BCF\BCFTopicLabelsDlg.cpp" />
     <ClCompile Include="BCF\BCFView.cpp" />
     <ClCompile Include="BCF\BCFProjectDlg.cpp" />
     <ClCompile Include="BCF\BCFTopicDlg.cpp" />
