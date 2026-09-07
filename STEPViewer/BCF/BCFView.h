@@ -1,15 +1,15 @@
 #pragma once
 
 #include "bcfAPI.h"
-#include "BCFCommentForm.h"
-#include "BCFProjectForm.h"
-#include "BCFTopicForm.h"
-#include "BCFViewControls.h"
 
 #include <map>
 
 class CMySTEPViewerDoc;
 class _model;
+class CBCFCommentForm;
+class CBCFEdit;
+class CBCFProjectForm;
+class CBCFTopicForm;
 
 class CBCFPaneMenuBar : public CMFCMenuBar
 {
@@ -102,9 +102,9 @@ private:
 	CFont m_dialogFont;
 	CStatic m_projectIdLabel;
 	CStatic m_projectNameLabel;
-	CBCFEdit m_projectId;
-	CBCFEdit m_projectName;
-	CBCFProjectForm m_projectForm;
-	CBCFTopicForm m_topicForm;
-	CBCFCommentForm m_commentForm;
+	CBCFEdit* m_projectId;
+	CBCFEdit* m_projectName;
+	CBCFProjectForm* m_projectForm;
+	CBCFTopicForm* m_topicForm;
+	CBCFCommentForm* m_commentForm;
 };

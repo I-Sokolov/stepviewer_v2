@@ -1,6 +1,7 @@
 #include "stdafx.h"
 
 #include "BCFTopicForm.h"
+#include "BCFAddDocumentReference.h"
 #include "BCFTopicLabelsDlg.h"
 #include "BCFView.h"
 #include "BCFViewPointMgr.h"
@@ -11,6 +12,20 @@
 #include <experimental/filesystem>
 
 namespace fs = std::experimental::filesystem;
+
+namespace
+{
+	CString GetDocumentText(BCFDocumentReference& document)
+	{
+		CString text = FromUTF8(document.GetDescription());
+		if (!text.IsEmpty()) {
+			text.Append(L": ");
+		}
+		fs::path path = document.GetFilePath();
+		text += FromUTF8(path.filename().string().c_str());
+		return text;
+	}
+}
 
 BEGIN_MESSAGE_MAP(CBCFTopicForm, CWnd)
 	ON_WM_SIZE()
@@ -23,6 +38,9 @@ BEGIN_MESSAGE_MAP(CBCFTopicForm, CWnd)
 	ON_NOTIFY(TCN_SELCHANGE, IDC_PANE_TABS, &CBCFTopicForm::OnTabChanged)
 	ON_CONTROL(LBN_SELCHANGE, IDC_PANE_COMMENTS, &CBCFTopicForm::OnCommentChanged)
 	ON_CONTROL(LBN_DBLCLK, IDC_PANE_COMMENTS, &CBCFTopicForm::OnCommentDoubleClick)
+	ON_BN_CLICKED(IDC_PANE_ADD_DOCUMENT, &CBCFTopicForm::OnAddDocument)
+	ON_BN_CLICKED(IDC_PANE_REMOVE_DOCUMENT, &CBCFTopicForm::OnRemoveDocument)
+	ON_CONTROL(LBN_SELCHANGE, IDC_PANE_DOCUMENTS, &CBCFTopicForm::OnDocumentChanged)
 END_MESSAGE_MAP()
 
 BOOL CBCFTopicForm::Create(CBCFView* pane)
@@ -114,11 +132,20 @@ BOOL CBCFTopicForm::Create(CBCFView* pane)
 	m_comments.Create(WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VSCROLL | LBS_NOTIFY | LBS_OWNERDRAWVARIABLE |
 		LBS_HASSTRINGS | LBS_NOINTEGRALHEIGHT, CRect(), this, IDC_PANE_COMMENTS);
 	SetBCFControlFont(m_comments, this);
-	CreateBCFStaticLabel(m_documentsPlaceholder, L"Documents are not available in this version.", this);
+	m_documents.Create(WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VSCROLL |
+		LBS_NOTIFY | LBS_SORT | LBS_NOINTEGRALHEIGHT,
+		CRect(), this, IDC_PANE_DOCUMENTS);
+	SetBCFControlFont(m_documents, this);
+	m_addDocument.Create(L"Add..", WS_CHILD | WS_TABSTOP | BS_PUSHBUTTON,
+		CRect(), this, IDC_PANE_ADD_DOCUMENT);
+	SetBCFControlFont(m_addDocument, this);
+	m_removeDocument.Create(L"Remove...", WS_CHILD | WS_TABSTOP | BS_PUSHBUTTON,
+		CRect(), this, IDC_PANE_REMOVE_DOCUMENT);
+	SetBCFControlFont(m_removeDocument, this);
 	CreateBCFStaticLabel(m_linksPlaceholder, L"Links are not available in this version.", this);
 
 	CStatic* tabLabels[] = {
-		&m_descriptionLabel, &m_documentsPlaceholder, &m_linksPlaceholder
+		&m_descriptionLabel, &m_linksPlaceholder
 	};
 	for (CStatic* label : tabLabels) {
 		label->ModifyStyleEx(0, WS_EX_TRANSPARENT);
@@ -194,6 +221,7 @@ void CBCFTopicForm::Load(BCFTopic* topic)
 	FormatTopicInfo();
 	
 	ReloadComments();
+	ReloadDocuments();
 	m_pane->LoadBimFiles(*topic);
 	ReloadBimFiles();
 	m_tabs.SetCurSel(0);
@@ -448,6 +476,73 @@ void CBCFTopicForm::OnCheckBimFiles()
 	}
 }
 
+BCFDocumentReference* CBCFTopicForm::GetSelectedDocument() const
+{
+	const int selection = m_documents.GetCurSel();
+	return selection == LB_ERR
+		? nullptr
+		: static_cast<BCFDocumentReference*>(m_documents.GetItemDataPtr(selection));
+}
+
+void CBCFTopicForm::ReloadDocuments(BCFDocumentReference* selectDocument)
+{
+	BCFDocumentReference* selected = selectDocument ? selectDocument : GetSelectedDocument();
+	m_documents.SetRedraw(FALSE);
+	m_documents.ResetContent();
+	int selectedItem = LB_ERR;
+	if (m_topic) {
+		for (uint16_t i = 0; BCFDocumentReference* document = m_topic->GetDocumentReference(i); ++i) {
+			const int item = m_documents.AddString(GetDocumentText(*document));
+			m_documents.SetItemDataPtr(item, document);
+			if (document == selected) {
+				selectedItem = item;
+			}
+		}
+	}
+	m_documents.SetRedraw(TRUE);
+	m_documents.Invalidate();
+	if (selectedItem == LB_ERR && m_documents.GetCount() > 0) {
+		selectedItem = 0;
+	}
+	m_documents.SetCurSel(selectedItem);
+	OnDocumentChanged();
+}
+
+void CBCFTopicForm::OnAddDocument()
+{
+	if (!m_topic) {
+		return;
+	}
+	CBCFAddDocumentReference dialog(*m_pane, *m_topic);
+	if (dialog.DoModal() == IDOK) {
+		ReloadDocuments(m_topic->GetDocumentReference(
+			static_cast<uint16_t>(m_documents.GetCount())));
+	}
+}
+
+void CBCFTopicForm::OnRemoveDocument()
+{
+	BCFDocumentReference* document = GetSelectedDocument();
+	if (!document) {
+		return;
+	}
+	CString question;
+	question.Format(L"Do you want to remove reference to document '%s'?",
+		GetDocumentText(*document).GetString());
+	if (AfxMessageBox(question, MB_YESNO) == IDYES) {
+		const bool ok = document->Remove();
+		m_pane->ShowLog(!ok);
+		if (ok) {
+			ReloadDocuments();
+		}
+	}
+}
+
+void CBCFTopicForm::OnDocumentChanged()
+{
+	m_removeDocument.EnableWindow(GetSelectedDocument() != nullptr);
+}
+
 HBRUSH CBCFTopicForm::OnCtlColor(CDC* dc, CWnd* window, UINT controlColor)
 {
 	if (controlColor == CTLCOLOR_STATIC &&
@@ -490,7 +585,9 @@ void CBCFTopicForm::ShowTab(int tab)
 	m_bimFiles.ShowWindow(tab == 2 ? SW_SHOW : SW_HIDE);
 	m_addBimFiles.ShowWindow(tab == 2 ? SW_SHOW : SW_HIDE);
 	m_comments.ShowWindow(tab == 4 ? SW_SHOW : SW_HIDE);
-	m_documentsPlaceholder.ShowWindow(tab == 5 ? SW_SHOW : SW_HIDE);
+	m_documents.ShowWindow(tab == 5 ? SW_SHOW : SW_HIDE);
+	m_addDocument.ShowWindow(tab == 5 ? SW_SHOW : SW_HIDE);
+	m_removeDocument.ShowWindow(tab == 5 ? SW_SHOW : SW_HIDE);
 	m_linksPlaceholder.ShowWindow(tab == 6 ? SW_SHOW : SW_HIDE);
 	RedrawWindow(nullptr, nullptr,
 		RDW_INVALIDATE | RDW_ERASE | RDW_FRAME | RDW_ALLCHILDREN | RDW_UPDATENOW);
@@ -658,7 +755,20 @@ void CBCFTopicForm::AdjustLayout()
 		m_comments.MoveWindow(page);
 	}
 	else if (m_tabs.GetCurSel() == 5) {
-		m_documentsPlaceholder.MoveWindow(page.left, page.top, page.Width(), textHeight);
+		CString addText;
+		CString removeText;
+		m_addDocument.GetWindowText(addText);
+		m_removeDocument.GetWindowText(removeText);
+		const int addWidth = max(rowHeight,
+			static_cast<int>(dc.GetTextExtent(addText).cx) + 2 * margin);
+		const int removeWidth = max(rowHeight,
+			static_cast<int>(dc.GetTextExtent(removeText).cx) + 2 * margin);
+		const int removeLeft = page.right - removeWidth;
+		const int addLeft = removeLeft - rowSpacing - addWidth;
+		m_addDocument.MoveWindow(addLeft, page.bottom - rowHeight, addWidth, rowHeight);
+		m_removeDocument.MoveWindow(removeLeft, page.bottom - rowHeight, removeWidth, rowHeight);
+		m_documents.MoveWindow(page.left, page.top, page.Width(),
+			max(rowHeight, page.Height() - rowHeight - rowSpacing));
 	}
 	else if (m_tabs.GetCurSel() == 6) {
 		m_linksPlaceholder.MoveWindow(page.left, page.top, page.Width(), textHeight);

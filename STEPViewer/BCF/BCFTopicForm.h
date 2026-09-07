@@ -29,6 +29,9 @@ protected:
 	afx_msg void OnSelectTopicLabels();
 	afx_msg void OnAddBimFiles();
 	afx_msg void OnCheckBimFiles();
+	afx_msg void OnAddDocument();
+	afx_msg void OnRemoveDocument();
+	afx_msg void OnDocumentChanged();
 	afx_msg HBRUSH OnCtlColor(CDC* dc, CWnd* window, UINT controlColor);
 	DECLARE_MESSAGE_MAP()
 
@@ -40,6 +43,8 @@ private:
 	void UpdateLabels();
 	void ReloadBimFiles();
 	bool AddBimFile(const CString& path);
+	void ReloadDocuments(BCFDocumentReference* selectDocument = nullptr);
+	BCFDocumentReference* GetSelectedDocument() const;
 
 	CBCFView* m_pane = nullptr;
 	BCFTopic* m_topic = nullptr;
@@ -71,6 +76,8 @@ private:
 	CButton m_addBimFiles;
 	std::map<_model*, BCFBimFile*> m_usedBimModels;
 	CBCFCommentsListBox m_comments;
-	CStatic m_documentsPlaceholder;
+	CListBox m_documents;
+	CButton m_addDocument;
+	CButton m_removeDocument;
 	CStatic m_linksPlaceholder;
 };

@@ -1,6 +1,10 @@
 #include "stdafx.h"
 
+#include "BCFCommentForm.h"
+#include "BCFProjectForm.h"
+#include "BCFTopicForm.h"
 #include "BCFView.h"
+#include "BCFViewControls.h"
 #include "STEPViewerDoc.h"
 #include "Resource.h"
 #include "_ap_model_factory.h"
@@ -70,13 +74,25 @@ BEGIN_MESSAGE_MAP(CBCFView, CDockablePane)
 END_MESSAGE_MAP()
 
 CBCFView::CBCFView()
-	: m_document(nullptr), m_project(nullptr), m_activeForm(ProjectForm)
+	: m_document(nullptr)
+	, m_project(nullptr)
+	, m_activeForm(ProjectForm)
+	, m_projectId(new CBCFEdit)
+	, m_projectName(new CBCFEdit)
+	, m_projectForm(new CBCFProjectForm)
+	, m_topicForm(new CBCFTopicForm)
+	, m_commentForm(new CBCFCommentForm)
 {
 }
 
 CBCFView::~CBCFView()
 {
 	ReleaseProject();
+	delete m_commentForm;
+	delete m_topicForm;
+	delete m_projectForm;
+	delete m_projectName;
+	delete m_projectId;
 }
 
 int CBCFView::OnCreate(LPCREATESTRUCT createStruct)
@@ -105,15 +121,15 @@ int CBCFView::OnCreate(LPCREATESTRUCT createStruct)
 	CreateBCFStaticLabel(m_projectIdLabel, L"Project Id:", this);
 	CreateBCFStaticLabel(m_projectNameLabel, L"Name:", this);
 	
-	m_projectId.Create(WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL | ES_READONLY,
+	m_projectId->Create(WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL | ES_READONLY,
 		CRect(), this, IDC_PANE_PROJECT_ID);
-	m_projectName.Create(WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL,
+	m_projectName->Create(WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL,
 		CRect(), this, IDC_PANE_PROJECT_NAME);
 
-	SetBCFControlFont(m_projectId, this);
-	SetBCFControlFont(m_projectName, this);
+	SetBCFControlFont(*m_projectId, this);
+	SetBCFControlFont(*m_projectName, this);
 	
-	if (!m_projectForm.Create(this) || !m_topicForm.Create(this) || !m_commentForm.Create(this)) {
+	if (!m_projectForm->Create(this) || !m_topicForm->Create(this) || !m_commentForm->Create(this)) {
 		return -1;
 	}
 	
@@ -190,9 +206,9 @@ bool CBCFView::CommitCurrent()
 		return true;
 	}
 	if (m_activeForm == TopicForm) {
-		return m_topicForm.Commit();
+		return m_topicForm->Commit();
 	}
-	return m_commentForm.Commit();
+	return m_commentForm->Commit();
 }
 
 bool CBCFView::SaveProject()
@@ -211,7 +227,7 @@ bool CBCFView::SaveProject()
 	if (ok) {
 		m_filePath = path;
 		UpdateCaption();
-		m_projectForm.Load();
+		m_projectForm->Load();
 	}
 	return ok;
 }
@@ -254,8 +270,8 @@ void CBCFView::ReleaseProject()
 	m_bimModels.clear();
 	LoadProjectInfo();
 	UpdateCaption();
-	m_topicForm.Load(nullptr);
-	m_commentForm.Load(nullptr);
+	m_topicForm->Load(nullptr);
+	m_commentForm->Load(nullptr);
 }
 
 void CBCFView::ShowProject()
@@ -263,16 +279,16 @@ void CBCFView::ShowProject()
 	if (!CommitProjectInfo()) {
 		return;
 	}
-	if (m_activeForm == TopicForm && !m_topicForm.Commit()) {
+	if (m_activeForm == TopicForm && !m_topicForm->Commit()) {
 		return;
 	}
 	if (m_activeForm == CommentForm) {
-		if (!m_commentForm.Commit()) {
+		if (!m_commentForm->Commit()) {
 			return;
 		}
-		m_topicForm.ReloadComments(m_commentForm.GetComment());
+		m_topicForm->ReloadComments(m_commentForm->GetComment());
 	}
-	m_projectForm.Load();
+	m_projectForm->Load();
 	ShowForm(ProjectForm);
 }
 
@@ -282,51 +298,51 @@ void CBCFView::ShowTopic(BCFTopic* topic)
 		return;
 	}
 	if (m_activeForm == ProjectForm) {
-		if (!m_projectForm.Commit()) {
+		if (!m_projectForm->Commit()) {
 			return;
 		}
 	}
 	else if (m_activeForm == CommentForm) {
-		BCFComment* comment = m_commentForm.GetComment();
-		if (!m_commentForm.Commit()) {
+		BCFComment* comment = m_commentForm->GetComment();
+		if (!m_commentForm->Commit()) {
 			return;
 		}
-		if (m_topicForm.GetTopic() == topic) {
-			m_topicForm.ReloadComments(comment);
+		if (m_topicForm->GetTopic() == topic) {
+			m_topicForm->ReloadComments(comment);
 			ShowForm(TopicForm);
 			return;
 		}
 	}
-	m_topicForm.Load(topic);
+	m_topicForm->Load(topic);
 	ShowForm(TopicForm);
 }
 
 void CBCFView::ShowComment(BCFComment* comment)
 {
-	if (!comment || !CommitProjectInfo() || !m_topicForm.Commit()) {
+	if (!comment || !CommitProjectInfo() || !m_topicForm->Commit()) {
 		return;
 	}
-	m_commentForm.Load(comment);
+	m_commentForm->Load(comment);
 	ShowForm(CommentForm);
 }
 
 void CBCFView::ShowForm(Form form)
 {
 	m_activeForm = form;
-	m_projectForm.ShowWindow(form == ProjectForm ? SW_SHOW : SW_HIDE);
-	m_topicForm.ShowWindow(form == TopicForm ? SW_SHOW : SW_HIDE);
-	m_commentForm.ShowWindow(form == CommentForm ? SW_SHOW : SW_HIDE);
+	m_projectForm->ShowWindow(form == ProjectForm ? SW_SHOW : SW_HIDE);
+	m_topicForm->ShowWindow(form == TopicForm ? SW_SHOW : SW_HIDE);
+	m_commentForm->ShowWindow(form == CommentForm ? SW_SHOW : SW_HIDE);
 	AdjustLayout();
 	RefreshCommandUI();
 }
 
 void CBCFView::LoadProjectInfo()
 {
-	if (!m_projectId.GetSafeHwnd()) {
+	if (!m_projectId->GetSafeHwnd()) {
 		return;
 	}
-	m_projectId.SetWindowText(m_project ? FromUTF8(m_project->GetProjectId()) : CString());
-	m_projectName.SetWindowText(m_project ? FromUTF8(m_project->GetName()) : CString());
+	m_projectId->SetWindowText(m_project ? FromUTF8(m_project->GetProjectId()) : CString());
+	m_projectName->SetWindowText(m_project ? FromUTF8(m_project->GetName()) : CString());
 }
 
 bool CBCFView::CommitProjectInfo()
@@ -335,7 +351,7 @@ bool CBCFView::CommitProjectInfo()
 		return true;
 	}
 	CString name;
-	m_projectName.GetWindowText(name);
+	m_projectName->GetWindowText(name);
 	name.Trim();
 	if (name == FromUTF8(m_project->GetName())) {
 		return true;
@@ -360,20 +376,20 @@ void CBCFView::OnAddTopic()
 	if (!m_project) {
 		return;
 	}
-	if (!m_projectForm.Commit()) {
+	if (!m_projectForm->Commit()) {
 		return;
 	}
 	BCFTopic* topic = m_project->AddTopic(nullptr, nullptr, nullptr);
 	ShowLog(!topic);
 	if (topic) {
-		m_projectForm.Load(topic);
+		m_projectForm->Load(topic);
 		ShowTopic(topic);
 	}
 }
 
 void CBCFView::OnDeleteTopic()
 {
-	BCFTopic* topic = m_projectForm.GetSelectedTopic();
+	BCFTopic* topic = m_projectForm->GetSelectedTopic();
 	if (!topic) {
 		return;
 	}
@@ -383,38 +399,38 @@ void CBCFView::OnDeleteTopic()
 		bool ok = topic->Remove();
 		ShowLog(!ok);
 		if (ok) {
-			m_projectForm.Load();
+			m_projectForm->Load();
 		}
 	}
 }
 
 void CBCFView::OnTopicDetails()
 {
-	ShowTopic(m_projectForm.GetSelectedTopic());
+	ShowTopic(m_projectForm->GetSelectedTopic());
 }
 
 void CBCFView::OnViewProject() { ShowProject(); }
-void CBCFView::OnViewTopic() { ShowTopic(m_projectForm.GetSelectedTopic()); }
-void CBCFView::OnViewComment() { ShowComment(m_topicForm.GetSelectedComment()); }
+void CBCFView::OnViewTopic() { ShowTopic(m_projectForm->GetSelectedTopic()); }
+void CBCFView::OnViewComment() { ShowComment(m_topicForm->GetSelectedComment()); }
 
 void CBCFView::OnSaveComment()
 {
-	if (m_commentForm.Commit()) {
-		m_topicForm.ReloadComments(m_commentForm.GetComment());
+	if (m_commentForm->Commit()) {
+		m_topicForm->ReloadComments(m_commentForm->GetComment());
 	}
 }
 
 void CBCFView::OnDeleteComment()
 {
-	BCFComment* comment = m_commentForm.GetComment();
+	BCFComment* comment = m_commentForm->GetComment();
 	if (!comment || AfxMessageBox(L"Delete this comment?", MB_YESNO | MB_ICONWARNING) != IDYES) {
 		return;
 	}
 	bool ok = comment->Remove();
 	ShowLog(!ok);
 	if (ok) {
-		m_commentForm.Load(nullptr);
-		m_topicForm.ReloadComments();
+		m_commentForm->Load(nullptr);
+		m_topicForm->ReloadComments();
 		ShowForm(TopicForm);
 	}
 }
@@ -508,12 +524,12 @@ void CBCFView::OnUpdateProjectCommand(CCmdUI* commandUI)
 
 void CBCFView::OnUpdateTopicCommand(CCmdUI* commandUI)
 {
-	commandUI->Enable(m_activeForm == ProjectForm && m_projectForm.GetSelectedTopic() != nullptr);
+	commandUI->Enable(m_activeForm == ProjectForm && m_projectForm->GetSelectedTopic() != nullptr);
 }
 
 void CBCFView::OnUpdateCommentCommand(CCmdUI* commandUI)
 {
-	commandUI->Enable(m_activeForm == CommentForm && m_commentForm.GetComment() != nullptr);
+	commandUI->Enable(m_activeForm == CommentForm && m_commentForm->GetComment() != nullptr);
 }
 
 void CBCFView::OnUpdateViewProject(CCmdUI* commandUI)
@@ -524,14 +540,14 @@ void CBCFView::OnUpdateViewProject(CCmdUI* commandUI)
 
 void CBCFView::OnUpdateViewTopic(CCmdUI* commandUI)
 {
-	commandUI->Enable(m_projectForm.GetSelectedTopic() != nullptr);
+	commandUI->Enable(m_projectForm->GetSelectedTopic() != nullptr);
 	commandUI->SetRadio(m_activeForm == TopicForm);
 }
 
 void CBCFView::OnUpdateViewComment(CCmdUI* commandUI)
 {
-	const bool hasSelectedComment = m_topicForm.GetTopic() == m_projectForm.GetSelectedTopic() &&
-		m_topicForm.GetSelectedComment() != nullptr;
+	const bool hasSelectedComment = m_topicForm->GetTopic() == m_projectForm->GetSelectedTopic() &&
+		m_topicForm->GetSelectedComment() != nullptr;
 	commandUI->Enable(hasSelectedComment);
 	commandUI->SetRadio(m_activeForm == CommentForm);
 }
@@ -567,10 +583,10 @@ void CBCFView::AdjustLayout()
 	CString projectIdText;
 	m_projectIdLabel.GetWindowText(idLabelText);
 	m_projectNameLabel.GetWindowText(nameLabelText);
-	m_projectId.GetWindowText(projectIdText);
+	m_projectId->GetWindowText(projectIdText);
 	const int idLabelWidth = dc.GetTextExtent(idLabelText).cx + margin;
 	const int nameLabelWidth = dc.GetTextExtent(nameLabelText).cx + margin;
-	const DWORD projectIdMargins = m_projectId.GetMargins();
+	const DWORD projectIdMargins = m_projectId->GetMargins();
 	const int projectIdWidth = max(rowHeight,
 		static_cast<int>(dc.GetTextExtent(projectIdText).cx) +
 		LOWORD(projectIdMargins) + HIWORD(projectIdMargins));
@@ -584,28 +600,28 @@ void CBCFView::AdjustLayout()
 		3 * margin + idLabelWidth + projectIdWidth + nameLabelWidth + minEditWidth;
 	if (client.Width() >= twoColumnWidth) {
 		m_projectIdLabel.MoveWindow(margin, headerTop + labelOffset, idLabelWidth, textHeight);
-		m_projectId.MoveWindow(margin + idLabelWidth, headerTop + labelOffset,
+		m_projectId->MoveWindow(margin + idLabelWidth, headerTop + labelOffset,
 			projectIdWidth, rowHeight - labelOffset);
 		const int second = 2 * margin + idLabelWidth + projectIdWidth;
 		m_projectNameLabel.MoveWindow(second, headerTop + labelOffset, nameLabelWidth, textHeight);
-		m_projectName.MoveWindow(second + nameLabelWidth, headerTop + labelOffset,
+		m_projectName->MoveWindow(second + nameLabelWidth, headerTop + labelOffset,
 			client.right - second - nameLabelWidth - margin, rowHeight - labelOffset);
 	}
 	else {
 		const int labelWidth = max(idLabelWidth, nameLabelWidth);
 		const int editWidth = max(rowHeight, client.Width() - 2 * margin - labelWidth);
 		m_projectIdLabel.MoveWindow(margin, headerTop + labelOffset, labelWidth, textHeight);
-		m_projectId.MoveWindow(margin + labelWidth, headerTop + labelOffset,
+		m_projectId->MoveWindow(margin + labelWidth, headerTop + labelOffset,
 			min(projectIdWidth, editWidth), rowHeight - labelOffset);
 		m_projectNameLabel.MoveWindow(margin, headerTop + rowHeight + labelOffset, labelWidth, textHeight);
-		m_projectName.MoveWindow(margin + labelWidth, headerTop + rowHeight + labelOffset,
+		m_projectName->MoveWindow(margin + labelWidth, headerTop + rowHeight + labelOffset,
 			editWidth, rowHeight - labelOffset);
 		headerHeight = 2 * rowHeight;
 	}
 	CRect formRect(client.left, headerTop + headerHeight + margin, client.right, client.bottom);
-	m_projectForm.MoveWindow(formRect);
-	m_topicForm.MoveWindow(formRect);
-	m_commentForm.MoveWindow(formRect);
+	m_projectForm->MoveWindow(formRect);
+	m_topicForm->MoveWindow(formRect);
+	m_commentForm->MoveWindow(formRect);
 	RedrawWindow(nullptr, nullptr, RDW_INVALIDATE | RDW_ERASE | RDW_ALLCHILDREN);
 }
 
@@ -618,12 +634,12 @@ void CBCFView::OnSize(UINT type, int cx, int cy)
 void CBCFView::OnSetFocus(CWnd*)
 {
 	if (m_activeForm == ProjectForm) {
-		m_projectForm.SetFocus();
+		m_projectForm->SetFocus();
 	}
 	else if (m_activeForm == TopicForm) {
-		m_topicForm.SetFocus();
+		m_topicForm->SetFocus();
 	}
 	else {
-		m_commentForm.SetFocus();
+		m_commentForm->SetFocus();
 	}
 }
