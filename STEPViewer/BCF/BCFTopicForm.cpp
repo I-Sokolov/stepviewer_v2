@@ -2,6 +2,8 @@
 
 #include "BCFTopicForm.h"
 #include "BCFAddDocumentReference.h"
+#include "BCFAddReferenceLink.h"
+#include "BCFAddRelatedTopic.h"
 #include "BCFTopicLabelsDlg.h"
 #include "BCFView.h"
 #include "BCFViewPointMgr.h"
@@ -41,6 +43,12 @@ BEGIN_MESSAGE_MAP(CBCFTopicForm, CWnd)
 	ON_BN_CLICKED(IDC_PANE_ADD_DOCUMENT, &CBCFTopicForm::OnAddDocument)
 	ON_BN_CLICKED(IDC_PANE_REMOVE_DOCUMENT, &CBCFTopicForm::OnRemoveDocument)
 	ON_CONTROL(LBN_SELCHANGE, IDC_PANE_DOCUMENTS, &CBCFTopicForm::OnDocumentChanged)
+	ON_BN_CLICKED(IDC_PANE_ADD_LINK, &CBCFTopicForm::OnAddLink)
+	ON_BN_CLICKED(IDC_PANE_REMOVE_LINK, &CBCFTopicForm::OnRemoveLink)
+	ON_CONTROL(LBN_SELCHANGE, IDC_PANE_LINKS, &CBCFTopicForm::OnLinkChanged)
+	ON_BN_CLICKED(IDC_PANE_ADD_RELATED_TOPIC, &CBCFTopicForm::OnAddRelatedTopic)
+	ON_BN_CLICKED(IDC_PANE_REMOVE_RELATED_TOPIC, &CBCFTopicForm::OnRemoveRelatedTopic)
+	ON_CONTROL(LBN_SELCHANGE, IDC_PANE_RELATED_TOPICS, &CBCFTopicForm::OnRelatedTopicChanged)
 END_MESSAGE_MAP()
 
 BOOL CBCFTopicForm::Create(CBCFView* pane)
@@ -67,6 +75,7 @@ BOOL CBCFTopicForm::Create(CBCFView* pane)
 	m_tabs.InsertItem(4, L"Comments");
 	m_tabs.InsertItem(5, L"Documents");
 	m_tabs.InsertItem(6, L"Links");
+	m_tabs.InsertItem(7, L"Related Topics");
 
 	m_title.Create(WS_CHILD | WS_TABSTOP | ES_AUTOHSCROLL, CRect(), this, IDC_PANE_TOPIC_TITLE);
 
@@ -142,11 +151,28 @@ BOOL CBCFTopicForm::Create(CBCFView* pane)
 	m_removeDocument.Create(L"Remove...", WS_CHILD | WS_TABSTOP | BS_PUSHBUTTON,
 		CRect(), this, IDC_PANE_REMOVE_DOCUMENT);
 	SetBCFControlFont(m_removeDocument, this);
-	CreateBCFStaticLabel(m_linksPlaceholder, L"Links are not available in this version.", this);
+	m_links.Create(WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VSCROLL |
+		LBS_NOTIFY | LBS_SORT | LBS_NOINTEGRALHEIGHT,
+		CRect(), this, IDC_PANE_LINKS);
+	SetBCFControlFont(m_links, this);
+	m_addLink.Create(L"Add..", WS_CHILD | WS_TABSTOP | BS_PUSHBUTTON,
+		CRect(), this, IDC_PANE_ADD_LINK);
+	SetBCFControlFont(m_addLink, this);
+	m_removeLink.Create(L"Remove...", WS_CHILD | WS_TABSTOP | BS_PUSHBUTTON,
+		CRect(), this, IDC_PANE_REMOVE_LINK);
+	SetBCFControlFont(m_removeLink, this);
+	m_relatedTopics.Create(WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VSCROLL |
+		LBS_NOTIFY | LBS_SORT | LBS_NOINTEGRALHEIGHT,
+		CRect(), this, IDC_PANE_RELATED_TOPICS);
+	SetBCFControlFont(m_relatedTopics, this);
+	m_addRelatedTopic.Create(L"Add..", WS_CHILD | WS_TABSTOP | BS_PUSHBUTTON,
+		CRect(), this, IDC_PANE_ADD_RELATED_TOPIC);
+	SetBCFControlFont(m_addRelatedTopic, this);
+	m_removeRelatedTopic.Create(L"Remove...", WS_CHILD | WS_TABSTOP | BS_PUSHBUTTON,
+		CRect(), this, IDC_PANE_REMOVE_RELATED_TOPIC);
+	SetBCFControlFont(m_removeRelatedTopic, this);
 
-	CStatic* tabLabels[] = {
-		&m_descriptionLabel, &m_linksPlaceholder
-	};
+	CStatic* tabLabels[] = { &m_descriptionLabel };
 	for (CStatic* label : tabLabels) {
 		label->ModifyStyleEx(0, WS_EX_TRANSPARENT);
 	}
@@ -222,6 +248,8 @@ void CBCFTopicForm::Load(BCFTopic* topic)
 	
 	ReloadComments();
 	ReloadDocuments();
+	ReloadLinks();
+	ReloadRelatedTopics();
 	m_pane->LoadBimFiles(*topic);
 	ReloadBimFiles();
 	m_tabs.SetCurSel(0);
@@ -543,6 +571,126 @@ void CBCFTopicForm::OnDocumentChanged()
 	m_removeDocument.EnableWindow(GetSelectedDocument() != nullptr);
 }
 
+void CBCFTopicForm::ReloadLinks(int selection)
+{
+	if (selection == LB_ERR) {
+		selection = m_links.GetCurSel();
+	}
+	m_links.SetRedraw(FALSE);
+	m_links.ResetContent();
+	if (m_topic) {
+		for (uint16_t i = 0; const char* link = m_topic->GetReferenceLink(i); ++i) {
+			m_links.AddString(FromUTF8(link));
+		}
+	}
+	m_links.SetRedraw(TRUE);
+	m_links.Invalidate();
+	if (selection == LB_ERR && m_links.GetCount() > 0) {
+		selection = 0;
+	}
+	if (selection >= m_links.GetCount()) {
+		selection = m_links.GetCount() - 1;
+	}
+	m_links.SetCurSel(selection);
+	OnLinkChanged();
+}
+
+void CBCFTopicForm::OnAddLink()
+{
+	if (!m_topic) {
+		return;
+	}
+	CBCFAddReferenceLink dialog(*m_pane, *m_topic);
+	if (dialog.DoModal() == IDOK) {
+		ReloadLinks();
+	}
+}
+
+void CBCFTopicForm::OnRemoveLink()
+{
+	const int selection = m_links.GetCurSel();
+	if (!m_topic || selection == LB_ERR) {
+		return;
+	}
+	CString link;
+	m_links.GetText(selection, link);
+	CString question;
+	question.Format(L"Do you want to delete reference link '%s'?", link.GetString());
+	if (AfxMessageBox(question, MB_YESNO) == IDYES) {
+		const bool ok = m_topic->RemoveReferenceLink(ToUTF8(link).c_str());
+		m_pane->ShowLog(!ok);
+		if (ok) {
+			ReloadLinks(selection);
+		}
+	}
+}
+
+void CBCFTopicForm::OnLinkChanged()
+{
+	m_removeLink.EnableWindow(m_links.GetCurSel() != LB_ERR);
+}
+
+BCFTopic* CBCFTopicForm::GetSelectedRelatedTopic() const
+{
+	const int selection = m_relatedTopics.GetCurSel();
+	return selection == LB_ERR
+		? nullptr
+		: static_cast<BCFTopic*>(m_relatedTopics.GetItemDataPtr(selection));
+}
+
+void CBCFTopicForm::ReloadRelatedTopics(BCFTopic* selectTopic)
+{
+	BCFTopic* selected = selectTopic ? selectTopic : GetSelectedRelatedTopic();
+	m_relatedTopics.SetRedraw(FALSE);
+	m_relatedTopics.ResetContent();
+	int selectedItem = LB_ERR;
+	if (m_topic) {
+		for (uint16_t i = 0; BCFTopic* topic = m_topic->GetRelatedTopic(i); ++i) {
+			const int item = m_relatedTopics.AddString(GetBCFTopicDisplayName(*topic));
+			m_relatedTopics.SetItemDataPtr(item, topic);
+			if (topic == selected) {
+				selectedItem = item;
+			}
+		}
+	}
+	m_relatedTopics.SetRedraw(TRUE);
+	m_relatedTopics.Invalidate();
+	if (selectedItem == LB_ERR && m_relatedTopics.GetCount() > 0) {
+		selectedItem = 0;
+	}
+	m_relatedTopics.SetCurSel(selectedItem);
+	OnRelatedTopicChanged();
+}
+
+void CBCFTopicForm::OnAddRelatedTopic()
+{
+	if (!m_topic) {
+		return;
+	}
+	CBCFAddRelatedTopic dialog(*m_pane, *m_topic);
+	if (dialog.DoModal() == IDOK) {
+		ReloadRelatedTopics();
+	}
+}
+
+void CBCFTopicForm::OnRemoveRelatedTopic()
+{
+	BCFTopic* relatedTopic = GetSelectedRelatedTopic();
+	if (!m_topic || !relatedTopic) {
+		return;
+	}
+	const bool ok = m_topic->RemoveRelatedTopic(relatedTopic);
+	m_pane->ShowLog(!ok);
+	if (ok) {
+		ReloadRelatedTopics();
+	}
+}
+
+void CBCFTopicForm::OnRelatedTopicChanged()
+{
+	m_removeRelatedTopic.EnableWindow(GetSelectedRelatedTopic() != nullptr);
+}
+
 HBRUSH CBCFTopicForm::OnCtlColor(CDC* dc, CWnd* window, UINT controlColor)
 {
 	if (controlColor == CTLCOLOR_STATIC &&
@@ -588,7 +736,12 @@ void CBCFTopicForm::ShowTab(int tab)
 	m_documents.ShowWindow(tab == 5 ? SW_SHOW : SW_HIDE);
 	m_addDocument.ShowWindow(tab == 5 ? SW_SHOW : SW_HIDE);
 	m_removeDocument.ShowWindow(tab == 5 ? SW_SHOW : SW_HIDE);
-	m_linksPlaceholder.ShowWindow(tab == 6 ? SW_SHOW : SW_HIDE);
+	m_links.ShowWindow(tab == 6 ? SW_SHOW : SW_HIDE);
+	m_addLink.ShowWindow(tab == 6 ? SW_SHOW : SW_HIDE);
+	m_removeLink.ShowWindow(tab == 6 ? SW_SHOW : SW_HIDE);
+	m_relatedTopics.ShowWindow(tab == 7 ? SW_SHOW : SW_HIDE);
+	m_addRelatedTopic.ShowWindow(tab == 7 ? SW_SHOW : SW_HIDE);
+	m_removeRelatedTopic.ShowWindow(tab == 7 ? SW_SHOW : SW_HIDE);
 	RedrawWindow(nullptr, nullptr,
 		RDW_INVALIDATE | RDW_ERASE | RDW_FRAME | RDW_ALLCHILDREN | RDW_UPDATENOW);
 }
@@ -754,24 +907,39 @@ void CBCFTopicForm::AdjustLayout()
 	else if (m_tabs.GetCurSel() == 4) {
 		m_comments.MoveWindow(page);
 	}
-	else if (m_tabs.GetCurSel() == 5) {
+	else if (m_tabs.GetCurSel() >= 5 && m_tabs.GetCurSel() <= 7) {
+		CListBox* list = nullptr;
+		CButton* addButton = nullptr;
+		CButton* removeButton = nullptr;
+		if (m_tabs.GetCurSel() == 5) {
+			list = &m_documents;
+			addButton = &m_addDocument;
+			removeButton = &m_removeDocument;
+		}
+		else if (m_tabs.GetCurSel() == 6) {
+			list = &m_links;
+			addButton = &m_addLink;
+			removeButton = &m_removeLink;
+		}
+		else {
+			list = &m_relatedTopics;
+			addButton = &m_addRelatedTopic;
+			removeButton = &m_removeRelatedTopic;
+		}
 		CString addText;
 		CString removeText;
-		m_addDocument.GetWindowText(addText);
-		m_removeDocument.GetWindowText(removeText);
+		addButton->GetWindowText(addText);
+		removeButton->GetWindowText(removeText);
 		const int addWidth = max(rowHeight,
 			static_cast<int>(dc.GetTextExtent(addText).cx) + 2 * margin);
 		const int removeWidth = max(rowHeight,
 			static_cast<int>(dc.GetTextExtent(removeText).cx) + 2 * margin);
 		const int removeLeft = page.right - removeWidth;
 		const int addLeft = removeLeft - rowSpacing - addWidth;
-		m_addDocument.MoveWindow(addLeft, page.bottom - rowHeight, addWidth, rowHeight);
-		m_removeDocument.MoveWindow(removeLeft, page.bottom - rowHeight, removeWidth, rowHeight);
-		m_documents.MoveWindow(page.left, page.top, page.Width(),
+		addButton->MoveWindow(addLeft, page.bottom - rowHeight, addWidth, rowHeight);
+		removeButton->MoveWindow(removeLeft, page.bottom - rowHeight, removeWidth, rowHeight);
+		list->MoveWindow(page.left, page.top, page.Width(),
 			max(rowHeight, page.Height() - rowHeight - rowSpacing));
-	}
-	else if (m_tabs.GetCurSel() == 6) {
-		m_linksPlaceholder.MoveWindow(page.left, page.top, page.Width(), textHeight);
 	}
 
 	if (oldFont) {

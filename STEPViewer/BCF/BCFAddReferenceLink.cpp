@@ -5,6 +5,7 @@
 #include "STEPViewer.h"
 #include "BCFTopicDlg.h"
 #include "BCFAddReferenceLink.h"
+#include "BCFView.h"
 
 
 // CBCFAddReferenceLink dialog
@@ -13,9 +14,19 @@ IMPLEMENT_DYNAMIC(CBCFAddReferenceLink, CDialogEx)
 
 CBCFAddReferenceLink::CBCFAddReferenceLink(CBCFTopicDlg& view)
 	: CDialogEx(IDD_BCF_ADDREFERENCELINK, &view)
-	, m_view(view)
+	, m_topic(&view.GetTopic())
+	, m_topicView(&view)
+	, m_paneView(nullptr)
 {
 
+}
+
+CBCFAddReferenceLink::CBCFAddReferenceLink(CBCFView& view, BCFTopic& topic)
+	: CDialogEx(IDD_BCF_ADDREFERENCELINK, &view)
+	, m_topic(&topic)
+	, m_topicView(nullptr)
+	, m_paneView(&view)
+{
 }
 
 CBCFAddReferenceLink::~CBCFAddReferenceLink()
@@ -42,12 +53,16 @@ void CBCFAddReferenceLink::OnOK()
 	text.Trim();
 	if (!text.IsEmpty())
 	{
-		auto& topic = m_view.GetTopic();
-		if (topic.AddReferenceLink(ToUTF8(text).c_str())) {
+		if (m_topic->AddReferenceLink(ToUTF8(text).c_str())) {
 			CDialogEx::OnOK();
 		}
 		else {
-			m_view.ShowLog(true);
+			if (m_topicView) {
+				m_topicView->ShowLog(true);
+			}
+			else {
+				m_paneView->ShowLog(true);
+			}
 		}
 	}
 }

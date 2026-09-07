@@ -1,6 +1,8 @@
 #pragma once
 
 class CBCFTopicDlg;
+class CBCFView;
+struct BCFTopic;
 
 class CBCFAddReferenceLink : public CDialogEx
 {
@@ -8,6 +10,7 @@ class CBCFAddReferenceLink : public CDialogEx
 
 public:
 	CBCFAddReferenceLink(CBCFTopicDlg& view);
+	CBCFAddReferenceLink(CBCFView& view, BCFTopic& topic);
 	virtual ~CBCFAddReferenceLink();
 
 // Dialog Data
@@ -23,7 +26,11 @@ protected:
 	afx_msg void OnChangeEdit();
 
 public:
-	CBCFTopicDlg& m_view;
 	CEdit m_wndEdit;
 	CButton m_wndOK;
+
+private:
+	BCFTopic* m_topic;
+	CBCFTopicDlg* m_topicView;
+	CBCFView* m_paneView;
 };

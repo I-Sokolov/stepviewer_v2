@@ -5,6 +5,8 @@
 #include "STEPViewer.h"
 #include "BCFAddRelatedTopic.h"
 #include "BCFTopicDlg.h"
+#include "BCFView.h"
+#include "BCFViewControls.h"
 
 #include <unordered_set>
 
@@ -13,9 +15,19 @@ IMPLEMENT_DYNAMIC(CBCFAddRelatedTopic, CDialogEx)
 
 CBCFAddRelatedTopic::CBCFAddRelatedTopic(CBCFTopicDlg& bcfView)
 	: CDialogEx(IDD_BCF_ADDRELATEDTOPIC, &bcfView)
-	, m_view(bcfView)
+	, m_topic(&bcfView.GetTopic())
+	, m_topicView(&bcfView)
+	, m_paneView(nullptr)
 {
 
+}
+
+CBCFAddRelatedTopic::CBCFAddRelatedTopic(CBCFView& view, BCFTopic& topic)
+	: CDialogEx(IDD_BCF_ADDRELATEDTOPIC, &view)
+	, m_topic(&topic)
+	, m_topicView(nullptr)
+	, m_paneView(&view)
+{
 }
 
 CBCFAddRelatedTopic::~CBCFAddRelatedTopic()
@@ -42,20 +54,18 @@ BOOL CBCFAddRelatedTopic::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
 
-	auto topic = &m_view.GetTopic();
-
 	std::unordered_set<BCFTopic*> exist;
 	uint16_t i = 0;
-	while (auto t = topic->GetRelatedTopic(i++)) {
+	while (auto t = m_topic->GetRelatedTopic(i++)) {
 		exist.insert(t);
 	}
-	exist.insert(topic);
+	exist.insert(m_topic);
 
-	auto& bcfProject = topic->GetProject();
+	auto& bcfProject = m_topic->GetProject();
 	i = 0;
 	while (auto t = bcfProject.GetTopic(i++)) {
 		if (exist.find(t) == exist.end()) {
-			CString text = m_view.GetTopicDisplayName(*t);
+			CString text = GetBCFTopicDisplayName(*t);
 			auto item = m_wndListTopic.AddString(text);
 			m_wndListTopic.SetItemDataPtr(item, t);
 		}
@@ -74,12 +84,16 @@ void CBCFAddRelatedTopic::OnOK()
 	if (item != LB_ERR) {
 		auto t = (BCFTopic*)m_wndListTopic.GetItemData(item);
 		if (t) {
-			auto& topic = m_view.GetTopic();
-			if (topic.AddRelatedTopic(t)) {
+			if (m_topic->AddRelatedTopic(t)) {
 				CDialogEx::OnOK();
 			}
 			else{
-				m_view.ShowLog(true);
+				if (m_topicView) {
+					m_topicView->ShowLog(true);
+				}
+				else {
+					m_paneView->ShowLog(true);
+				}
 			}
 		}
 	}

@@ -12,6 +12,7 @@
 #include "BCF\BCFAddReferenceLink.h"
 #include "BCF\BCFAddDocumentReference.h"
 #include "BCF\BCFBimFiles.h"
+#include "BCF\BCFViewControls.h"
 
 #include <experimental/filesystem>
 namespace fs = std::experimental::filesystem;
@@ -686,21 +687,7 @@ void CBCFTopicDlg::OnClickedUpdateViewpoint()
 
 CString CBCFTopicDlg::GetTopicDisplayName(BCFTopic& topic)
 {
-	uint16_t i = 0;
-	auto& bcfProject = topic.GetProject();
-	while (auto t = bcfProject.GetTopic(i++)) {
-		if (t == &topic) {
-			break;
-		}
-	}
-
-	auto guid = FromUTF8(topic.GetGuid());
-	auto title = FromUTF8(topic.GetTitle());
-
-	CString text;
-	text.Format(L"#%d: %s - %s", i, guid.GetString(), title.GetString());
-
-	return text;
+	return GetBCFTopicDisplayName(topic);
 }
 
 

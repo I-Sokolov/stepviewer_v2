@@ -32,6 +32,12 @@ protected:
 	afx_msg void OnAddDocument();
 	afx_msg void OnRemoveDocument();
 	afx_msg void OnDocumentChanged();
+	afx_msg void OnAddLink();
+	afx_msg void OnRemoveLink();
+	afx_msg void OnLinkChanged();
+	afx_msg void OnAddRelatedTopic();
+	afx_msg void OnRemoveRelatedTopic();
+	afx_msg void OnRelatedTopicChanged();
 	afx_msg HBRUSH OnCtlColor(CDC* dc, CWnd* window, UINT controlColor);
 	DECLARE_MESSAGE_MAP()
 
@@ -45,6 +51,9 @@ private:
 	bool AddBimFile(const CString& path);
 	void ReloadDocuments(BCFDocumentReference* selectDocument = nullptr);
 	BCFDocumentReference* GetSelectedDocument() const;
+	void ReloadLinks(int selection = LB_ERR);
+	void ReloadRelatedTopics(BCFTopic* selectTopic = nullptr);
+	BCFTopic* GetSelectedRelatedTopic() const;
 
 	CBCFView* m_pane = nullptr;
 	BCFTopic* m_topic = nullptr;
@@ -79,5 +88,10 @@ private:
 	CListBox m_documents;
 	CButton m_addDocument;
 	CButton m_removeDocument;
-	CStatic m_linksPlaceholder;
+	CListBox m_links;
+	CButton m_addLink;
+	CButton m_removeLink;
+	CListBox m_relatedTopics;
+	CButton m_addRelatedTopic;
+	CButton m_removeRelatedTopic;
 };

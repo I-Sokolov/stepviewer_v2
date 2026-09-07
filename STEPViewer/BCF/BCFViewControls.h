@@ -30,6 +30,12 @@ enum BCFViewControlId
 	IDC_PANE_DOCUMENTS,
 	IDC_PANE_ADD_DOCUMENT,
 	IDC_PANE_REMOVE_DOCUMENT,
+	IDC_PANE_LINKS,
+	IDC_PANE_ADD_LINK,
+	IDC_PANE_REMOVE_LINK,
+	IDC_PANE_RELATED_TOPICS,
+	IDC_PANE_ADD_RELATED_TOPIC,
+	IDC_PANE_REMOVE_RELATED_TOPIC,
 	IDC_PANE_COMMENT_TEXT
 };
 
@@ -39,6 +45,7 @@ void SetBCFComboValue(CComboBox& combo, const CString& value);
 BOOL CreateBCFStaticLabel(CStatic& label, LPCTSTR text, CWnd* parent);
 CString FormatBCFCommentCreated(BCFComment& comment);
 CString FormatBCFCommentModified(BCFComment& comment);
+CString GetBCFTopicDisplayName(BCFTopic& topic);
 
 class CBCFSelectFileDlg : public CFileDialog
 {

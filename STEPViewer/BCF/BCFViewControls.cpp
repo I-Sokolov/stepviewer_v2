@@ -93,6 +93,22 @@ CString FormatBCFCommentModified(BCFComment& comment)
 	return value;
 }
 
+CString GetBCFTopicDisplayName(BCFTopic& topic)
+{
+	uint16_t index = 0;
+	BCFProject& project = topic.GetProject();
+	while (BCFTopic* candidate = project.GetTopic(index++)) {
+		if (candidate == &topic) {
+			break;
+		}
+	}
+
+	CString text;
+	text.Format(L"#%d: %s - %s", index, FromUTF8(topic.GetGuid()).GetString(),
+		FromUTF8(topic.GetTitle()).GetString());
+	return text;
+}
+
 CBCFSelectFileDlg::CBCFSelectFileDlg(LPCTSTR filePath, bool external, CWnd* parent)
 	: CFileDialog(TRUE, nullptr, filePath, OFN_FILEMUSTEXIST | OFN_HIDEREADONLY,
 		L"All files (*.*)|*.*||", parent)
