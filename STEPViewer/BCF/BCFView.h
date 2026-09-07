@@ -1,43 +1,15 @@
 #pragma once
 
 #include "bcfAPI.h"
-#include "BCFTopicDlg.h"
+#include "BCFCommentForm.h"
+#include "BCFProjectForm.h"
+#include "BCFTopicForm.h"
+#include "BCFViewControls.h"
 
 #include <map>
 
 class CMySTEPViewerDoc;
 class _model;
-class CBCFView;
-
-class CBCFSelectFileDlg : public CFileDialog
-{
-public:
-	CBCFSelectFileDlg(LPCTSTR filePath, bool external, CWnd* parent);
-
-	bool IsExternal() const { return m_external; }
-
-protected:
-	virtual BOOL OnFileNameOK() override;
-
-private:
-	enum
-	{
-		ModeControl = 1,
-		ExternalFileMode,
-		EmbedFileMode
-	};
-
-	bool m_external;
-};
-
-class CBCFEdit : public CEdit
-{
-protected:
-	afx_msg void OnPaint();
-	afx_msg void OnSetFocus(CWnd* oldWnd);
-	afx_msg void OnKillFocus(CWnd* newWnd);
-	DECLARE_MESSAGE_MAP()
-};
 
 class CBCFPaneMenuBar : public CMFCMenuBar
 {
@@ -58,113 +30,6 @@ public:
 	virtual BOOL LoadState(LPCTSTR = nullptr, int = -1, UINT = static_cast<UINT>(-1)) override { return TRUE; }
 	virtual BOOL SaveState(LPCTSTR = nullptr, int = -1, UINT = static_cast<UINT>(-1)) override { return TRUE; }
 	virtual BOOL AllowShowOnList() const override { return FALSE; }
-};
-
-class CBCFProjectForm : public CWnd
-{
-public:
-	BOOL Create(CBCFView* pane);
-	void Load(BCFTopic* selectTopic = nullptr);
-	bool Commit();
-	BCFTopic* GetSelectedTopic() const;
-
-protected:
-	afx_msg void OnSize(UINT type, int cx, int cy);
-	afx_msg void OnTopicChanged(NMHDR* header, LRESULT* result);
-	afx_msg void OnTopicDoubleClick(NMHDR* header, LRESULT* result);
-	DECLARE_MESSAGE_MAP()
-
-private:
-	CBCFView* m_pane = nullptr;
-	CStatic m_topicsLabel;
-	CListCtrl m_topics;
-};
-
-class CBCFTopicForm : public CWnd
-{
-public:
-	BOOL Create(CBCFView* pane);
-	void Load(BCFTopic* topic);
-	bool Commit();
-	BCFTopic* GetTopic() const { return m_topic; }
-	BCFComment* GetSelectedComment() const;
-	void ReloadComments(BCFComment* selectComment = nullptr);
-
-protected:
-	afx_msg void OnSize(UINT type, int cx, int cy);
-	afx_msg void OnTabChanged(NMHDR* header, LRESULT* result);
-	afx_msg void OnCommentChanged();
-	afx_msg void OnCommentDoubleClick();
-	afx_msg void OnViewProject();
-	afx_msg void OnSelectSnippetFile();
-	afx_msg void OnSelectTopicLabels();
-	afx_msg void OnAddBimFiles();
-	afx_msg void OnCheckBimFiles();
-	afx_msg HBRUSH OnCtlColor(CDC* dc, CWnd* window, UINT controlColor);
-	DECLARE_MESSAGE_MAP()
-
-private:
-	void AdjustLayout();
-	void ShowTab(int tab);
-	void LoadExtension(CComboBox& combo, BCFEnumeration enumeration);
-	void FormatTopicInfo();
-	void UpdateLabels();
-	void ReloadBimFiles();
-	bool AddBimFile(const CString& path);
-
-	CBCFView* m_pane = nullptr;
-	BCFTopic* m_topic = nullptr;
-	CButton m_viewProject;
-	CStatic m_topicInfo;
-	CStatic m_separator;
-	CTabCtrl m_tabs;
-	CBCFEdit m_title;
-	CStatic m_descriptionLabel;
-	CBCFEdit m_description;
-	CStatic m_attributeLabels[12];
-	CComboBox m_type;
-	CComboBox m_stage;
-	CComboBox m_status;
-	CComboBox m_assigned;
-	CComboBox m_priority;
-	CBCFEdit m_due;
-	CStatic m_labelsLabel;
-	CBCFEdit m_labels;
-	CButton m_selectTopicLabels;
-	CComboBox m_snippetType;
-	CButton m_snippetExternal;
-	CButton m_selectSnippetFile;
-	CBCFEdit m_snippetReference;
-	CBCFEdit m_snippetSchema;
-	CBCFEdit m_index;
-	CBCFEdit m_serverId;
-	CCheckListBox m_bimFiles;
-	CButton m_addBimFiles;
-	std::map<_model*, BCFBimFile*> m_usedBimModels;
-	CBCFCommentsListBox m_comments;
-	CStatic m_documentsPlaceholder;
-	CStatic m_linksPlaceholder;
-};
-
-class CBCFCommentForm : public CWnd
-{
-public:
-	BOOL Create(CBCFView* pane);
-	void Load(BCFComment* comment);
-	bool Commit();
-	BCFComment* GetComment() const { return m_comment; }
-
-protected:
-	afx_msg void OnSize(UINT type, int cx, int cy);
-	DECLARE_MESSAGE_MAP()
-
-private:
-	CBCFView* m_pane = nullptr;
-	BCFComment* m_comment = nullptr;
-	CStatic m_createdInfo;
-	CStatic m_modifiedInfo;
-	CStatic m_textLabel;
-	CBCFEdit m_text;
 };
 
 class CBCFView : public CDockablePane

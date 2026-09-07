@@ -668,8 +668,12 @@
     <ClInclude Include="BCF\BCFAddReferenceLink.h" />
     <ClInclude Include="BCF\BCFAddRelatedTopic.h" />
     <ClInclude Include="BCF\BCFBimFiles.h" />
+    <ClInclude Include="BCF\BCFCommentForm.h" />
+    <ClInclude Include="BCF\BCFProjectForm.h" />
+    <ClInclude Include="BCF\BCFTopicForm.h" />
     <ClInclude Include="BCF\BCFTopicLabelsDlg.h" />
     <ClInclude Include="BCF\BCFView.h" />
+    <ClInclude Include="BCF\BCFViewControls.h" />
     <ClInclude Include="BCF\BCFProjectDlg.h" />
     <ClInclude Include="BCF\BCFTopicDlg.h" />
     <ClInclude Include="BCF\BCFViewPointMgr.h" />
@@ -1241,8 +1245,12 @@
     <ClCompile Include="BCF\BCFAddReferenceLink.cpp" />
     <ClCompile Include="BCF\BCFAddRelatedTopic.cpp" />
     <ClCompile Include="BCF\BCFBimFiles.cpp" />
+    <ClCompile Include="BCF\BCFCommentForm.cpp" />
+    <ClCompile Include="BCF\BCFProjectForm.cpp" />
+    <ClCompile Include="BCF\BCFTopicForm.cpp" />
     <ClCompile Include="BCF\BCFTopicLabelsDlg.cpp" />
     <ClCompile Include="BCF\BCFView.cpp" />
+    <ClCompile Include="BCF\BCFViewControls.cpp" />
     <ClCompile Include="BCF\BCFProjectDlg.cpp" />
     <ClCompile Include="BCF\BCFTopicDlg.cpp" />
     <ClCompile Include="BCF\BCFViewPointMgr.cpp" />

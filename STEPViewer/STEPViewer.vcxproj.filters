@@ -252,10 +252,22 @@
     <ClInclude Include="BCF\BCFBimFiles.h">
       <Filter>BCF</Filter>
     </ClInclude>
+    <ClInclude Include="BCF\BCFCommentForm.h">
+      <Filter>BCF</Filter>
+    </ClInclude>
+    <ClInclude Include="BCF\BCFProjectForm.h">
+      <Filter>BCF</Filter>
+    </ClInclude>
+    <ClInclude Include="BCF\BCFTopicForm.h">
+      <Filter>BCF</Filter>
+    </ClInclude>
     <ClInclude Include="BCF\BCFTopicLabelsDlg.h">
       <Filter>BCF</Filter>
     </ClInclude>
     <ClInclude Include="BCF\BCFView.h">
+      <Filter>BCF</Filter>
+    </ClInclude>
+    <ClInclude Include="BCF\BCFViewControls.h">
       <Filter>BCF</Filter>
     </ClInclude>
     <ClInclude Include="BCF\BCFTopicDlg.h">
@@ -515,10 +527,22 @@
     <ClCompile Include="BCF\BCFBimFiles.cpp">
       <Filter>BCF</Filter>
     </ClCompile>
+    <ClCompile Include="BCF\BCFCommentForm.cpp">
+      <Filter>BCF</Filter>
+    </ClCompile>
+    <ClCompile Include="BCF\BCFProjectForm.cpp">
+      <Filter>BCF</Filter>
+    </ClCompile>
+    <ClCompile Include="BCF\BCFTopicForm.cpp">
+      <Filter>BCF</Filter>
+    </ClCompile>
     <ClCompile Include="BCF\BCFTopicLabelsDlg.cpp">
       <Filter>BCF</Filter>
     </ClCompile>
     <ClCompile Include="BCF\BCFView.cpp">
+      <Filter>BCF</Filter>
+    </ClCompile>
+    <ClCompile Include="BCF\BCFViewControls.cpp">
       <Filter>BCF</Filter>
     </ClCompile>
     <ClCompile Include="BCF\BCFTopicDlg.cpp">
