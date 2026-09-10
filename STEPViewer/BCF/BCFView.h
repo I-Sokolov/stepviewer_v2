@@ -66,6 +66,7 @@ protected:
 	afx_msg void OnNewFile();
 	afx_msg void OnOpenFile();
 	afx_msg void OnSaveFile();
+	afx_msg void OnProjectSettings();
 	afx_msg void OnAddTopic();
 	afx_msg void OnDeleteTopic();
 	afx_msg void OnTopicDetails();
@@ -75,6 +76,7 @@ protected:
 	afx_msg void OnSaveComment();
 	afx_msg void OnDeleteComment();
 	afx_msg void OnUpdateProjectCommand(CCmdUI* commandUI);
+	afx_msg void OnUpdateProjectSettings(CCmdUI* commandUI);
 	afx_msg void OnUpdateTopicCommand(CCmdUI* commandUI);
 	afx_msg void OnUpdateCommentCommand(CCmdUI* commandUI);
 	afx_msg void OnUpdateViewProject(CCmdUI* commandUI);
@@ -102,6 +104,7 @@ private:
 	CFont m_dialogFont;
 	CStatic m_projectIdLabel;
 	CStatic m_projectNameLabel;
+	CButton m_projectSettings;
 	CBCFEdit* m_projectId;
 	CBCFEdit* m_projectName;
 	CBCFProjectForm* m_projectForm;

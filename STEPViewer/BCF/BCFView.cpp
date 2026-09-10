@@ -1,6 +1,7 @@
 #include "stdafx.h"
 
 #include "BCFCommentForm.h"
+#include "BCFExtenstionsDlg.h"
 #include "BCFProjectForm.h"
 #include "BCFTopicForm.h"
 #include "BCFView.h"
@@ -54,6 +55,7 @@ BEGIN_MESSAGE_MAP(CBCFView, CDockablePane)
 	ON_COMMAND(ID_BCF_FILE_NEW, &CBCFView::OnNewFile)
 	ON_COMMAND(ID_BCF_FILE_OPEN, &CBCFView::OnOpenFile)
 	ON_COMMAND(ID_BCF_FILE_SAVE, &CBCFView::OnSaveFile)
+	ON_BN_CLICKED(IDC_PANE_PROJECT_SETTINGS, &CBCFView::OnProjectSettings)
 	ON_COMMAND(ID_BCF_PANE_ADD_TOPIC, &CBCFView::OnAddTopic)
 	ON_COMMAND(ID_BCF_PANE_DELETE_TOPIC, &CBCFView::OnDeleteTopic)
 	ON_COMMAND(ID_BCF_PANE_TOPIC_DETAILS, &CBCFView::OnTopicDetails)
@@ -64,6 +66,7 @@ BEGIN_MESSAGE_MAP(CBCFView, CDockablePane)
 	ON_COMMAND(ID_BCF_PANE_DELETE_COMMENT, &CBCFView::OnDeleteComment)
 	ON_UPDATE_COMMAND_UI(ID_BCF_FILE_SAVE, &CBCFView::OnUpdateProjectCommand)
 	ON_UPDATE_COMMAND_UI(ID_BCF_PANE_ADD_TOPIC, &CBCFView::OnUpdateProjectCommand)
+	ON_UPDATE_COMMAND_UI(IDC_PANE_PROJECT_SETTINGS, &CBCFView::OnUpdateProjectSettings)
 	ON_UPDATE_COMMAND_UI(ID_BCF_PANE_DELETE_TOPIC, &CBCFView::OnUpdateTopicCommand)
 	ON_UPDATE_COMMAND_UI(ID_BCF_PANE_TOPIC_DETAILS, &CBCFView::OnUpdateTopicCommand)
 	ON_UPDATE_COMMAND_UI(ID_BCF_VIEW_PROJECT, &CBCFView::OnUpdateViewProject)
@@ -120,6 +123,10 @@ int CBCFView::OnCreate(LPCREATESTRUCT createStruct)
 
 	CreateBCFStaticLabel(m_projectIdLabel, L"Project Id:", this);
 	CreateBCFStaticLabel(m_projectNameLabel, L"Name:", this);
+	m_projectSettings.Create(L"Settings...",
+		WS_CHILD | WS_VISIBLE | WS_DISABLED | WS_TABSTOP | BS_PUSHBUTTON,
+		CRect(), this, IDC_PANE_PROJECT_SETTINGS);
+	SetBCFControlFont(m_projectSettings, this);
 	
 	m_projectId->Create(WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL | ES_READONLY,
 		CRect(), this, IDC_PANE_PROJECT_ID);
@@ -133,6 +140,7 @@ int CBCFView::OnCreate(LPCREATESTRUCT createStruct)
 		return -1;
 	}
 	
+	LoadProjectInfo();
 	ShowForm(ProjectForm);
 	return 0;
 }
@@ -522,6 +530,11 @@ void CBCFView::OnUpdateProjectCommand(CCmdUI* commandUI)
 	commandUI->Enable(m_activeForm == ProjectForm && m_project != nullptr);
 }
 
+void CBCFView::OnUpdateProjectSettings(CCmdUI* commandUI)
+{
+	commandUI->Enable(m_project != nullptr);
+}
+
 void CBCFView::OnUpdateTopicCommand(CCmdUI* commandUI)
 {
 	commandUI->Enable(m_activeForm == ProjectForm && m_projectForm->GetSelectedTopic() != nullptr);
@@ -556,6 +569,24 @@ void CBCFView::OnNewFile() { NewProject(); }
 void CBCFView::OnOpenFile() { OpenProject(); }
 void CBCFView::OnSaveFile() { SaveProject(); }
 
+void CBCFView::OnProjectSettings()
+{
+	if (!m_project) {
+		return;
+	}
+	CBCFExtenstionsDlg dialog(*m_project, m_email, this);
+	if (dialog.DoModal() == IDOK) {
+		m_email = dialog.GetUser();
+		m_email.Trim();
+		AfxGetApp()->WriteProfileString(L"BCF", L"User", m_email);
+		const bool ok = m_project->SetOptions(ToUTF8(m_email).c_str(), true, true);
+		ShowLog(!ok);
+		if (ok && m_topicForm->GetTopic()) {
+			m_topicForm->Load(m_topicForm->GetTopic());
+		}
+	}
+}
+
 void CBCFView::AdjustLayout()
 {
 	if (!GetSafeHwnd() || !m_menuBar.GetSafeHwnd()) {
@@ -581,15 +612,18 @@ void CBCFView::AdjustLayout()
 	CString idLabelText;
 	CString nameLabelText;
 	CString projectIdText;
+	CString settingsText;
 	m_projectIdLabel.GetWindowText(idLabelText);
 	m_projectNameLabel.GetWindowText(nameLabelText);
 	m_projectId->GetWindowText(projectIdText);
+	m_projectSettings.GetWindowText(settingsText);
 	const int idLabelWidth = dc.GetTextExtent(idLabelText).cx + margin;
 	const int nameLabelWidth = dc.GetTextExtent(nameLabelText).cx + margin;
 	const DWORD projectIdMargins = m_projectId->GetMargins();
 	const int projectIdWidth = max(rowHeight,
 		static_cast<int>(dc.GetTextExtent(projectIdText).cx) +
 		LOWORD(projectIdMargins) + HIWORD(projectIdMargins));
+	const int settingsWidth = static_cast<int>(dc.GetTextExtent(settingsText).cx) + 2 * margin;
 	if (oldFont) {
 		dc.SelectObject(oldFont);
 	}
@@ -597,7 +631,7 @@ void CBCFView::AdjustLayout()
 	int headerHeight = rowHeight;
 	const int minEditWidth = 3 * rowHeight;
 	const int twoColumnWidth =
-		3 * margin + idLabelWidth + projectIdWidth + nameLabelWidth + minEditWidth;
+		4 * margin + idLabelWidth + projectIdWidth + nameLabelWidth + minEditWidth + settingsWidth;
 	if (client.Width() >= twoColumnWidth) {
 		m_projectIdLabel.MoveWindow(margin, headerTop + labelOffset, idLabelWidth, textHeight);
 		m_projectId->MoveWindow(margin + idLabelWidth, headerTop + labelOffset,
@@ -605,7 +639,10 @@ void CBCFView::AdjustLayout()
 		const int second = 2 * margin + idLabelWidth + projectIdWidth;
 		m_projectNameLabel.MoveWindow(second, headerTop + labelOffset, nameLabelWidth, textHeight);
 		m_projectName->MoveWindow(second + nameLabelWidth, headerTop + labelOffset,
-			client.right - second - nameLabelWidth - margin, rowHeight - labelOffset);
+			client.right - second - nameLabelWidth - settingsWidth - 2 * margin,
+			rowHeight - labelOffset);
+		m_projectSettings.MoveWindow(client.right - settingsWidth - margin,
+			headerTop, settingsWidth, rowHeight);
 	}
 	else {
 		const int labelWidth = max(idLabelWidth, nameLabelWidth);
@@ -615,7 +652,9 @@ void CBCFView::AdjustLayout()
 			min(projectIdWidth, editWidth), rowHeight - labelOffset);
 		m_projectNameLabel.MoveWindow(margin, headerTop + rowHeight + labelOffset, labelWidth, textHeight);
 		m_projectName->MoveWindow(margin + labelWidth, headerTop + rowHeight + labelOffset,
-			editWidth, rowHeight - labelOffset);
+			max(rowHeight, editWidth - settingsWidth - margin), rowHeight - labelOffset);
+		m_projectSettings.MoveWindow(client.right - settingsWidth - margin,
+			headerTop + rowHeight, settingsWidth, rowHeight);
 		headerHeight = 2 * rowHeight;
 	}
 	CRect formRect(client.left, headerTop + headerHeight + margin, client.right, client.bottom);

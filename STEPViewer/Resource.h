@@ -147,6 +147,9 @@
 #define IDR_BCF_VIEW_MENU              373
 #define ID_VIEW_BCF_PROJECT_PANE       374
 #define IDD_BCF_TOPIC_LABELS           376
+#define IDD_BCF_SETTINGS_USER           377
+#define IDD_BCF_SETTINGS_ENUMERATION    378
+#define IDD_BCF_SETTINGS_VALUE          379
 #define IDC_COMBO_EXISTING_INSTANCE     1000
 #define IDC_RADIO_EXISTING_INSTANCE     1001
 #define IDC_RADIO_NEW_INSTANCE          1002
@@ -211,6 +214,13 @@
 #define IDC_BCF_EMAILSTATIC             1067
 #define IDC_BCF_EMAIL_LABEL             1067
 #define IDC_BCF_TOPIC_LABELS            1068
+#define IDC_BCF_SETTINGS_USER           1069
+#define IDC_BCF_SETTINGS_LIST           1070
+#define IDC_BCF_SETTINGS_ADD            1071
+#define IDC_BCF_SETTINGS_REMOVE         1072
+#define IDC_BCF_SETTINGS_UP             1073
+#define IDC_BCF_SETTINGS_DOWN           1074
+#define IDC_BCF_SETTINGS_VALUE          1075
 #define VERSION_BUILD                   2373
 #define ID_INSTANCES_ZOOM_TO            32772
 #define ID_INSTANCES                    32773
@@ -278,9 +288,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        377
+#define _APS_NEXT_RESOURCE_VALUE        380
 #define _APS_NEXT_COMMAND_VALUE         32869
-#define _APS_NEXT_CONTROL_VALUE         1069
+#define _APS_NEXT_CONTROL_VALUE         1076
 #define _APS_NEXT_SYMED_VALUE           323
 #endif
 #endif
