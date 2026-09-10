@@ -38,6 +38,7 @@ private:
 	void ReloadVisibility();
 	bool CommitVisibility();
 	void ReloadColoring();
+	CString GetComponentText(BCFComponent& component) const;
 
 	CBCFView* m_pane = nullptr;
 	BCFComment* m_comment = nullptr;

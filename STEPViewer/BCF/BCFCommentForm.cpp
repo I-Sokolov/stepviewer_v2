@@ -387,20 +387,10 @@ void CBCFCommentForm::ReloadSelection()
 	BCFViewPoint* viewPoint = m_comment ? m_comment->GetViewPoint() : nullptr;
 	if (viewPoint) {
 		for (uint16_t i = 0; BCFComponent* component = viewPoint->GetSelection(i); ++i) {
-			CString text = FromUTF8(component->GetIfcGuid());
-			if (text.IsEmpty()) {
-				text = FromUTF8(component->GetAuthoringToolId());
-			}
-			if (text.IsEmpty()) {
-				text = FromUTF8(component->GetOriginatingSystem());
-			}
-			if (text.IsEmpty()) {
-				text = L"(Unidentified component)";
-			}
 			if (!components.IsEmpty()) {
 				components += L"\r\n";
 			}
-			components += text;
+			components += GetComponentText(*component);
 		}
 	}
 	m_selectedComponents.SetWindowText(components);
@@ -442,20 +432,10 @@ void CBCFCommentForm::ReloadVisibility()
 	CString exceptions;
 	if (viewPoint) {
 		for (uint16_t i = 0; BCFComponent* component = viewPoint->GetException(i); ++i) {
-			CString text = FromUTF8(component->GetIfcGuid());
-			if (text.IsEmpty()) {
-				text = FromUTF8(component->GetAuthoringToolId());
-			}
-			if (text.IsEmpty()) {
-				text = FromUTF8(component->GetOriginatingSystem());
-			}
-			if (text.IsEmpty()) {
-				text = L"(Unidentified component)";
-			}
 			if (!exceptions.IsEmpty()) {
 				exceptions += L"\r\n";
 			}
-			exceptions += text;
+			exceptions += GetComponentText(*component);
 		}
 	}
 	if (!exceptions.IsEmpty()) {
@@ -517,22 +497,27 @@ void CBCFCommentForm::ReloadColoring()
 			details += L"#";
 			details += FromUTF8(coloring->GetColor());
 			for (uint16_t j = 0; BCFComponent* component = coloring->GetComponent(j); ++j) {
-				CString text = FromUTF8(component->GetIfcGuid());
-				if (text.IsEmpty()) {
-					text = FromUTF8(component->GetAuthoringToolId());
-				}
-				if (text.IsEmpty()) {
-					text = FromUTF8(component->GetOriginatingSystem());
-				}
-				if (text.IsEmpty()) {
-					text = L"(Unidentified component)";
-				}
 				details += L"\r\n  ";
-				details += text;
+				details += GetComponentText(*component);
 			}
 		}
 	}
 	m_coloringDetails.SetWindowText(details);
+}
+
+CString CBCFCommentForm::GetComponentText(BCFComponent& component) const
+{
+	CString text = FromUTF8(component.GetIfcGuid());
+	if (text.IsEmpty()) {
+		text = FromUTF8(component.GetAuthoringToolId());
+	}
+	if (text.IsEmpty()) {
+		text = FromUTF8(component.GetOriginatingSystem());
+	}
+	if (text.IsEmpty()) {
+		text = L"(Unidentified component)";
+	}
+	return text;
 }
 
 void CBCFCommentForm::OnVisibleFromSelection()
