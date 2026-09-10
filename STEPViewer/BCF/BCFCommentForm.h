@@ -24,6 +24,7 @@ protected:
 	afx_msg void OnGrabSelected();
 	afx_msg void OnSelectComponents();
 	afx_msg void OnGrabVisible();
+	afx_msg void OnVisibleFromSelection();
 	afx_msg void OnSetVisible();
 	DECLARE_MESSAGE_MAP()
 
@@ -59,6 +60,7 @@ private:
 	CBCFEdit m_selectedComponents;
 	CButton m_visibilityGroup;
 	CButton m_grabVisible;
+	CButton m_visibleFromSelection;
 	CButton m_setVisible;
 	CComboBox m_visibilityMode;
 	CStatic m_showLabel;

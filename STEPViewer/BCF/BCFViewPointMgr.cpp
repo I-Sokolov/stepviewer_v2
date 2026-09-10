@@ -150,6 +150,38 @@ bool CBCFViewPointMgr::SaveCurrentVisibilityToComment(BCFComment& comment)
 	return SaveVisibility(*viewPoint);
 }
 
+bool CBCFViewPointMgr::SaveSelectedAsVisibleToComment(BCFComment& comment)
+{
+	BCFViewPoint* viewPoint = comment.GetViewPoint();
+	if (!viewPoint) {
+		viewPoint = comment.GetTopic().AddViewPoint();
+		if (!viewPoint || !comment.SetViewPoint(viewPoint)) {
+			return false;
+		}
+	}
+
+	bool ok = viewPoint->SetDefaultVisibility(false);
+	ok = viewPoint->SetSpaceVisible(false) && ok;
+	ok = viewPoint->SetSpaceBoundariesVisible(false) && ok;
+	ok = viewPoint->SetOpeningsVisible(false) && ok;
+	for (uint16_t i = 0; BCFComponent* exception = viewPoint->GetException(0);) {
+		if (!exception->Remove()) {
+			ok = false;
+			++i;
+			exception = viewPoint->GetException(i);
+		}
+		else {
+			exception = viewPoint->GetException(0);
+		}
+	}
+	for (_instance* instance : GetViewerDoc().getSelectedInstances()) {
+		if (const char* globalId = GetGlobalId(instance)) {
+			ok = viewPoint->AddException(globalId) && ok;
+		}
+	}
+	return ok;
+}
+
 void CBCFViewPointMgr::ApplySelectionToViewer(BCFViewPoint* vp)
 {
 	vector<_instance*> vecInstances;

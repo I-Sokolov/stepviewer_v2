@@ -47,6 +47,7 @@ BEGIN_MESSAGE_MAP(CBCFCommentForm, CWnd)
 	ON_BN_CLICKED(IDC_PANE_COMMENT_GRAB_SELECTED, &CBCFCommentForm::OnGrabSelected)
 	ON_BN_CLICKED(IDC_PANE_COMMENT_SELECT_COMPONENTS, &CBCFCommentForm::OnSelectComponents)
 	ON_BN_CLICKED(IDC_PANE_COMMENT_GRAB_VISIBLE, &CBCFCommentForm::OnGrabVisible)
+	ON_BN_CLICKED(IDC_PANE_COMMENT_VISIBLE_FROM_SELECTION, &CBCFCommentForm::OnVisibleFromSelection)
 	ON_BN_CLICKED(IDC_PANE_COMMENT_SET_VISIBLE, &CBCFCommentForm::OnSetVisible)
 END_MESSAGE_MAP()
 
@@ -112,6 +113,8 @@ BOOL CBCFCommentForm::Create(CBCFView* pane)
 	m_visibilityGroup.Create(L"Visibility", WS_CHILD | BS_GROUPBOX, CRect(), this, 0);
 	m_grabVisible.Create(L"Grab visible", WS_CHILD | WS_TABSTOP | BS_PUSHBUTTON,
 		CRect(), this, IDC_PANE_COMMENT_GRAB_VISIBLE);
+	m_visibleFromSelection.Create(L"Grab selected", WS_CHILD | WS_TABSTOP | BS_PUSHBUTTON,
+		CRect(), this, IDC_PANE_COMMENT_VISIBLE_FROM_SELECTION);
 	m_setVisible.Create(L"Set visible", WS_CHILD | WS_TABSTOP | BS_PUSHBUTTON,
 		CRect(), this, IDC_PANE_COMMENT_SET_VISIBLE);
 	m_visibilityMode.Create(WS_CHILD | WS_TABSTOP | WS_VSCROLL | CBS_DROPDOWNLIST,
@@ -127,7 +130,7 @@ BOOL CBCFCommentForm::Create(CBCFView* pane)
 	m_coloringGroup.Create(L"Coloring", WS_CHILD | BS_GROUPBOX, CRect(), this, 0);
 	CWnd* visualizationControls[] = {
 		&m_selectionGroup, &m_grabSelected, &m_selectComponents,
-		&m_selectedComponents, &m_visibilityGroup, &m_grabVisible, &m_setVisible,
+		&m_selectedComponents, &m_visibilityGroup, &m_grabVisible, &m_visibleFromSelection, &m_setVisible,
 		&m_visibilityMode, &m_showLabel, &m_showSpaces, &m_showBoundaries,
 		&m_showOpenings, &m_visibilityExceptions, &m_coloringGroup
 	};
@@ -296,7 +299,7 @@ void CBCFCommentForm::ShowTab(int tab)
 	const int visualizationCommand = tab == 1 ? SW_SHOW : SW_HIDE;
 	CWnd* visualizationControls[] = {
 		&m_selectionGroup, &m_grabSelected, &m_selectComponents,
-		&m_selectedComponents, &m_visibilityGroup, &m_grabVisible, &m_setVisible,
+		&m_selectedComponents, &m_visibilityGroup, &m_grabVisible, &m_visibleFromSelection, &m_setVisible,
 		&m_visibilityMode, &m_showLabel, &m_showSpaces, &m_showBoundaries,
 		&m_showOpenings, &m_visibilityExceptions, &m_coloringGroup
 	};
@@ -496,6 +499,20 @@ void CBCFCommentForm::OnSetVisible()
 	}
 }
 
+void CBCFCommentForm::OnVisibleFromSelection()
+{
+	if (!m_comment || !m_pane->GetDocument()) {
+		return;
+	}
+	const bool ok = CBCFViewPointMgr(*m_pane->GetDocument())
+		.SaveSelectedAsVisibleToComment(*m_comment);
+	m_pane->ShowLog(!ok);
+	if (ok) {
+		ReloadVisibility();
+		UpdateCameraControls();
+	}
+}
+
 void CBCFCommentForm::OnViewTopic()
 {
 	if (m_comment && Commit()) {
@@ -628,17 +645,25 @@ void CBCFCommentForm::OnSize(UINT type, int cx, int cy)
 			max(rowHeight, static_cast<int>(page.bottom) - listTop - margin));
 
 		CString grabVisibleText;
+		CString visibleFromSelectionText;
 		CString setVisibleText;
 		m_grabVisible.GetWindowText(grabVisibleText);
+		m_visibleFromSelection.GetWindowText(visibleFromSelectionText);
 		m_setVisible.GetWindowText(setVisibleText);
 		const int grabVisibleWidth =
 			static_cast<int>(dc.GetTextExtent(grabVisibleText).cx) + 2 * margin;
+		const int visibleFromSelectionWidth =
+			static_cast<int>(dc.GetTextExtent(visibleFromSelectionText).cx) + 2 * margin;
 		const int setVisibleWidth =
 			static_cast<int>(dc.GetTextExtent(setVisibleText).cx) + 2 * margin;
 		const int visibilityContentLeft = visibilityLeft + margin;
 		m_grabVisible.MoveWindow(visibilityContentLeft, contentTop,
 			grabVisibleWidth, rowHeight);
-		m_setVisible.MoveWindow(visibilityContentLeft + grabVisibleWidth + rowSpacing,
+		const int visibleFromSelectionLeft =
+			visibilityContentLeft + grabVisibleWidth + rowSpacing;
+		m_visibleFromSelection.MoveWindow(visibleFromSelectionLeft, contentTop,
+			visibleFromSelectionWidth, rowHeight);
+		m_setVisible.MoveWindow(visibleFromSelectionLeft + visibleFromSelectionWidth + rowSpacing,
 			contentTop, setVisibleWidth, rowHeight);
 		const int modeTop = contentTop + rowHeight + rowSpacing;
 		m_visibilityMode.MoveWindow(visibilityContentLeft, modeTop,
