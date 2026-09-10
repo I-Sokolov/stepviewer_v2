@@ -1,7 +1,7 @@
 #include "stdafx.h"
 
 #include "BCFCommentForm.h"
-#include "BCFExtenstionsDlg.h"
+#include "BCFProjectSettingsDlg.h"
 #include "BCFProjectForm.h"
 #include "BCFTopicForm.h"
 #include "BCFView.h"
@@ -165,13 +165,16 @@ void CBCFView::NewProject()
 		return;
 	}
 	ReleaseProject();
+
 	m_project = BCFProject::Create();
 	if (!m_project) {
 		AfxMessageBox(L"Failed to initialize BCF project.", MB_OK | MB_ICONERROR);
 		return;
 	}
+
 	m_email = AfxGetApp()->GetProfileString(L"BCF", L"User");
 	m_project->SetOptions(ToUTF8(m_email).c_str(), true, true);
+
 	m_filePath.Empty();
 	LoadProjectInfo();
 	UpdateCaption();
@@ -193,6 +196,7 @@ void CBCFView::OpenProject()
 	}
 	m_email = AfxGetApp()->GetProfileString(L"BCF", L"User");
 	m_project->SetOptions(ToUTF8(m_email).c_str(), true, true);
+
 	m_filePath = dialog.GetPathName();
 	if (!m_project->ReadFile(ToUTF8(m_filePath).c_str(), true)) {
 		ShowLog(true);
@@ -574,13 +578,15 @@ void CBCFView::OnProjectSettings()
 	if (!m_project) {
 		return;
 	}
-	CBCFExtenstionsDlg dialog(*m_project, m_email, this);
+	CBCFProjectSettingsDlg dialog(*m_project, m_email, this);
 	if (dialog.DoModal() == IDOK) {
+
 		m_email = dialog.GetUser();
-		m_email.Trim();
 		AfxGetApp()->WriteProfileString(L"BCF", L"User", m_email);
 		const bool ok = m_project->SetOptions(ToUTF8(m_email).c_str(), true, true);
+
 		ShowLog(!ok);
+
 		if (ok && m_topicForm->GetTopic()) {
 			m_topicForm->Load(m_topicForm->GetTopic());
 		}

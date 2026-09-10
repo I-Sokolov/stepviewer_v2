@@ -255,7 +255,7 @@
     <ClInclude Include="BCF\BCFCommentForm.h">
       <Filter>BCF</Filter>
     </ClInclude>
-    <ClInclude Include="BCF\BCFExtenstionsDlg.h">
+    <ClInclude Include="BCF\BCFProjectSettingsDlg.h">
       <Filter>BCF</Filter>
     </ClInclude>
     <ClInclude Include="BCF\BCFProjectForm.h">
@@ -533,7 +533,7 @@
     <ClCompile Include="BCF\BCFCommentForm.cpp">
       <Filter>BCF</Filter>
     </ClCompile>
-    <ClCompile Include="BCF\BCFExtenstionsDlg.cpp">
+    <ClCompile Include="BCF\BCFProjectSettingsDlg.cpp">
       <Filter>BCF</Filter>
     </ClCompile>
     <ClCompile Include="BCF\BCFProjectForm.cpp">

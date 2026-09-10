@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "BCFExtenstionsDlg.h"
+#include "BCFProjectSettingsDlg.h"
 #include "Resource.h"
 
 namespace
@@ -64,6 +64,7 @@ void CBCFExtensionUserPage::DoDataExchange(CDataExchange* dataExchange)
 {
 	CPropertyPage::DoDataExchange(dataExchange);
 	DDX_Text(dataExchange, IDC_BCF_SETTINGS_USER, m_user);
+	m_user.Trim();
 }
 
 BEGIN_MESSAGE_MAP(CBCFExtensionEnumerationPage, CPropertyPage)
@@ -178,7 +179,7 @@ bool CBCFExtensionEnumerationPage::Apply()
 	return ok;
 }
 
-CBCFExtenstionsDlg::CBCFExtenstionsDlg(
+CBCFProjectSettingsDlg::CBCFProjectSettingsDlg(
 	BCFProject& project, const CString& user, CWnd* parent)
 	: CPropertySheet(L"Project settings", parent)
 	, m_userPage(user)
@@ -192,18 +193,16 @@ CBCFExtenstionsDlg::CBCFExtenstionsDlg(
 	}
 }
 
-BEGIN_MESSAGE_MAP(CBCFExtenstionsDlg, CPropertySheet)
-	ON_COMMAND(IDOK, &CBCFExtenstionsDlg::OnApplySettings)
+BEGIN_MESSAGE_MAP(CBCFProjectSettingsDlg, CPropertySheet)
+	ON_COMMAND(IDOK, &CBCFProjectSettingsDlg::OnApplySettings)
 END_MESSAGE_MAP()
 
-void CBCFExtenstionsDlg::OnApplySettings()
+void CBCFProjectSettingsDlg::OnApplySettings()
 {
 	if (!m_userPage.UpdateData(TRUE)) {
 		return;
 	}
-	CString user = m_userPage.GetUser();
-	user.Trim();
-	if (user.IsEmpty()) {
+	if (m_userPage.GetUser().IsEmpty()) {
 		AfxMessageBox(L"User is required.", MB_OK | MB_ICONERROR);
 		return;
 	}

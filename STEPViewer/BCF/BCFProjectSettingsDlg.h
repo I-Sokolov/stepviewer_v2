@@ -52,10 +52,10 @@ private:
 	CButton m_moveDown;
 };
 
-class CBCFExtenstionsDlg : public CPropertySheet
+class CBCFProjectSettingsDlg : public CPropertySheet
 {
 public:
-	CBCFExtenstionsDlg(BCFProject& project, const CString& user, CWnd* parent);
+	CBCFProjectSettingsDlg(BCFProject& project, const CString& user, CWnd* parent);
 
 	CString GetUser() const { return m_userPage.GetUser(); }
 

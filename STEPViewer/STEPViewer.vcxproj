@@ -669,7 +669,7 @@
     <ClInclude Include="BCF\BCFAddRelatedTopic.h" />
     <ClInclude Include="BCF\BCFBimFiles.h" />
     <ClInclude Include="BCF\BCFCommentForm.h" />
-    <ClInclude Include="BCF\BCFExtenstionsDlg.h" />
+    <ClInclude Include="BCF\BCFProjectSettingsDlg.h" />
     <ClInclude Include="BCF\BCFProjectForm.h" />
     <ClInclude Include="BCF\BCFTopicForm.h" />
     <ClInclude Include="BCF\BCFTopicLabelsDlg.h" />
@@ -1247,7 +1247,7 @@
     <ClCompile Include="BCF\BCFAddRelatedTopic.cpp" />
     <ClCompile Include="BCF\BCFBimFiles.cpp" />
     <ClCompile Include="BCF\BCFCommentForm.cpp" />
-    <ClCompile Include="BCF\BCFExtenstionsDlg.cpp" />
+    <ClCompile Include="BCF\BCFProjectSettingsDlg.cpp" />
     <ClCompile Include="BCF\BCFProjectForm.cpp" />
     <ClCompile Include="BCF\BCFTopicForm.cpp" />
     <ClCompile Include="BCF\BCFTopicLabelsDlg.cpp" />
