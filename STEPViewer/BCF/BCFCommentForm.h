@@ -37,6 +37,7 @@ private:
 	void ReloadSelection();
 	void ReloadVisibility();
 	bool CommitVisibility();
+	void ReloadColoring();
 
 	CBCFView* m_pane = nullptr;
 	BCFComment* m_comment = nullptr;
@@ -69,4 +70,5 @@ private:
 	CButton m_showOpenings;
 	CBCFEdit m_visibilityExceptions;
 	CButton m_coloringGroup;
+	CBCFEdit m_coloringDetails;
 };

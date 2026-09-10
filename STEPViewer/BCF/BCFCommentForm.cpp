@@ -128,11 +128,13 @@ BOOL CBCFCommentForm::Create(CBCFView* pane)
 	m_visibilityExceptions.Create(WS_CHILD | WS_BORDER | ES_MULTILINE | ES_AUTOVSCROLL |
 		ES_READONLY | WS_VSCROLL, CRect(), this, 0);
 	m_coloringGroup.Create(L"Coloring", WS_CHILD | BS_GROUPBOX, CRect(), this, 0);
+	m_coloringDetails.Create(WS_CHILD | WS_BORDER | ES_MULTILINE | ES_AUTOVSCROLL |
+		ES_READONLY | WS_VSCROLL, CRect(), this, 0);
 	CWnd* visualizationControls[] = {
 		&m_selectionGroup, &m_grabSelected, &m_selectComponents,
 		&m_selectedComponents, &m_visibilityGroup, &m_grabVisible, &m_visibleFromSelection, &m_setVisible,
 		&m_visibilityMode, &m_showLabel, &m_showSpaces, &m_showBoundaries,
-		&m_showOpenings, &m_visibilityExceptions, &m_coloringGroup
+		&m_showOpenings, &m_visibilityExceptions, &m_coloringGroup, &m_coloringDetails
 	};
 	for (CWnd* control : visualizationControls) {
 		SetBCFControlFont(*control, this);
@@ -153,6 +155,7 @@ void CBCFCommentForm::Load(BCFComment* comment)
 	LoadViewPoint();
 	ReloadSelection();
 	ReloadVisibility();
+	ReloadColoring();
 }
 
 void CBCFCommentForm::UpdateHeader()
@@ -301,7 +304,7 @@ void CBCFCommentForm::ShowTab(int tab)
 		&m_selectionGroup, &m_grabSelected, &m_selectComponents,
 		&m_selectedComponents, &m_visibilityGroup, &m_grabVisible, &m_visibleFromSelection, &m_setVisible,
 		&m_visibilityMode, &m_showLabel, &m_showSpaces, &m_showBoundaries,
-		&m_showOpenings, &m_visibilityExceptions, &m_coloringGroup
+		&m_showOpenings, &m_visibilityExceptions, &m_coloringGroup, &m_coloringDetails
 	};
 	for (CWnd* control : visualizationControls) {
 		control->ShowWindow(visualizationCommand);
@@ -364,6 +367,9 @@ void CBCFCommentForm::OnFromView()
 	m_pane->ShowLog(!ok);
 	if (ok) {
 		LoadViewPoint();
+		ReloadSelection();
+		ReloadVisibility();
+		ReloadColoring();
 	}
 }
 
@@ -497,6 +503,36 @@ void CBCFCommentForm::OnSetVisible()
 		CBCFViewPointMgr(*m_pane->GetDocument()).SetVisibilityFromComment(*m_comment);
 		m_pane->ShowLog(false);
 	}
+}
+
+void CBCFCommentForm::ReloadColoring()
+{
+	CString details;
+	BCFViewPoint* viewPoint = m_comment ? m_comment->GetViewPoint() : nullptr;
+	if (viewPoint) {
+		for (uint16_t i = 0; BCFColoring* coloring = viewPoint->GetColoring(i); ++i) {
+			if (!details.IsEmpty()) {
+				details += L"\r\n";
+			}
+			details += L"#";
+			details += FromUTF8(coloring->GetColor());
+			for (uint16_t j = 0; BCFComponent* component = coloring->GetComponent(j); ++j) {
+				CString text = FromUTF8(component->GetIfcGuid());
+				if (text.IsEmpty()) {
+					text = FromUTF8(component->GetAuthoringToolId());
+				}
+				if (text.IsEmpty()) {
+					text = FromUTF8(component->GetOriginatingSystem());
+				}
+				if (text.IsEmpty()) {
+					text = L"(Unidentified component)";
+				}
+				details += L"\r\n  ";
+				details += text;
+			}
+		}
+	}
+	m_coloringDetails.SetWindowText(details);
 }
 
 void CBCFCommentForm::OnVisibleFromSelection()
@@ -686,5 +722,9 @@ void CBCFCommentForm::OnSize(UINT type, int cx, int cy)
 		m_visibilityExceptions.MoveWindow(visibilityContentLeft, exceptionsTop,
 			max(rowHeight, groupWidth - 2 * margin),
 			max(rowHeight, static_cast<int>(page.bottom) - exceptionsTop - margin));
+
+		m_coloringDetails.MoveWindow(coloringLeft + margin, page.top + rowHeight,
+			max(rowHeight, coloringWidth - 2 * margin),
+			max(rowHeight, page.Height() - rowHeight - margin));
 	}
 }
