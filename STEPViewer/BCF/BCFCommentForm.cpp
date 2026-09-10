@@ -365,10 +365,13 @@ void CBCFCommentForm::OnSize(UINT type, int cx, int cy)
 	page.DeflateRect(margin, margin);
 
 	if (m_tabs.GetCurSel() == 0) {
-		const int cameraLabelWidth = static_cast<int>(dc.GetTextExtent(L"Field of view:").cx) + margin;
-		const int cameraValueWidth = static_cast<int>(
+		const int vectorLabelWidth = static_cast<int>(dc.GetTextExtent(L"View Point:").cx) + margin;
+		const int vectorValueWidth = static_cast<int>(
 			dc.GetTextExtent(L"-12345, -12345, -12345").cx) + 2 * margin;
-		const int cameraWidth = cameraLabelWidth + cameraValueWidth + 2 * margin;
+		const int scalarLabelWidth = static_cast<int>(dc.GetTextExtent(L"Field of view:").cx) + margin;
+		const int scalarValueWidth = static_cast<int>(dc.GetTextExtent(L"-12345").cx) + 2 * margin;
+		const int cameraWidth = vectorLabelWidth + vectorValueWidth +
+			scalarLabelWidth + scalarValueWidth + 3 * margin + rowSpacing;
 		const int remainingWidth = max(2 * rowHeight, page.Width() - cameraWidth - 2 * rowSpacing);
 		const int firstWidth = remainingWidth / 2;
 		const int secondWidth = remainingWidth - firstWidth;
@@ -394,26 +397,34 @@ void CBCFCommentForm::OnSize(UINT type, int cx, int cy)
 
 		m_cameraGroup.MoveWindow(cameraLeft, page.top, cameraWidth, page.Height());
 		const int cameraContentLeft = cameraLeft + margin;
-		const int cameraControlLeft = cameraContentLeft + cameraLabelWidth;
-		m_camera.MoveWindow(cameraContentLeft, page.top + rowHeight,
-			cameraWidth - 2 * margin, 3 * rowHeight);
-		for (int i = 0; i < static_cast<int>(_countof(m_cameraLabels)); ++i) {
-			const int top = page.top + (i + 2) * (rowHeight + rowSpacing);
-			m_cameraLabels[i].MoveWindow(cameraContentLeft, top + labelOffset,
-				cameraLabelWidth, textHeight);
-			m_cameraValues[i].MoveWindow(cameraControlLeft, top + labelOffset,
-				cameraValueWidth, rowHeight - labelOffset);
-		}
+		const int vectorControlLeft = cameraContentLeft + vectorLabelWidth;
+		const int scalarLabelLeft = vectorControlLeft + vectorValueWidth + rowSpacing;
+		const int scalarControlLeft = scalarLabelLeft + scalarLabelWidth;
 		CString fromText;
 		CString toText;
 		m_fromView.GetWindowText(fromText);
 		m_toView.GetWindowText(toText);
 		const int fromWidth = static_cast<int>(dc.GetTextExtent(fromText).cx) + 2 * margin;
 		const int toWidth = static_cast<int>(dc.GetTextExtent(toText).cx) + 2 * margin;
-		const int cameraButtonsTop = page.top +
-			8 * (rowHeight + rowSpacing);
-		m_fromView.MoveWindow(cameraContentLeft, cameraButtonsTop, fromWidth, rowHeight);
-		m_toView.MoveWindow(cameraContentLeft + fromWidth + rowSpacing,
-			cameraButtonsTop, toWidth, rowHeight);
+		const int cameraButtonsWidth = fromWidth + rowSpacing + toWidth;
+		const int cameraTop = page.top + rowHeight;
+		m_camera.MoveWindow(cameraContentLeft, page.top + rowHeight,
+			max(rowHeight, cameraWidth - 2 * margin - cameraButtonsWidth - rowSpacing),
+			3 * rowHeight);
+		m_fromView.MoveWindow(cameraLeft + cameraWidth - margin - cameraButtonsWidth,
+			cameraTop, fromWidth, rowHeight);
+		m_toView.MoveWindow(cameraLeft + cameraWidth - margin - toWidth,
+			cameraTop, toWidth, rowHeight);
+		for (int i = 0; i < static_cast<int>(_countof(m_cameraLabels)); ++i) {
+			const bool scalar = i >= AspectRatio;
+			const int row = scalar ? i - AspectRatio : i;
+			const int top = page.top + (row + 2) * (rowHeight + rowSpacing);
+			const int labelLeft = scalar ? scalarLabelLeft : cameraContentLeft;
+			const int controlLeft = scalar ? scalarControlLeft : vectorControlLeft;
+			m_cameraLabels[i].MoveWindow(labelLeft, top + labelOffset,
+				scalar ? scalarLabelWidth : vectorLabelWidth, textHeight);
+			m_cameraValues[i].MoveWindow(controlLeft, top + labelOffset,
+				scalar ? scalarValueWidth : vectorValueWidth, rowHeight - labelOffset);
+		}
 	}
 }
