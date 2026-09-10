@@ -175,10 +175,48 @@ void CBCFView::NewProject()
 	m_email = AfxGetApp()->GetProfileString(L"BCF", L"User");
 	m_project->SetOptions(ToUTF8(m_email).c_str(), true, true);
 
+	if (!CBCFProjectSettingsDlg::LoadEnumerationProfile(*m_project)) {
+		AfxMessageBox(L"Failed to load saved BCF project enumerations.", MB_OK | MB_ICONERROR);
+	}
+
+	CBCFProjectSettingsDlg dialog(*m_project, m_email, this);
+	if (dialog.DoModal() != IDOK) {
+		ReleaseProject();
+		ShowProject();
+		return;
+	}
+
+	m_email = dialog.GetUser();
+	AfxGetApp()->WriteProfileString(L"BCF", L"User", m_email);
+	if (!m_project->SetOptions(ToUTF8(m_email).c_str(), true, true) ||
+		!CBCFProjectSettingsDlg::SaveEnumerationProfile(*m_project)) {
+		AfxMessageBox(L"Failed to save new BCF project settings.", MB_OK | MB_ICONERROR);
+	}
+
 	m_filePath.Empty();
 	LoadProjectInfo();
 	UpdateCaption();
-	ShowProject();
+
+	BCFTopic* topic = m_project->AddTopic(nullptr, nullptr, nullptr);
+	if (!topic) {
+		ShowLog(true);
+		ShowProject();
+		Activate();
+		return;
+	}
+
+	bool filesAdded = true;
+	if (m_document) {
+		for (_model* model : m_document->getModels()) {
+			if (model && !topic->AddBimFile(ToUTF8(model->getPath()).c_str(), false)) {
+				filesAdded = false;
+			}
+		}
+	}
+
+	ShowLog(!filesAdded);
+	m_projectForm->Load(topic);
+	ShowTopic(topic);
 	Activate();
 }
 
@@ -587,8 +625,15 @@ void CBCFView::OnProjectSettings()
 
 		ShowLog(!ok);
 
-		if (ok && m_topicForm->GetTopic()) {
-			m_topicForm->Load(m_topicForm->GetTopic());
+		if (ok) {
+			if (m_filePath.IsEmpty() &&
+				!CBCFProjectSettingsDlg::SaveEnumerationProfile(*m_project)) {
+				AfxMessageBox(L"Failed to save BCF project enumeration defaults.",
+					MB_OK | MB_ICONERROR);
+			}
+			if (m_topicForm->GetTopic()) {
+				m_topicForm->Load(m_topicForm->GetTopic());
+			}
 		}
 	}
 }

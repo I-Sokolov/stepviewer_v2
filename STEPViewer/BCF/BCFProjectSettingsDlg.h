@@ -58,6 +58,8 @@ public:
 	CBCFProjectSettingsDlg(BCFProject& project, const CString& user, CWnd* parent);
 
 	CString GetUser() const { return m_userPage.GetUser(); }
+	static bool LoadEnumerationProfile(BCFProject& project);
+	static bool SaveEnumerationProfile(BCFProject& project);
 
 protected:
 	afx_msg void OnApplySettings();

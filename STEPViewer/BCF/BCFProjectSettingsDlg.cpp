@@ -41,17 +41,33 @@ namespace
 	{
 		BCFEnumeration enumeration;
 		LPCTSTR title;
+		LPCTSTR profileKey;
 	};
 
+	const LPCTSTR ENUMERATION_PROFILE_SECTION = L"BCF Project Enumerations";
 	const EnumerationPage ENUMERATION_PAGES[] = {
-		{ BCFTopicTypes, L"Topic Types" },
-		{ BCFTopicStatuses, L"Topic Statuses" },
-		{ BCFPriorities, L"Priorities" },
-		{ BCFTopicLabels, L"Topic Labels" },
-		{ BCFUsers, L"Users" },
-		{ BCFSnippetTypes, L"Snippet Types" },
-		{ BCFStages, L"Stages" }
+		{ BCFTopicTypes, L"Topic Types", L"TopicTypes" },
+		{ BCFTopicStatuses, L"Topic Statuses", L"TopicStatuses" },
+		{ BCFPriorities, L"Priorities", L"Priorities" },
+		{ BCFTopicLabels, L"Topic Labels", L"TopicLabels" },
+		{ BCFUsers, L"Users", L"Users" },
+		{ BCFSnippetTypes, L"Snippet Types", L"SnippetTypes" },
+		{ BCFStages, L"Stages", L"Stages" }
 	};
+
+	CString GetProfileCountKey(const EnumerationPage& definition)
+	{
+		CString key;
+		key.Format(L"%s.Count", definition.profileKey);
+		return key;
+	}
+
+	CString GetProfileValueKey(const EnumerationPage& definition, int index)
+	{
+		CString key;
+		key.Format(L"%s.%d", definition.profileKey, index);
+		return key;
+	}
 }
 
 CBCFExtensionUserPage::CBCFExtensionUserPage(const CString& user)
@@ -191,6 +207,66 @@ CBCFProjectSettingsDlg::CBCFProjectSettingsDlg(
 			extensions, definition.enumeration, definition.title));
 		AddPage(m_extensionPages.back().get());
 	}
+}
+
+bool CBCFProjectSettingsDlg::LoadEnumerationProfile(BCFProject& project)
+{
+	CWinApp* app = AfxGetApp();
+	BCFExtensions& extensions = project.GetExtensions();
+	for (const EnumerationPage& definition : ENUMERATION_PAGES) {
+		const int count = app->GetProfileInt(
+			ENUMERATION_PROFILE_SECTION, GetProfileCountKey(definition), -1);
+		if (count < 0) {
+			continue;
+		}
+
+		std::vector<CString> currentValues;
+		for (uint16_t i = 0; const char* value = extensions.GetElement(definition.enumeration, i); ++i) {
+			currentValues.push_back(FromUTF8(value));
+		}
+		for (const CString& value : currentValues) {
+			if (!extensions.RemoveElement(definition.enumeration, ToUTF8(value).c_str())) {
+				return false;
+			}
+		}
+		for (int i = 0; i < count; ++i) {
+			const CString value = app->GetProfileString(
+				ENUMERATION_PROFILE_SECTION, GetProfileValueKey(definition, i));
+			if (value.IsEmpty() ||
+				!extensions.AddElement(definition.enumeration, ToUTF8(value).c_str())) {
+				return false;
+			}
+		}
+	}
+	return true;
+}
+
+bool CBCFProjectSettingsDlg::SaveEnumerationProfile(BCFProject& project)
+{
+	CWinApp* app = AfxGetApp();
+	BCFExtensions& extensions = project.GetExtensions();
+	for (const EnumerationPage& definition : ENUMERATION_PAGES) {
+		const CString countKey = GetProfileCountKey(definition);
+		const int oldCount = app->GetProfileInt(
+			ENUMERATION_PROFILE_SECTION, countKey, 0);
+		uint16_t count = 0;
+		for (; const char* value = extensions.GetElement(definition.enumeration, count); ++count) {
+			if (!app->WriteProfileString(ENUMERATION_PROFILE_SECTION,
+				GetProfileValueKey(definition, count), FromUTF8(value))) {
+				return false;
+			}
+		}
+		for (int i = count; i < oldCount; ++i) {
+			if (!app->WriteProfileString(ENUMERATION_PROFILE_SECTION,
+				GetProfileValueKey(definition, i), nullptr)) {
+				return false;
+			}
+		}
+		if (!app->WriteProfileInt(ENUMERATION_PROFILE_SECTION, countKey, count)) {
+			return false;
+		}
+	}
+	return true;
 }
 
 BEGIN_MESSAGE_MAP(CBCFProjectSettingsDlg, CPropertySheet)
