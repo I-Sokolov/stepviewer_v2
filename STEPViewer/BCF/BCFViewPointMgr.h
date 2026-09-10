@@ -20,6 +20,7 @@ public:
 	void SetVisibilityFromComment(BCFComment& comment);
 	bool SaveCurrentVisibilityToComment(BCFComment& comment);
 	bool SaveSelectedAsVisibleToComment(BCFComment& comment);
+	std::wstring GetIfcComponentDisplayName(const char* ifcGuid);
 
 private:
 	void ApplySelectionToViewer(BCFViewPoint* vp);

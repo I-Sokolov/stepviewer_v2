@@ -247,6 +247,17 @@ _instance* CBCFViewPointMgr::SearchIfcComponent(const char* ifcGuid)
 	return NULL;
 }
 
+std::wstring CBCFViewPointMgr::GetIfcComponentDisplayName(const char* ifcGuid)
+{
+	if (!ifcGuid || !*ifcGuid) {
+		return {};
+	}
+	auto instance = dynamic_cast<_ap_instance*>(SearchIfcComponent(ifcGuid));
+	return instance
+		? _ap_geometry::getDisplayString(instance->getSdaiInstance(), m_document.getFullDisplayName())
+		: std::wstring();
+}
+
 bool CBCFViewPointMgr::SaveSelection(BCFViewPoint& vp)
 {
 	bool ok = true;

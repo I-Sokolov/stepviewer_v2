@@ -507,7 +507,16 @@ void CBCFCommentForm::ReloadColoring()
 
 CString CBCFCommentForm::GetComponentText(BCFComponent& component) const
 {
-	CString text = FromUTF8(component.GetIfcGuid());
+	CString text;
+	const char* ifcGuid = component.GetIfcGuid();
+	if (ifcGuid && *ifcGuid && m_pane->GetDocument()) {
+		const std::wstring displayName =
+			CBCFViewPointMgr(*m_pane->GetDocument()).GetIfcComponentDisplayName(ifcGuid);
+		text = displayName.c_str();
+	}
+	if (text.IsEmpty()) {
+		text = FromUTF8(ifcGuid);
+	}
 	if (text.IsEmpty()) {
 		text = FromUTF8(component.GetAuthoringToolId());
 	}
