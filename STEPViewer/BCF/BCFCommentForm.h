@@ -23,6 +23,8 @@ protected:
 	afx_msg void OnToView();
 	afx_msg void OnGrabSelected();
 	afx_msg void OnSelectComponents();
+	afx_msg void OnGrabVisible();
+	afx_msg void OnSetVisible();
 	DECLARE_MESSAGE_MAP()
 
 private:
@@ -32,6 +34,8 @@ private:
 	void ShowTab(int tab);
 	void UpdateCameraControls();
 	void ReloadSelection();
+	void ReloadVisibility();
+	bool CommitVisibility();
 
 	CBCFView* m_pane = nullptr;
 	BCFComment* m_comment = nullptr;
@@ -54,5 +58,13 @@ private:
 	CButton m_selectComponents;
 	CListBox m_selectedComponents;
 	CButton m_visibilityGroup;
+	CButton m_grabVisible;
+	CButton m_setVisible;
+	CComboBox m_visibilityMode;
+	CStatic m_showLabel;
+	CButton m_showSpaces;
+	CButton m_showBoundaries;
+	CButton m_showOpenings;
+	CBCFEdit m_visibilityExceptions;
 	CButton m_coloringGroup;
 };

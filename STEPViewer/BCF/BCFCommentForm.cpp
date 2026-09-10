@@ -46,6 +46,8 @@ BEGIN_MESSAGE_MAP(CBCFCommentForm, CWnd)
 	ON_BN_CLICKED(IDC_PANE_COMMENT_TO_VIEW, &CBCFCommentForm::OnToView)
 	ON_BN_CLICKED(IDC_PANE_COMMENT_GRAB_SELECTED, &CBCFCommentForm::OnGrabSelected)
 	ON_BN_CLICKED(IDC_PANE_COMMENT_SELECT_COMPONENTS, &CBCFCommentForm::OnSelectComponents)
+	ON_BN_CLICKED(IDC_PANE_COMMENT_GRAB_VISIBLE, &CBCFCommentForm::OnGrabVisible)
+	ON_BN_CLICKED(IDC_PANE_COMMENT_SET_VISIBLE, &CBCFCommentForm::OnSetVisible)
 END_MESSAGE_MAP()
 
 BOOL CBCFCommentForm::Create(CBCFView* pane)
@@ -108,10 +110,26 @@ BOOL CBCFCommentForm::Create(CBCFView* pane)
 	m_selectedComponents.Create(WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VSCROLL |
 		LBS_NOINTEGRALHEIGHT, CRect(), this, 0);
 	m_visibilityGroup.Create(L"Visibility", WS_CHILD | BS_GROUPBOX, CRect(), this, 0);
+	m_grabVisible.Create(L"Grab visible", WS_CHILD | WS_TABSTOP | BS_PUSHBUTTON,
+		CRect(), this, IDC_PANE_COMMENT_GRAB_VISIBLE);
+	m_setVisible.Create(L"Set visible", WS_CHILD | WS_TABSTOP | BS_PUSHBUTTON,
+		CRect(), this, IDC_PANE_COMMENT_SET_VISIBLE);
+	m_visibilityMode.Create(WS_CHILD | WS_TABSTOP | WS_VSCROLL | CBS_DROPDOWNLIST,
+		CRect(), this, IDC_PANE_COMMENT_VISIBILITY_MODE);
+	m_visibilityMode.AddString(L"Show all but exceptions");
+	m_visibilityMode.AddString(L"Hide all but exceptions");
+	CreateBCFStaticLabel(m_showLabel, L"Show", this);
+	m_showSpaces.Create(L"Spaces", WS_CHILD | WS_TABSTOP | BS_AUTOCHECKBOX, CRect(), this, 0);
+	m_showBoundaries.Create(L"Boundaries", WS_CHILD | WS_TABSTOP | BS_AUTOCHECKBOX, CRect(), this, 0);
+	m_showOpenings.Create(L"Openings", WS_CHILD | WS_TABSTOP | BS_AUTOCHECKBOX, CRect(), this, 0);
+	m_visibilityExceptions.Create(WS_CHILD | WS_BORDER | ES_MULTILINE | ES_AUTOVSCROLL |
+		ES_READONLY | WS_VSCROLL, CRect(), this, 0);
 	m_coloringGroup.Create(L"Coloring", WS_CHILD | BS_GROUPBOX, CRect(), this, 0);
 	CWnd* visualizationControls[] = {
 		&m_selectionGroup, &m_grabSelected, &m_selectComponents,
-		&m_selectedComponents, &m_visibilityGroup, &m_coloringGroup
+		&m_selectedComponents, &m_visibilityGroup, &m_grabVisible, &m_setVisible,
+		&m_visibilityMode, &m_showLabel, &m_showSpaces, &m_showBoundaries,
+		&m_showOpenings, &m_visibilityExceptions, &m_coloringGroup
 	};
 	for (CWnd* control : visualizationControls) {
 		SetBCFControlFont(*control, this);
@@ -131,6 +149,7 @@ void CBCFCommentForm::Load(BCFComment* comment)
 	m_text.SetWindowText(comment ? FromUTF8(comment->GetText()) : CString());
 	LoadViewPoint();
 	ReloadSelection();
+	ReloadVisibility();
 }
 
 void CBCFCommentForm::UpdateHeader()
@@ -166,6 +185,7 @@ bool CBCFCommentForm::Commit()
 	m_text.GetWindowText(text);
 	bool ok = m_comment->SetText(ToUTF8(text).c_str());
 	ok = CommitViewPoint() && ok;
+	ok = CommitVisibility() && ok;
 	m_pane->ShowLog(!ok);
 	if (ok) {
 		UpdateHeader();
@@ -213,7 +233,7 @@ bool CBCFCommentForm::CommitViewPoint()
 	}
 	const int camera = m_camera.GetCurSel();
 	if (camera <= 0) {
-		return m_comment->SetViewPoint(nullptr);
+		return true;
 	}
 	BCFViewPoint* viewPoint = m_comment->GetViewPoint();
 	if (!viewPoint) {
@@ -276,7 +296,9 @@ void CBCFCommentForm::ShowTab(int tab)
 	const int visualizationCommand = tab == 1 ? SW_SHOW : SW_HIDE;
 	CWnd* visualizationControls[] = {
 		&m_selectionGroup, &m_grabSelected, &m_selectComponents,
-		&m_selectedComponents, &m_visibilityGroup, &m_coloringGroup
+		&m_selectedComponents, &m_visibilityGroup, &m_grabVisible, &m_setVisible,
+		&m_visibilityMode, &m_showLabel, &m_showSpaces, &m_showBoundaries,
+		&m_showOpenings, &m_visibilityExceptions, &m_coloringGroup
 	};
 	for (CWnd* control : visualizationControls) {
 		control->ShowWindow(visualizationCommand);
@@ -390,6 +412,79 @@ void CBCFCommentForm::OnSelectComponents()
 {
 	if (m_comment && m_pane->GetDocument()) {
 		CBCFViewPointMgr(*m_pane->GetDocument()).SetSelectionFromComment(*m_comment);
+		m_pane->ShowLog(false);
+	}
+}
+
+void CBCFCommentForm::ReloadVisibility()
+{
+	BCFViewPoint* viewPoint = m_comment ? m_comment->GetViewPoint() : nullptr;
+	m_visibilityMode.SetCurSel(viewPoint && !viewPoint->GetDefaultVisibility() ? 1 : 0);
+	m_showSpaces.SetCheck(viewPoint && viewPoint->GetSpaceVisible() ? BST_CHECKED : BST_UNCHECKED);
+	m_showBoundaries.SetCheck(viewPoint && viewPoint->GetSpaceBoundariesVisible()
+		? BST_CHECKED : BST_UNCHECKED);
+	m_showOpenings.SetCheck(viewPoint && viewPoint->GetOpeningsVisible()
+		? BST_CHECKED : BST_UNCHECKED);
+
+	CString exceptions;
+	if (viewPoint) {
+		for (uint16_t i = 0; BCFComponent* component = viewPoint->GetException(i); ++i) {
+			CString text = FromUTF8(component->GetIfcGuid());
+			if (text.IsEmpty()) {
+				text = FromUTF8(component->GetAuthoringToolId());
+			}
+			if (text.IsEmpty()) {
+				text = FromUTF8(component->GetOriginatingSystem());
+			}
+			if (text.IsEmpty()) {
+				text = L"(Unidentified component)";
+			}
+			if (!exceptions.IsEmpty()) {
+				exceptions += L"\r\n";
+			}
+			exceptions += text;
+		}
+	}
+	m_visibilityExceptions.SetWindowText(exceptions);
+	m_setVisible.EnableWindow(viewPoint != nullptr);
+}
+
+bool CBCFCommentForm::CommitVisibility()
+{
+	BCFViewPoint* viewPoint = m_comment ? m_comment->GetViewPoint() : nullptr;
+	if (!viewPoint) {
+		return true;
+	}
+	bool ok = viewPoint->SetDefaultVisibility(m_visibilityMode.GetCurSel() != 1);
+	ok = viewPoint->SetSpaceVisible(m_showSpaces.GetCheck() == BST_CHECKED) && ok;
+	ok = viewPoint->SetSpaceBoundariesVisible(m_showBoundaries.GetCheck() == BST_CHECKED) && ok;
+	ok = viewPoint->SetOpeningsVisible(m_showOpenings.GetCheck() == BST_CHECKED) && ok;
+	return ok;
+}
+
+void CBCFCommentForm::OnGrabVisible()
+{
+	if (!m_comment || !m_pane->GetDocument()) {
+		return;
+	}
+	const bool ok = CBCFViewPointMgr(*m_pane->GetDocument())
+		.SaveCurrentVisibilityToComment(*m_comment);
+	m_pane->ShowLog(!ok);
+	if (ok) {
+		ReloadVisibility();
+		UpdateCameraControls();
+	}
+}
+
+void CBCFCommentForm::OnSetVisible()
+{
+	if (!m_comment || !m_pane->GetDocument()) {
+		return;
+	}
+	const bool ok = CommitVisibility();
+	m_pane->ShowLog(!ok);
+	if (ok) {
+		CBCFViewPointMgr(*m_pane->GetDocument()).SetVisibilityFromComment(*m_comment);
 		m_pane->ShowLog(false);
 	}
 }
@@ -524,5 +619,40 @@ void CBCFCommentForm::OnSize(UINT type, int cx, int cy)
 		m_selectedComponents.MoveWindow(contentLeft, listTop,
 			max(rowHeight, groupWidth - 2 * margin),
 			max(rowHeight, static_cast<int>(page.bottom) - listTop - margin));
+
+		CString grabVisibleText;
+		CString setVisibleText;
+		m_grabVisible.GetWindowText(grabVisibleText);
+		m_setVisible.GetWindowText(setVisibleText);
+		const int grabVisibleWidth =
+			static_cast<int>(dc.GetTextExtent(grabVisibleText).cx) + 2 * margin;
+		const int setVisibleWidth =
+			static_cast<int>(dc.GetTextExtent(setVisibleText).cx) + 2 * margin;
+		const int visibilityContentLeft = visibilityLeft + margin;
+		m_grabVisible.MoveWindow(visibilityContentLeft, contentTop,
+			grabVisibleWidth, rowHeight);
+		m_setVisible.MoveWindow(visibilityContentLeft + grabVisibleWidth + rowSpacing,
+			contentTop, setVisibleWidth, rowHeight);
+		const int modeTop = contentTop + rowHeight + rowSpacing;
+		m_visibilityMode.MoveWindow(visibilityContentLeft, modeTop,
+			max(rowHeight, groupWidth - 2 * margin), 3 * rowHeight);
+		const int showTop = modeTop + rowHeight + rowSpacing;
+		const int showLabelWidth = static_cast<int>(dc.GetTextExtent(L"Show").cx) + margin;
+		m_showLabel.MoveWindow(visibilityContentLeft, showTop + labelOffset,
+			showLabelWidth, textHeight);
+		int checkLeft = visibilityContentLeft + showLabelWidth;
+		CButton* checks[] = { &m_showSpaces, &m_showBoundaries, &m_showOpenings };
+		for (CButton* check : checks) {
+			CString checkText;
+			check->GetWindowText(checkText);
+			const int checkWidth = ::GetSystemMetrics(SM_CXMENUCHECK) +
+				static_cast<int>(dc.GetTextExtent(checkText).cx) + margin;
+			check->MoveWindow(checkLeft, showTop, checkWidth, rowHeight);
+			checkLeft += checkWidth + rowSpacing;
+		}
+		const int exceptionsTop = showTop + rowHeight + rowSpacing;
+		m_visibilityExceptions.MoveWindow(visibilityContentLeft, exceptionsTop,
+			max(rowHeight, groupWidth - 2 * margin),
+			max(rowHeight, static_cast<int>(page.bottom) - exceptionsTop - margin));
 	}
 }

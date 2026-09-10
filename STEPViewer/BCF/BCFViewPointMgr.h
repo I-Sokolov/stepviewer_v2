@@ -17,6 +17,8 @@ public:
 	bool SaveCurrentViewToComent(BCFComment& comment);
 	void SetSelectionFromComment(BCFComment& comment);
 	bool SaveCurrentSelectionToComment(BCFComment& comment);
+	void SetVisibilityFromComment(BCFComment& comment);
+	bool SaveCurrentVisibilityToComment(BCFComment& comment);
 
 private:
 	void ApplySelectionToViewer(BCFViewPoint* vp);
