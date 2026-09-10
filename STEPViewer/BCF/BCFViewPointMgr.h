@@ -15,6 +15,8 @@ public:
 	void SetViewFromComment(BCFComment& comment);
 
 	bool SaveCurrentViewToComent(BCFComment& comment);
+	void SetSelectionFromComment(BCFComment& comment);
+	bool SaveCurrentSelectionToComment(BCFComment& comment);
 
 private:
 	void ApplySelectionToViewer(BCFViewPoint* vp);

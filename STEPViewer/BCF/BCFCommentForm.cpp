@@ -44,6 +44,8 @@ BEGIN_MESSAGE_MAP(CBCFCommentForm, CWnd)
 	ON_BN_CLICKED(IDC_PANE_COMMENT_SNAPSHOT_SELECT, &CBCFCommentForm::OnSelectSnapshot)
 	ON_BN_CLICKED(IDC_PANE_COMMENT_FROM_VIEW, &CBCFCommentForm::OnFromView)
 	ON_BN_CLICKED(IDC_PANE_COMMENT_TO_VIEW, &CBCFCommentForm::OnToView)
+	ON_BN_CLICKED(IDC_PANE_COMMENT_GRAB_SELECTED, &CBCFCommentForm::OnGrabSelected)
+	ON_BN_CLICKED(IDC_PANE_COMMENT_SELECT_COMPONENTS, &CBCFCommentForm::OnSelectComponents)
 END_MESSAGE_MAP()
 
 BOOL CBCFCommentForm::Create(CBCFView* pane)
@@ -60,9 +62,7 @@ BOOL CBCFCommentForm::Create(CBCFView* pane)
 		CRect(), this, IDC_PANE_COMMENT_TABS);
 	SetBCFControlFont(m_tabs, this);
 	m_tabs.InsertItem(0, L"General");
-	m_tabs.InsertItem(1, L"Selection");
-	m_tabs.InsertItem(2, L"Visibility");
-	m_tabs.InsertItem(3, L"Coloring");
+	m_tabs.InsertItem(1, L"Visualization");
 	CreateBCFStaticLabel(m_textLabel, L"Comment:", this);
 	m_text.Create(WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_MULTILINE | ES_AUTOVSCROLL |
 		ES_WANTRETURN | WS_VSCROLL, CRect(), this, IDC_PANE_COMMENT_TEXT);
@@ -100,6 +100,22 @@ BOOL CBCFCommentForm::Create(CBCFView* pane)
 		CRect(), this, IDC_PANE_COMMENT_TO_VIEW);
 	SetBCFControlFont(m_fromView, this);
 	SetBCFControlFont(m_toView, this);
+	m_selectionGroup.Create(L"Selection", WS_CHILD | BS_GROUPBOX, CRect(), this, 0);
+	m_grabSelected.Create(L"Grab selected", WS_CHILD | WS_TABSTOP | BS_PUSHBUTTON,
+		CRect(), this, IDC_PANE_COMMENT_GRAB_SELECTED);
+	m_selectComponents.Create(L"Select", WS_CHILD | WS_TABSTOP | BS_PUSHBUTTON,
+		CRect(), this, IDC_PANE_COMMENT_SELECT_COMPONENTS);
+	m_selectedComponents.Create(WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VSCROLL |
+		LBS_NOINTEGRALHEIGHT, CRect(), this, 0);
+	m_visibilityGroup.Create(L"Visibility", WS_CHILD | BS_GROUPBOX, CRect(), this, 0);
+	m_coloringGroup.Create(L"Coloring", WS_CHILD | BS_GROUPBOX, CRect(), this, 0);
+	CWnd* visualizationControls[] = {
+		&m_selectionGroup, &m_grabSelected, &m_selectComponents,
+		&m_selectedComponents, &m_visibilityGroup, &m_coloringGroup
+	};
+	for (CWnd* control : visualizationControls) {
+		SetBCFControlFont(*control, this);
+	}
 	m_tabs.SetCurSel(0);
 	ShowTab(0);
 	return TRUE;
@@ -114,6 +130,7 @@ void CBCFCommentForm::Load(BCFComment* comment)
 	UpdateHeader();
 	m_text.SetWindowText(comment ? FromUTF8(comment->GetText()) : CString());
 	LoadViewPoint();
+	ReloadSelection();
 }
 
 void CBCFCommentForm::UpdateHeader()
@@ -242,20 +259,31 @@ void CBCFCommentForm::OnTabChanged(NMHDR*, LRESULT* result)
 
 void CBCFCommentForm::ShowTab(int tab)
 {
-	const int command = tab == 0 ? SW_SHOW : SW_HIDE;
-	m_textLabel.ShowWindow(command);
-	m_text.ShowWindow(command);
-	m_snapshot.ShowWindow(command);
-	m_selectSnapshot.ShowWindow(command);
-	m_captureSnapshot.ShowWindow(command);
-	m_cameraGroup.ShowWindow(command);
-	m_camera.ShowWindow(command);
-	m_fromView.ShowWindow(command);
-	m_toView.ShowWindow(command);
+	const int generalCommand = tab == 0 ? SW_SHOW : SW_HIDE;
+	m_textLabel.ShowWindow(generalCommand);
+	m_text.ShowWindow(generalCommand);
+	m_snapshot.ShowWindow(generalCommand);
+	m_selectSnapshot.ShowWindow(generalCommand);
+	m_captureSnapshot.ShowWindow(generalCommand);
+	m_cameraGroup.ShowWindow(generalCommand);
+	m_camera.ShowWindow(generalCommand);
+	m_fromView.ShowWindow(generalCommand);
+	m_toView.ShowWindow(generalCommand);
 	for (size_t i = 0; i < _countof(m_cameraLabels); ++i) {
-		m_cameraLabels[i].ShowWindow(command);
-		m_cameraValues[i].ShowWindow(command);
+		m_cameraLabels[i].ShowWindow(generalCommand);
+		m_cameraValues[i].ShowWindow(generalCommand);
 	}
+	const int visualizationCommand = tab == 1 ? SW_SHOW : SW_HIDE;
+	CWnd* visualizationControls[] = {
+		&m_selectionGroup, &m_grabSelected, &m_selectComponents,
+		&m_selectedComponents, &m_visibilityGroup, &m_coloringGroup
+	};
+	for (CWnd* control : visualizationControls) {
+		control->ShowWindow(visualizationCommand);
+	}
+	CRect client;
+	GetClientRect(client);
+	OnSize(SIZE_RESTORED, client.Width(), client.Height());
 	RedrawWindow(nullptr, nullptr,
 		RDW_INVALIDATE | RDW_ERASE | RDW_FRAME | RDW_ALLCHILDREN | RDW_UPDATENOW);
 }
@@ -318,6 +346,50 @@ void CBCFCommentForm::OnToView()
 {
 	if (m_comment && m_comment->GetViewPoint() && m_pane->GetDocument()) {
 		CBCFViewPointMgr(*m_pane->GetDocument()).SetViewFromComment(*m_comment);
+		m_pane->ShowLog(false);
+	}
+}
+
+void CBCFCommentForm::ReloadSelection()
+{
+	m_selectedComponents.ResetContent();
+	BCFViewPoint* viewPoint = m_comment ? m_comment->GetViewPoint() : nullptr;
+	if (viewPoint) {
+		for (uint16_t i = 0; BCFComponent* component = viewPoint->GetSelection(i); ++i) {
+			CString text = FromUTF8(component->GetIfcGuid());
+			if (text.IsEmpty()) {
+				text = FromUTF8(component->GetAuthoringToolId());
+			}
+			if (text.IsEmpty()) {
+				text = FromUTF8(component->GetOriginatingSystem());
+			}
+			if (text.IsEmpty()) {
+				text = L"(Unidentified component)";
+			}
+			m_selectedComponents.AddString(text);
+		}
+	}
+	m_selectComponents.EnableWindow(viewPoint && m_selectedComponents.GetCount() > 0);
+}
+
+void CBCFCommentForm::OnGrabSelected()
+{
+	if (!m_comment || !m_pane->GetDocument()) {
+		return;
+	}
+	const bool ok = CBCFViewPointMgr(*m_pane->GetDocument())
+		.SaveCurrentSelectionToComment(*m_comment);
+	m_pane->ShowLog(!ok);
+	if (ok) {
+		ReloadSelection();
+		UpdateCameraControls();
+	}
+}
+
+void CBCFCommentForm::OnSelectComponents()
+{
+	if (m_comment && m_pane->GetDocument()) {
+		CBCFViewPointMgr(*m_pane->GetDocument()).SetSelectionFromComment(*m_comment);
 		m_pane->ShowLog(false);
 	}
 }
@@ -426,5 +498,31 @@ void CBCFCommentForm::OnSize(UINT type, int cx, int cy)
 			m_cameraValues[i].MoveWindow(controlLeft, top + labelOffset,
 				scalar ? scalarValueWidth : vectorValueWidth, rowHeight - labelOffset);
 		}
+	}
+	else if (m_tabs.GetCurSel() == 1) {
+		const int groupWidth = max(rowHeight, (page.Width() - 2 * rowSpacing) / 3);
+		const int selectionLeft = page.left;
+		const int visibilityLeft = selectionLeft + groupWidth + rowSpacing;
+		const int coloringLeft = visibilityLeft + groupWidth + rowSpacing;
+		const int coloringWidth = max(rowHeight, static_cast<int>(page.right) - coloringLeft);
+		m_selectionGroup.MoveWindow(selectionLeft, page.top, groupWidth, page.Height());
+		m_visibilityGroup.MoveWindow(visibilityLeft, page.top, groupWidth, page.Height());
+		m_coloringGroup.MoveWindow(coloringLeft, page.top, coloringWidth, page.Height());
+
+		CString grabText;
+		CString selectText;
+		m_grabSelected.GetWindowText(grabText);
+		m_selectComponents.GetWindowText(selectText);
+		const int grabWidth = static_cast<int>(dc.GetTextExtent(grabText).cx) + 2 * margin;
+		const int selectWidth = static_cast<int>(dc.GetTextExtent(selectText).cx) + 2 * margin;
+		const int contentLeft = selectionLeft + margin;
+		const int contentTop = page.top + rowHeight;
+		m_grabSelected.MoveWindow(contentLeft, contentTop, grabWidth, rowHeight);
+		m_selectComponents.MoveWindow(contentLeft + grabWidth + rowSpacing,
+			contentTop, selectWidth, rowHeight);
+		const int listTop = contentTop + rowHeight + rowSpacing;
+		m_selectedComponents.MoveWindow(contentLeft, listTop,
+			max(rowHeight, groupWidth - 2 * margin),
+			max(rowHeight, static_cast<int>(page.bottom) - listTop - margin));
 	}
 }

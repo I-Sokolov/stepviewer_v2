@@ -21,6 +21,8 @@ protected:
 	afx_msg void OnSelectSnapshot();
 	afx_msg void OnFromView();
 	afx_msg void OnToView();
+	afx_msg void OnGrabSelected();
+	afx_msg void OnSelectComponents();
 	DECLARE_MESSAGE_MAP()
 
 private:
@@ -29,6 +31,7 @@ private:
 	bool CommitViewPoint();
 	void ShowTab(int tab);
 	void UpdateCameraControls();
+	void ReloadSelection();
 
 	CBCFView* m_pane = nullptr;
 	BCFComment* m_comment = nullptr;
@@ -46,4 +49,10 @@ private:
 	CBCFEdit m_cameraValues[6];
 	CButton m_fromView;
 	CButton m_toView;
+	CButton m_selectionGroup;
+	CButton m_grabSelected;
+	CButton m_selectComponents;
+	CListBox m_selectedComponents;
+	CButton m_visibilityGroup;
+	CButton m_coloringGroup;
 };

@@ -116,6 +116,23 @@ bool CBCFViewPointMgr::SaveCurrentViewToComent(BCFComment&comment)
 
 }
 
+void CBCFViewPointMgr::SetSelectionFromComment(BCFComment& comment)
+{
+	ApplySelectionToViewer(comment.GetViewPoint());
+}
+
+bool CBCFViewPointMgr::SaveCurrentSelectionToComment(BCFComment& comment)
+{
+	BCFViewPoint* viewPoint = comment.GetViewPoint();
+	if (!viewPoint) {
+		viewPoint = comment.GetTopic().AddViewPoint();
+		if (!viewPoint || !comment.SetViewPoint(viewPoint)) {
+			return false;
+		}
+	}
+	return SaveSelection(*viewPoint);
+}
+
 void CBCFViewPointMgr::ApplySelectionToViewer(BCFViewPoint* vp)
 {
 	vector<_instance*> vecInstances;
