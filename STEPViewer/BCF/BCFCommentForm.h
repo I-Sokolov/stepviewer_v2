@@ -56,7 +56,7 @@ private:
 	CButton m_selectionGroup;
 	CButton m_grabSelected;
 	CButton m_selectComponents;
-	CListBox m_selectedComponents;
+	CBCFEdit m_selectedComponents;
 	CButton m_visibilityGroup;
 	CButton m_grabVisible;
 	CButton m_setVisible;

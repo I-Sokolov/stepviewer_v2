@@ -107,8 +107,8 @@ BOOL CBCFCommentForm::Create(CBCFView* pane)
 		CRect(), this, IDC_PANE_COMMENT_GRAB_SELECTED);
 	m_selectComponents.Create(L"Select", WS_CHILD | WS_TABSTOP | BS_PUSHBUTTON,
 		CRect(), this, IDC_PANE_COMMENT_SELECT_COMPONENTS);
-	m_selectedComponents.Create(WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VSCROLL |
-		LBS_NOINTEGRALHEIGHT, CRect(), this, 0);
+	m_selectedComponents.Create(WS_CHILD | WS_BORDER | ES_MULTILINE | ES_AUTOVSCROLL |
+		ES_READONLY | WS_VSCROLL, CRect(), this, 0);
 	m_visibilityGroup.Create(L"Visibility", WS_CHILD | BS_GROUPBOX, CRect(), this, 0);
 	m_grabVisible.Create(L"Grab visible", WS_CHILD | WS_TABSTOP | BS_PUSHBUTTON,
 		CRect(), this, IDC_PANE_COMMENT_GRAB_VISIBLE);
@@ -374,7 +374,7 @@ void CBCFCommentForm::OnToView()
 
 void CBCFCommentForm::ReloadSelection()
 {
-	m_selectedComponents.ResetContent();
+	CString components;
 	BCFViewPoint* viewPoint = m_comment ? m_comment->GetViewPoint() : nullptr;
 	if (viewPoint) {
 		for (uint16_t i = 0; BCFComponent* component = viewPoint->GetSelection(i); ++i) {
@@ -388,10 +388,14 @@ void CBCFCommentForm::ReloadSelection()
 			if (text.IsEmpty()) {
 				text = L"(Unidentified component)";
 			}
-			m_selectedComponents.AddString(text);
+			if (!components.IsEmpty()) {
+				components += L"\r\n";
+			}
+			components += text;
 		}
 	}
-	m_selectComponents.EnableWindow(viewPoint && m_selectedComponents.GetCount() > 0);
+	m_selectedComponents.SetWindowText(components);
+	m_selectComponents.EnableWindow(viewPoint && !components.IsEmpty());
 }
 
 void CBCFCommentForm::OnGrabSelected()
@@ -444,6 +448,9 @@ void CBCFCommentForm::ReloadVisibility()
 			}
 			exceptions += text;
 		}
+	}
+	if (!exceptions.IsEmpty()) {
+		exceptions = L"Exceptions:\r\n" + exceptions;
 	}
 	m_visibilityExceptions.SetWindowText(exceptions);
 	m_setVisible.EnableWindow(viewPoint != nullptr);
