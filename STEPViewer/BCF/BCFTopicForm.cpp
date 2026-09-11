@@ -72,9 +72,7 @@ BOOL CBCFTopicForm::Create(CBCFView* pane)
 	m_tabs.InsertItem(1, L"Attributes");
 	m_tabs.InsertItem(2, L"BIM Files");
 	m_tabs.InsertItem(3, L"Snippet");
-	m_tabs.InsertItem(4, L"Documents");
-	m_tabs.InsertItem(5, L"Links");
-	m_tabs.InsertItem(6, L"Related Topics");
+	m_tabs.InsertItem(4, L"References");
 
 	m_title.Create(WS_CHILD | WS_TABSTOP | ES_AUTOHSCROLL, CRect(), this, IDC_PANE_TOPIC_TITLE);
 
@@ -140,6 +138,7 @@ BOOL CBCFTopicForm::Create(CBCFView* pane)
 	m_comments.Create(WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VSCROLL | LBS_NOTIFY | LBS_OWNERDRAWVARIABLE |
 		LBS_HASSTRINGS | LBS_NOINTEGRALHEIGHT, CRect(), this, IDC_PANE_COMMENTS);
 	SetBCFControlFont(m_comments, this);
+	CreateBCFStaticLabel(m_documentsLabel, L"Documents", this);
 	m_documents.Create(WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VSCROLL |
 		LBS_NOTIFY | LBS_SORT | LBS_NOINTEGRALHEIGHT,
 		CRect(), this, IDC_PANE_DOCUMENTS);
@@ -150,6 +149,7 @@ BOOL CBCFTopicForm::Create(CBCFView* pane)
 	m_removeDocument.Create(L"Remove...", WS_CHILD | WS_TABSTOP | BS_PUSHBUTTON,
 		CRect(), this, IDC_PANE_REMOVE_DOCUMENT);
 	SetBCFControlFont(m_removeDocument, this);
+	CreateBCFStaticLabel(m_linksLabel, L"Links", this);
 	m_links.Create(WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VSCROLL |
 		LBS_NOTIFY | LBS_SORT | LBS_NOINTEGRALHEIGHT,
 		CRect(), this, IDC_PANE_LINKS);
@@ -160,6 +160,7 @@ BOOL CBCFTopicForm::Create(CBCFView* pane)
 	m_removeLink.Create(L"Remove...", WS_CHILD | WS_TABSTOP | BS_PUSHBUTTON,
 		CRect(), this, IDC_PANE_REMOVE_LINK);
 	SetBCFControlFont(m_removeLink, this);
+	CreateBCFStaticLabel(m_relatedTopicsLabel, L"Related Topics", this);
 	m_relatedTopics.Create(WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VSCROLL |
 		LBS_NOTIFY | LBS_SORT | LBS_NOINTEGRALHEIGHT,
 		CRect(), this, IDC_PANE_RELATED_TOPICS);
@@ -171,7 +172,9 @@ BOOL CBCFTopicForm::Create(CBCFView* pane)
 		CRect(), this, IDC_PANE_REMOVE_RELATED_TOPIC);
 	SetBCFControlFont(m_removeRelatedTopic, this);
 
-	CStatic* tabLabels[] = { &m_descriptionLabel };
+	CStatic* tabLabels[] = {
+		&m_descriptionLabel, &m_documentsLabel, &m_linksLabel, &m_relatedTopicsLabel
+	};
 	for (CStatic* label : tabLabels) {
 		label->ModifyStyleEx(0, WS_EX_TRANSPARENT);
 	}
@@ -748,14 +751,17 @@ void CBCFTopicForm::ShowTab(int tab)
 	m_bimFiles.ShowWindow(tab == 2 ? SW_SHOW : SW_HIDE);
 	m_addBimFiles.ShowWindow(tab == 2 ? SW_SHOW : SW_HIDE);
 	m_documents.ShowWindow(tab == 4 ? SW_SHOW : SW_HIDE);
+	m_documentsLabel.ShowWindow(tab == 4 ? SW_SHOW : SW_HIDE);
 	m_addDocument.ShowWindow(tab == 4 ? SW_SHOW : SW_HIDE);
 	m_removeDocument.ShowWindow(tab == 4 ? SW_SHOW : SW_HIDE);
-	m_links.ShowWindow(tab == 5 ? SW_SHOW : SW_HIDE);
-	m_addLink.ShowWindow(tab == 5 ? SW_SHOW : SW_HIDE);
-	m_removeLink.ShowWindow(tab == 5 ? SW_SHOW : SW_HIDE);
-	m_relatedTopics.ShowWindow(tab == 6 ? SW_SHOW : SW_HIDE);
-	m_addRelatedTopic.ShowWindow(tab == 6 ? SW_SHOW : SW_HIDE);
-	m_removeRelatedTopic.ShowWindow(tab == 6 ? SW_SHOW : SW_HIDE);
+	m_linksLabel.ShowWindow(tab == 4 ? SW_SHOW : SW_HIDE);
+	m_links.ShowWindow(tab == 4 ? SW_SHOW : SW_HIDE);
+	m_addLink.ShowWindow(tab == 4 ? SW_SHOW : SW_HIDE);
+	m_removeLink.ShowWindow(tab == 4 ? SW_SHOW : SW_HIDE);
+	m_relatedTopicsLabel.ShowWindow(tab == 4 ? SW_SHOW : SW_HIDE);
+	m_relatedTopics.ShowWindow(tab == 4 ? SW_SHOW : SW_HIDE);
+	m_addRelatedTopic.ShowWindow(tab == 4 ? SW_SHOW : SW_HIDE);
+	m_removeRelatedTopic.ShowWindow(tab == 4 ? SW_SHOW : SW_HIDE);
 	m_comments.ShowWindow(tab == 0 ? SW_SHOW : SW_HIDE);
 	RedrawWindow(nullptr, nullptr,
 		RDW_INVALIDATE | RDW_ERASE | RDW_FRAME | RDW_ALLCHILDREN | RDW_UPDATENOW);
@@ -925,52 +931,37 @@ void CBCFTopicForm::AdjustLayout()
 			rowHeight - labelOffset);
 	}
 	else if (m_tabs.GetCurSel() == 4) {
-		CListBox* list = &m_documents;
-		CButton* addButton = &m_addDocument;
-		CButton* removeButton = &m_removeDocument;
-		CString addText;
-		CString removeText;
-		addButton->GetWindowText(addText);
-		removeButton->GetWindowText(removeText);
-		const int addWidth = max(rowHeight,
-			static_cast<int>(dc.GetTextExtent(addText).cx) + 2 * margin);
-		const int removeWidth = max(rowHeight,
-			static_cast<int>(dc.GetTextExtent(removeText).cx) + 2 * margin);
-		const int removeLeft = page.right - removeWidth;
-		const int addLeft = removeLeft - rowSpacing - addWidth;
-		addButton->MoveWindow(addLeft, page.bottom - rowHeight, addWidth, rowHeight);
-		removeButton->MoveWindow(removeLeft, page.bottom - rowHeight, removeWidth, rowHeight);
-		list->MoveWindow(page.left, page.top, page.Width(),
-			max(rowHeight, page.Height() - rowHeight - rowSpacing));
-	}
-	else if (m_tabs.GetCurSel() >= 5 && m_tabs.GetCurSel() <= 6) {
-		CListBox* list = nullptr;
-		CButton* addButton = nullptr;
-		CButton* removeButton = nullptr;
-		if (m_tabs.GetCurSel() == 5) {
-			list = &m_links;
-			addButton = &m_addLink;
-			removeButton = &m_removeLink;
+		const int columnWidth = max(rowHeight, (page.Width() - 2 * rowSpacing) / 3);
+		CStatic* labels[] = { &m_documentsLabel, &m_linksLabel, &m_relatedTopicsLabel };
+		CListBox* lists[] = { &m_documents, &m_links, &m_relatedTopics };
+		CButton* addButtons[] = { &m_addDocument, &m_addLink, &m_addRelatedTopic };
+		CButton* removeButtons[] = { &m_removeDocument, &m_removeLink, &m_removeRelatedTopic };
+		for (int i = 0; i < 3; ++i) {
+			const int left = page.left + i * (columnWidth + rowSpacing);
+			const int width = i < 2
+				? columnWidth
+				: max(rowHeight, static_cast<int>(page.right) - left);
+			labels[i]->MoveWindow(left, page.top + labelOffset, width, textHeight);
+
+			CString addText;
+			CString removeText;
+			addButtons[i]->GetWindowText(addText);
+			removeButtons[i]->GetWindowText(removeText);
+			const int addWidth = max(rowHeight,
+				static_cast<int>(dc.GetTextExtent(addText).cx) + 2 * margin);
+			const int removeWidth = max(rowHeight,
+				static_cast<int>(dc.GetTextExtent(removeText).cx) + 2 * margin);
+			const int removeLeft = left + width - removeWidth;
+			addButtons[i]->MoveWindow(
+				removeLeft - rowSpacing - addWidth, page.bottom - rowHeight,
+				addWidth, rowHeight);
+			removeButtons[i]->MoveWindow(
+				removeLeft, page.bottom - rowHeight, removeWidth, rowHeight);
+			const int listTop = page.top + rowHeight;
+			lists[i]->MoveWindow(left, listTop, width,
+				max(rowHeight, static_cast<int>(page.bottom) -
+					listTop - rowHeight - rowSpacing));
 		}
-		else {
-			list = &m_relatedTopics;
-			addButton = &m_addRelatedTopic;
-			removeButton = &m_removeRelatedTopic;
-		}
-		CString addText;
-		CString removeText;
-		addButton->GetWindowText(addText);
-		removeButton->GetWindowText(removeText);
-		const int addWidth = max(rowHeight,
-			static_cast<int>(dc.GetTextExtent(addText).cx) + 2 * margin);
-		const int removeWidth = max(rowHeight,
-			static_cast<int>(dc.GetTextExtent(removeText).cx) + 2 * margin);
-		const int removeLeft = page.right - removeWidth;
-		const int addLeft = removeLeft - rowSpacing - addWidth;
-		addButton->MoveWindow(addLeft, page.bottom - rowHeight, addWidth, rowHeight);
-		removeButton->MoveWindow(removeLeft, page.bottom - rowHeight, removeWidth, rowHeight);
-		list->MoveWindow(page.left, page.top, page.Width(),
-			max(rowHeight, page.Height() - rowHeight - rowSpacing));
 	}
 	if (oldFont) {
 		dc.SelectObject(oldFont);

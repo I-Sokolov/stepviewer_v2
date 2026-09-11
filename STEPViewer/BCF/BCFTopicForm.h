@@ -85,12 +85,15 @@ private:
 	CButton m_addBimFiles;
 	std::map<_model*, BCFBimFile*> m_usedBimModels;
 	CBCFCommentsListBox m_comments;
+	CStatic m_documentsLabel;
 	CListBox m_documents;
 	CButton m_addDocument;
 	CButton m_removeDocument;
+	CStatic m_linksLabel;
 	CListBox m_links;
 	CButton m_addLink;
 	CButton m_removeLink;
+	CStatic m_relatedTopicsLabel;
 	CListBox m_relatedTopics;
 	CButton m_addRelatedTopic;
 	CButton m_removeRelatedTopic;
