@@ -68,14 +68,13 @@ BOOL CBCFTopicForm::Create(CBCFView* pane)
 	m_tabs.Create(WS_CHILD | WS_VISIBLE | WS_TABSTOP | TCS_TABS, CRect(), this, IDC_PANE_TABS);	
 	SetBCFControlFont(m_tabs, this);
 	
-	m_tabs.InsertItem(0, L"Title");
+	m_tabs.InsertItem(0, L"Title & Comments");
 	m_tabs.InsertItem(1, L"Attributes");
 	m_tabs.InsertItem(2, L"BIM Files");
 	m_tabs.InsertItem(3, L"Snippet");
 	m_tabs.InsertItem(4, L"Documents");
 	m_tabs.InsertItem(5, L"Links");
 	m_tabs.InsertItem(6, L"Related Topics");
-	m_tabs.InsertItem(7, L"Comments");
 
 	m_title.Create(WS_CHILD | WS_TABSTOP | ES_AUTOHSCROLL, CRect(), this, IDC_PANE_TOPIC_TITLE);
 
@@ -757,7 +756,7 @@ void CBCFTopicForm::ShowTab(int tab)
 	m_relatedTopics.ShowWindow(tab == 6 ? SW_SHOW : SW_HIDE);
 	m_addRelatedTopic.ShowWindow(tab == 6 ? SW_SHOW : SW_HIDE);
 	m_removeRelatedTopic.ShowWindow(tab == 6 ? SW_SHOW : SW_HIDE);
-	m_comments.ShowWindow(tab == 7 ? SW_SHOW : SW_HIDE);
+	m_comments.ShowWindow(tab == 0 ? SW_SHOW : SW_HIDE);
 	RedrawWindow(nullptr, nullptr,
 		RDW_INVALIDATE | RDW_ERASE | RDW_FRAME | RDW_ALLCHILDREN | RDW_UPDATENOW);
 }
@@ -808,15 +807,20 @@ void CBCFTopicForm::AdjustLayout()
 	};
 
 	if (m_tabs.GetCurSel() == 0) {
+		const int titleWidth = max(rowHeight, (page.Width() - rowSpacing) / 2);
+		const int commentsLeft = page.left + titleWidth + rowSpacing;
+		const int commentsWidth = max(rowHeight,
+			static_cast<int>(page.right) - commentsLeft);
 		m_title.MoveWindow(page.left, page.top + labelOffset,
-			page.Width(), rowHeight - labelOffset);
+			titleWidth, rowHeight - labelOffset);
 
 		const int descriptionLabelTop = page.top + rowHeight + rowSpacing;
 		m_descriptionLabel.MoveWindow(page.left, descriptionLabelTop,
 			getLabelWidth(m_descriptionLabel), textHeight);
 		const int descriptionTop = descriptionLabelTop + textHeight + rowSpacing;
-		m_description.MoveWindow(page.left, descriptionTop, page.Width(),
+		m_description.MoveWindow(page.left, descriptionTop, titleWidth,
 			max(rowHeight, static_cast<int>(page.bottom) - descriptionTop));
+		m_comments.MoveWindow(commentsLeft, page.top, commentsWidth, page.Height());
 	}
 	else if (m_tabs.GetCurSel() == 1) {
 		CStatic* labels[] = {
@@ -968,10 +972,6 @@ void CBCFTopicForm::AdjustLayout()
 		list->MoveWindow(page.left, page.top, page.Width(),
 			max(rowHeight, page.Height() - rowHeight - rowSpacing));
 	}
-	else if (m_tabs.GetCurSel() == 7) {
-		m_comments.MoveWindow(page);
-	}
-
 	if (oldFont) {
 		dc.SelectObject(oldFont);
 	}
