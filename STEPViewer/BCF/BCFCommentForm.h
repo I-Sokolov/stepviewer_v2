@@ -50,7 +50,6 @@ private:
 	CBCFEdit m_text;
 	CBCFSnapshotCtrl m_snapshot;
 	CButton m_selectSnapshot;
-	CButton m_captureSnapshot;
 	CButton m_cameraGroup;
 	CStatic m_cameraLabels[6];
 	CComboBox m_camera;

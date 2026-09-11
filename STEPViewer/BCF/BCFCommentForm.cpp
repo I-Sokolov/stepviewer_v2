@@ -81,11 +81,7 @@ BOOL CBCFCommentForm::Create(CBCFView* pane)
 		CRect(), this);
 	m_selectSnapshot.Create(L"Select file...", WS_CHILD | WS_TABSTOP | BS_PUSHBUTTON,
 		CRect(), this, IDC_PANE_COMMENT_SNAPSHOT_SELECT);
-	m_captureSnapshot.Create(L"Capture", WS_CHILD | WS_TABSTOP | BS_PUSHBUTTON,
-		CRect(), this, IDC_PANE_COMMENT_SNAPSHOT_CAPTURE);
 	SetBCFControlFont(m_selectSnapshot, this);
-	SetBCFControlFont(m_captureSnapshot, this);
-	m_captureSnapshot.EnableWindow(FALSE);
 	m_cameraGroup.Create(L"Camera", WS_CHILD | BS_GROUPBOX, CRect(), this, 0);
 	SetBCFControlFont(m_cameraGroup, this);
 	const wchar_t* labels[] = {
@@ -306,7 +302,6 @@ void CBCFCommentForm::ShowTab(int tab)
 	m_text.ShowWindow(generalCommand);
 	m_snapshot.ShowWindow(generalCommand);
 	m_selectSnapshot.ShowWindow(generalCommand);
-	m_captureSnapshot.ShowWindow(generalCommand);
 	m_cameraGroup.ShowWindow(generalCommand);
 	m_camera.ShowWindow(generalCommand);
 	m_fromView.ShowWindow(generalCommand);
@@ -634,15 +629,10 @@ void CBCFCommentForm::OnSize(UINT type, int cx, int cy)
 		m_snapshot.MoveWindow(secondLeft, page.top, secondWidth,
 			max(rowHeight, page.Height() - rowHeight - rowSpacing));
 		CString selectText;
-		CString captureText;
 		m_selectSnapshot.GetWindowText(selectText);
-		m_captureSnapshot.GetWindowText(captureText);
 		const int selectWidth = static_cast<int>(dc.GetTextExtent(selectText).cx) + 2 * margin;
-		const int captureWidth = static_cast<int>(dc.GetTextExtent(captureText).cx) + 2 * margin;
 		const int snapshotButtonsTop = page.bottom - rowHeight;
 		m_selectSnapshot.MoveWindow(secondLeft, snapshotButtonsTop, selectWidth, rowHeight);
-		m_captureSnapshot.MoveWindow(secondLeft + selectWidth + rowSpacing,
-			snapshotButtonsTop, captureWidth, rowHeight);
 
 		m_cameraGroup.MoveWindow(cameraLeft, page.top, cameraWidth, page.Height());
 		const int cameraContentLeft = cameraLeft + margin;
