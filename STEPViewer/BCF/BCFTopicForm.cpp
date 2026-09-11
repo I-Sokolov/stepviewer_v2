@@ -17,6 +17,22 @@ namespace fs = std::experimental::filesystem;
 
 namespace
 {
+	void UpdateHorizontalExtent(CListBox& list, int leadingWidth = 0)
+	{
+		CClientDC dc(&list);
+		CFont* oldFont = list.GetFont() ? dc.SelectObject(list.GetFont()) : nullptr;
+		int extent = 0;
+		CString text;
+		for (int i = 0; i < list.GetCount(); ++i) {
+			list.GetText(i, text);
+			extent = max(extent, static_cast<int>(dc.GetTextExtent(text).cx));
+		}
+		if (oldFont) {
+			dc.SelectObject(oldFont);
+		}
+		list.SetHorizontalExtent(extent ? extent + leadingWidth + 4 : 0);
+	}
+
 	CString GetDocumentText(BCFDocumentReference& document)
 	{
 		CString text = FromUTF8(document.GetDescription());
@@ -130,7 +146,7 @@ BOOL CBCFTopicForm::Create(CBCFView* pane)
 	for (CWnd* edit : edits) {
 		SetBCFControlFont(*edit, this);
 	}
-	m_bimFiles.Create(WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VSCROLL |
+	m_bimFiles.Create(WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VSCROLL | WS_HSCROLL |
 		LBS_OWNERDRAWFIXED | LBS_HASSTRINGS | LBS_NOINTEGRALHEIGHT,
 		CRect(), this, IDC_PANE_BIM_FILES);
 	m_bimFiles.SetCheckStyle(BS_AUTOCHECKBOX);
@@ -142,7 +158,7 @@ BOOL CBCFTopicForm::Create(CBCFView* pane)
 		LBS_HASSTRINGS | LBS_NOINTEGRALHEIGHT, CRect(), this, IDC_PANE_COMMENTS);
 	SetBCFControlFont(m_comments, this);
 	CreateBCFStaticLabel(m_documentsLabel, L"Documents", this);
-	m_documents.Create(WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VSCROLL |
+	m_documents.Create(WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VSCROLL | WS_HSCROLL |
 		LBS_NOTIFY | LBS_SORT | LBS_NOINTEGRALHEIGHT,
 		CRect(), this, IDC_PANE_DOCUMENTS);
 	SetBCFControlFont(m_documents, this);
@@ -153,7 +169,7 @@ BOOL CBCFTopicForm::Create(CBCFView* pane)
 		CRect(), this, IDC_PANE_REMOVE_DOCUMENT);
 	SetBCFControlFont(m_removeDocument, this);
 	CreateBCFStaticLabel(m_linksLabel, L"Links", this);
-	m_links.Create(WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VSCROLL |
+	m_links.Create(WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VSCROLL | WS_HSCROLL |
 		LBS_NOTIFY | LBS_SORT | LBS_NOINTEGRALHEIGHT,
 		CRect(), this, IDC_PANE_LINKS);
 	SetBCFControlFont(m_links, this);
@@ -164,7 +180,7 @@ BOOL CBCFTopicForm::Create(CBCFView* pane)
 		CRect(), this, IDC_PANE_REMOVE_LINK);
 	SetBCFControlFont(m_removeLink, this);
 	CreateBCFStaticLabel(m_relatedTopicsLabel, L"Related Topics", this);
-	m_relatedTopics.Create(WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VSCROLL |
+	m_relatedTopics.Create(WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VSCROLL | WS_HSCROLL |
 		LBS_NOTIFY | LBS_SORT | LBS_NOINTEGRALHEIGHT,
 		CRect(), this, IDC_PANE_RELATED_TOPICS);
 	SetBCFControlFont(m_relatedTopics, this);
@@ -467,6 +483,7 @@ void CBCFTopicForm::ReloadBimFiles()
 	if (topIndex != LB_ERR && topIndex < m_bimFiles.GetCount()) {
 		m_bimFiles.SetTopIndex(topIndex);
 	}
+	UpdateHorizontalExtent(m_bimFiles, ::GetSystemMetrics(SM_CXMENUCHECK) + 4);
 	m_bimFiles.SetRedraw(TRUE);
 	m_bimFiles.Invalidate();
 }
@@ -548,6 +565,7 @@ void CBCFTopicForm::ReloadDocuments(BCFDocumentReference* selectDocument)
 			}
 		}
 	}
+	UpdateHorizontalExtent(m_documents);
 	m_documents.SetRedraw(TRUE);
 	m_documents.Invalidate();
 	if (selectedItem == LB_ERR && m_documents.GetCount() > 0) {
@@ -604,6 +622,7 @@ void CBCFTopicForm::ReloadLinks(int selection)
 			m_links.AddString(FromUTF8(link));
 		}
 	}
+	UpdateHorizontalExtent(m_links);
 	m_links.SetRedraw(TRUE);
 	m_links.Invalidate();
 	if (selection == LB_ERR && m_links.GetCount() > 0) {
@@ -674,6 +693,7 @@ void CBCFTopicForm::ReloadRelatedTopics(BCFTopic* selectTopic)
 			}
 		}
 	}
+	UpdateHorizontalExtent(m_relatedTopics);
 	m_relatedTopics.SetRedraw(TRUE);
 	m_relatedTopics.Invalidate();
 	if (selectedItem == LB_ERR && m_relatedTopics.GetCount() > 0) {
