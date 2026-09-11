@@ -378,6 +378,11 @@ void CBCFTopicForm::OnCommentDoubleClick()
 		if (!comment) {
 			return;
 		}
+		if (m_pane->GetDocument()) {
+			const bool ok = CBCFViewPointMgr(*m_pane->GetDocument())
+				.SaveCurrentViewToComent(*comment);
+			m_pane->ShowLog(!ok);
+		}
 		ReloadComments(comment);
 	}
 	m_pane->ShowComment(comment);
