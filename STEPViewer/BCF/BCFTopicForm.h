@@ -81,8 +81,10 @@ private:
 	CBCFEdit m_snippetSchema;
 	CBCFEdit m_index;
 	CBCFEdit m_serverId;
+	CButton m_bimFilesGroup;
 	CCheckListBox m_bimFiles;
 	CButton m_addBimFiles;
+	CButton m_snippetGroup;
 	std::map<_model*, BCFBimFile*> m_usedBimModels;
 	CBCFCommentsListBox m_comments;
 	CStatic m_documentsLabel;

@@ -69,10 +69,8 @@ BOOL CBCFTopicForm::Create(CBCFView* pane)
 	SetBCFControlFont(m_tabs, this);
 	
 	m_tabs.InsertItem(0, L"Title && Comment");
-	m_tabs.InsertItem(1, L"Attributes");
-	m_tabs.InsertItem(2, L"BIM Files");
-	m_tabs.InsertItem(3, L"Snippet");
-	m_tabs.InsertItem(4, L"References");
+	m_tabs.InsertItem(1, L"Details");
+	m_tabs.InsertItem(2, L"References");
 
 	m_title.Create(WS_CHILD | WS_TABSTOP | ES_AUTOHSCROLL, CRect(), this, IDC_PANE_TOPIC_TITLE);
 
@@ -82,6 +80,11 @@ BOOL CBCFTopicForm::Create(CBCFView* pane)
 
 	SetBCFControlFont(m_title, this);
 	SetBCFControlFont(m_description, this);
+
+	m_bimFilesGroup.Create(L"BIM Files", WS_CHILD | BS_GROUPBOX, CRect(), this, 0);
+	SetBCFControlFont(m_bimFilesGroup, this);
+	m_snippetGroup.Create(L"Snippet", WS_CHILD | BS_GROUPBOX, CRect(), this, 0);
+	SetBCFControlFont(m_snippetGroup, this);
 
 	const wchar_t* labels[12] = {
 		L"Type:", L"Stage:", L"Status:", L"Assigned:", L"Priority:", L"Due:",
@@ -732,9 +735,7 @@ void CBCFTopicForm::ShowTab(int tab)
 		&m_index, &m_serverId, &m_selectTopicLabels
 	};
 	for (int i = 0; i < 12; ++i) {
-		const bool snippetLabel = i >= 6 && i <= 8;
-		m_attributeLabels[i].ShowWindow(
-			(snippetLabel ? tab == 3 : tab == 1) ? SW_SHOW : SW_HIDE);
+		m_attributeLabels[i].ShowWindow(tab == 1 ? SW_SHOW : SW_HIDE);
 	}
 	for (CWnd* control : attributeControls) {
 		control->ShowWindow(tab == 1 ? SW_SHOW : SW_HIDE);
@@ -746,22 +747,24 @@ void CBCFTopicForm::ShowTab(int tab)
 		&m_snippetSchema, &m_selectSnippetFile
 	};
 	for (CWnd* control : snippetControls) {
-		control->ShowWindow(tab == 3 ? SW_SHOW : SW_HIDE);
+		control->ShowWindow(tab == 1 ? SW_SHOW : SW_HIDE);
 	}
-	m_bimFiles.ShowWindow(tab == 2 ? SW_SHOW : SW_HIDE);
-	m_addBimFiles.ShowWindow(tab == 2 ? SW_SHOW : SW_HIDE);
-	m_documents.ShowWindow(tab == 4 ? SW_SHOW : SW_HIDE);
-	m_documentsLabel.ShowWindow(tab == 4 ? SW_SHOW : SW_HIDE);
-	m_addDocument.ShowWindow(tab == 4 ? SW_SHOW : SW_HIDE);
-	m_removeDocument.ShowWindow(tab == 4 ? SW_SHOW : SW_HIDE);
-	m_linksLabel.ShowWindow(tab == 4 ? SW_SHOW : SW_HIDE);
-	m_links.ShowWindow(tab == 4 ? SW_SHOW : SW_HIDE);
-	m_addLink.ShowWindow(tab == 4 ? SW_SHOW : SW_HIDE);
-	m_removeLink.ShowWindow(tab == 4 ? SW_SHOW : SW_HIDE);
-	m_relatedTopicsLabel.ShowWindow(tab == 4 ? SW_SHOW : SW_HIDE);
-	m_relatedTopics.ShowWindow(tab == 4 ? SW_SHOW : SW_HIDE);
-	m_addRelatedTopic.ShowWindow(tab == 4 ? SW_SHOW : SW_HIDE);
-	m_removeRelatedTopic.ShowWindow(tab == 4 ? SW_SHOW : SW_HIDE);
+	m_snippetGroup.ShowWindow(tab == 1 ? SW_SHOW : SW_HIDE);
+	m_bimFilesGroup.ShowWindow(tab == 1 ? SW_SHOW : SW_HIDE);
+	m_bimFiles.ShowWindow(tab == 1 ? SW_SHOW : SW_HIDE);
+	m_addBimFiles.ShowWindow(tab == 1 ? SW_SHOW : SW_HIDE);
+	m_documents.ShowWindow(tab == 2 ? SW_SHOW : SW_HIDE);
+	m_documentsLabel.ShowWindow(tab == 2 ? SW_SHOW : SW_HIDE);
+	m_addDocument.ShowWindow(tab == 2 ? SW_SHOW : SW_HIDE);
+	m_removeDocument.ShowWindow(tab == 2 ? SW_SHOW : SW_HIDE);
+	m_linksLabel.ShowWindow(tab == 2 ? SW_SHOW : SW_HIDE);
+	m_links.ShowWindow(tab == 2 ? SW_SHOW : SW_HIDE);
+	m_addLink.ShowWindow(tab == 2 ? SW_SHOW : SW_HIDE);
+	m_removeLink.ShowWindow(tab == 2 ? SW_SHOW : SW_HIDE);
+	m_relatedTopicsLabel.ShowWindow(tab == 2 ? SW_SHOW : SW_HIDE);
+	m_relatedTopics.ShowWindow(tab == 2 ? SW_SHOW : SW_HIDE);
+	m_addRelatedTopic.ShowWindow(tab == 2 ? SW_SHOW : SW_HIDE);
+	m_removeRelatedTopic.ShowWindow(tab == 2 ? SW_SHOW : SW_HIDE);
 	m_comments.ShowWindow(tab == 0 ? SW_SHOW : SW_HIDE);
 	RedrawWindow(nullptr, nullptr,
 		RDW_INVALIDATE | RDW_ERASE | RDW_FRAME | RDW_ALLCHILDREN | RDW_UPDATENOW);
@@ -829,79 +832,82 @@ void CBCFTopicForm::AdjustLayout()
 		m_comments.MoveWindow(commentsLeft, page.top, commentsWidth, page.Height());
 	}
 	else if (m_tabs.GetCurSel() == 1) {
-		CStatic* labels[] = {
+		const int columnWidth = max(rowHeight, (page.Width() - 2 * rowSpacing) / 3);
+		const int leftColumn = page.left;
+		const int middleColumn = leftColumn + columnWidth + rowSpacing;
+		const int rightColumn = middleColumn + columnWidth + rowSpacing;
+		const int rightColumnWidth = max(rowHeight,
+			static_cast<int>(page.right) - rightColumn);
+
+		CStatic* leftLabels[] = {
 			&m_attributeLabels[0], &m_attributeLabels[1], &m_attributeLabels[2],
-			&m_attributeLabels[3], &m_attributeLabels[4], &m_attributeLabels[5],
-			&m_labelsLabel, &m_attributeLabels[9], &m_attributeLabels[10]
+			&m_attributeLabels[3], &m_attributeLabels[4], &m_attributeLabels[5]
 		};
-		CWnd* controls[] = {
-			&m_type, &m_stage, &m_status,
-			&m_assigned, &m_priority, &m_due,
-			&m_labels, &m_index, &m_serverId
+		CWnd* leftControls[] = {
+			&m_type, &m_stage, &m_status, &m_assigned, &m_priority, &m_due
 		};
-		const int rowsPerColumn = 3;
-		const int columnWidth = page.Width() / 3;
-		int labelWidths[3] = {};
-		for (size_t i = 0; i < _countof(labels); ++i) {
-			const int column = static_cast<int>(i) / rowsPerColumn;
-			labelWidths[column] = max(labelWidths[column], getLabelWidth(*labels[i]));
+		int leftLabelWidth = 0;
+		for (CStatic* label : leftLabels) {
+			leftLabelWidth = max(leftLabelWidth, getLabelWidth(*label));
 		}
-		for (int& width : labelWidths) {
-			width += margin;
+		leftLabelWidth += margin;
+		for (size_t i = 0; i < _countof(leftControls); ++i) {
+			const int top = page.top +
+				static_cast<int>(i) * (rowHeight + rowSpacing);
+			leftLabels[i]->MoveWindow(
+				leftColumn, top + labelOffset, leftLabelWidth, textHeight);
+			const bool isEdit = leftControls[i]->IsKindOf(RUNTIME_CLASS(CEdit)) != FALSE;
+			leftControls[i]->MoveWindow(
+				leftColumn + leftLabelWidth, top + labelOffset,
+				max(rowHeight, columnWidth - leftLabelWidth),
+				isEdit ? rowHeight - labelOffset : 3 * rowHeight);
 		}
 
-		for (size_t i = 0; i < _countof(controls); ++i) {
-			const int column = static_cast<int>(i) / rowsPerColumn;
-			const int row = static_cast<int>(i) % rowsPerColumn;
-			const int left = page.left + column * columnWidth;
-			const int width = column == 2 ? static_cast<int>(page.right) - left : columnWidth - margin;
-			const int top = page.top + row * (rowHeight + rowSpacing);
-			labels[i]->MoveWindow(
-				left, top + labelOffset, labelWidths[column], textHeight);
-			const int controlLeft = left + labelWidths[column];
-			int controlWidth = max(rowHeight, width - labelWidths[column]);
-			if (controls[i] == &m_labels) {
-				controlWidth = max(rowHeight, controlWidth - rowHeight - margin / 2);
-				m_selectTopicLabels.MoveWindow(
-					left + width - rowHeight, top, rowHeight, rowHeight);
-			}
-			const bool isEdit = controls[i]->IsKindOf(RUNTIME_CLASS(CEdit)) != FALSE;
-			controls[i]->MoveWindow(
-				controlLeft, top + labelOffset, controlWidth,
-				isEdit ? rowHeight - labelOffset : rowsPerColumn * rowHeight);
-		}
-	}
-	else if (m_tabs.GetCurSel() == 2) {
-		const int addButtonWidth = max(
-			rowHeight, static_cast<int>(dc.GetTextExtent(L"Add...").cx) + 2 * margin);
-		m_addBimFiles.MoveWindow(
-			page.left, page.bottom - rowHeight, addButtonWidth, rowHeight);
-		m_bimFiles.MoveWindow(
-			page.left, page.top, page.Width(),
-			max(rowHeight, page.Height() - rowHeight - rowSpacing));
-	}
-	else if (m_tabs.GetCurSel() == 3) {
+		const int middleLabelWidth = max(
+			getLabelWidth(m_labelsLabel),
+			max(getLabelWidth(m_attributeLabels[9]),
+				getLabelWidth(m_attributeLabels[10]))) + margin;
+		m_labelsLabel.MoveWindow(
+			middleColumn, page.top + labelOffset, middleLabelWidth, textHeight);
+		m_selectTopicLabels.MoveWindow(
+			middleColumn + columnWidth - rowHeight, page.top, rowHeight, rowHeight);
+		m_labels.MoveWindow(
+			middleColumn + middleLabelWidth, page.top + labelOffset,
+			max(rowHeight, columnWidth - middleLabelWidth - rowHeight - margin / 2),
+			rowHeight - labelOffset);
+
+		const int snippetTop = page.top + rowHeight + rowSpacing;
+		const int snippetHeight = 4 * rowHeight + 2 * rowSpacing + margin;
+		m_snippetGroup.MoveWindow(
+			middleColumn, snippetTop, columnWidth, snippetHeight);
+		const int snippetContentLeft = middleColumn + margin;
+		const int snippetContentRight = middleColumn + columnWidth - margin;
+		const int snippetContentTop = snippetTop + rowHeight;
 		const int labelIndices[] = { 7, 6, 8 };
-		int labelWidth = 0;
+		int snippetLabelWidth = 0;
 		for (int labelIndex : labelIndices) {
-			labelWidth = max(labelWidth, getLabelWidth(m_attributeLabels[labelIndex]));
+			snippetLabelWidth = max(
+				snippetLabelWidth, getLabelWidth(m_attributeLabels[labelIndex]));
 		}
-		labelWidth += margin;
-		const int controlLeft = page.left + labelWidth;
+		snippetLabelWidth += margin;
+		const int snippetControlLeft = snippetContentLeft + snippetLabelWidth;
 
-		const int fileTop = page.top;
+		const int fileTop = snippetContentTop;
 		m_attributeLabels[7].MoveWindow(
-			page.left, fileTop + labelOffset, labelWidth, textHeight);
+			snippetContentLeft, fileTop + labelOffset,
+			snippetLabelWidth, textHeight);
 		m_selectSnippetFile.MoveWindow(
-			page.right - rowHeight, fileTop, rowHeight, rowHeight);
+			snippetContentRight - rowHeight, fileTop, rowHeight, rowHeight);
 		m_snippetReference.MoveWindow(
-			controlLeft, fileTop + labelOffset,
-			max(rowHeight, static_cast<int>(page.right) - controlLeft - rowHeight - margin / 2),
+			snippetControlLeft, fileTop + labelOffset,
+			max(rowHeight, snippetContentRight -
+				snippetControlLeft - rowHeight - margin / 2),
 			rowHeight - labelOffset);
 
 		const int typeTop = fileTop + rowHeight + rowSpacing;
 		m_attributeLabels[6].MoveWindow(
-			page.left, typeTop + labelOffset, labelWidth, textHeight);
+			snippetContentLeft, typeTop + labelOffset,
+			snippetLabelWidth, textHeight);
 		CString externalText;
 		m_snippetExternal.GetWindowText(externalText);
 		const int externalWidth = ::GetSystemMetrics(SM_CXMENUCHECK) +
@@ -916,21 +922,54 @@ void CBCFTopicForm::AdjustLayout()
 		}
 		typeWidth += ::GetSystemMetrics(SM_CXVSCROLL) + 2 * margin;
 		typeWidth = min(typeWidth,
-			max(rowHeight, static_cast<int>(page.right) - controlLeft - externalWidth - rowSpacing));
+			max(rowHeight, snippetContentRight -
+				snippetControlLeft - externalWidth - rowSpacing));
 		m_snippetType.MoveWindow(
-			controlLeft, typeTop + labelOffset, typeWidth, 3 * rowHeight);
+			snippetControlLeft, typeTop + labelOffset, typeWidth, 3 * rowHeight);
 		m_snippetExternal.MoveWindow(
-			controlLeft + typeWidth + rowSpacing, typeTop, externalWidth, rowHeight);
+			snippetControlLeft + typeWidth + rowSpacing,
+			typeTop, externalWidth, rowHeight);
 
 		const int schemaTop = typeTop + rowHeight + rowSpacing;
 		m_attributeLabels[8].MoveWindow(
-			page.left, schemaTop + labelOffset, labelWidth, textHeight);
+			snippetContentLeft, schemaTop + labelOffset,
+			snippetLabelWidth, textHeight);
 		m_snippetSchema.MoveWindow(
-			controlLeft, schemaTop + labelOffset,
-			max(rowHeight, static_cast<int>(page.right) - controlLeft),
+			snippetControlLeft, schemaTop + labelOffset,
+			max(rowHeight, snippetContentRight - snippetControlLeft),
 			rowHeight - labelOffset);
+
+		const int indexTop = snippetTop + snippetHeight + rowSpacing;
+		CStatic* middleLabels[] = {
+			&m_attributeLabels[9], &m_attributeLabels[10]
+		};
+		CBCFEdit* middleControls[] = { &m_index, &m_serverId };
+		for (int i = 0; i < 2; ++i) {
+			const int top = indexTop + i * (rowHeight + rowSpacing);
+			middleLabels[i]->MoveWindow(
+				middleColumn, top + labelOffset, middleLabelWidth, textHeight);
+			middleControls[i]->MoveWindow(
+				middleColumn + middleLabelWidth, top + labelOffset,
+				max(rowHeight, columnWidth - middleLabelWidth),
+				rowHeight - labelOffset);
+		}
+
+		m_bimFilesGroup.MoveWindow(
+			rightColumn, page.top, rightColumnWidth, page.Height());
+		const int addButtonWidth = max(
+			rowHeight, static_cast<int>(dc.GetTextExtent(L"Add...").cx) + 2 * margin);
+		const int bimFilesContentLeft = rightColumn + margin;
+		const int bimFilesContentTop = page.top + rowHeight;
+		m_addBimFiles.MoveWindow(
+			bimFilesContentLeft, page.bottom - rowHeight - margin,
+			addButtonWidth, rowHeight);
+		m_bimFiles.MoveWindow(
+			bimFilesContentLeft, bimFilesContentTop,
+			max(rowHeight, rightColumnWidth - 2 * margin),
+			max(rowHeight, static_cast<int>(page.bottom) -
+				bimFilesContentTop - rowHeight - 2 * margin));
 	}
-	else if (m_tabs.GetCurSel() == 4) {
+	else if (m_tabs.GetCurSel() == 2) {
 		const int columnWidth = max(rowHeight, (page.Width() - 2 * rowSpacing) / 3);
 		CStatic* labels[] = { &m_documentsLabel, &m_linksLabel, &m_relatedTopicsLabel };
 		CListBox* lists[] = { &m_documents, &m_links, &m_relatedTopics };
