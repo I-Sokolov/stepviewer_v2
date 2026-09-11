@@ -285,6 +285,9 @@
     <ClInclude Include="BCF\BCFViewPointMgr.h">
       <Filter>BCF</Filter>
     </ClInclude>
+    <ClInclude Include="BCF\UriDownloader.h">
+      <Filter>BCF</Filter>
+    </ClInclude>
     <ClInclude Include="..\include\_rdf_mvc.h">
       <Filter>include</Filter>
     </ClInclude>
@@ -564,6 +567,9 @@
       <Filter>BCF</Filter>
     </ClCompile>
     <ClCompile Include="BCF\BCFViewPointMgr.cpp">
+      <Filter>BCF</Filter>
+    </ClCompile>
+    <ClCompile Include="BCF\UriDownloader.cpp">
       <Filter>BCF</Filter>
     </ClCompile>
     <ClCompile Include="..\include\_rdf_mvc.cpp">

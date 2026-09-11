@@ -6,6 +6,7 @@
 #include "BCFTopicForm.h"
 #include "BCFView.h"
 #include "BCFViewControls.h"
+#include "UriDownloader.h"
 #include "STEPViewerDoc.h"
 #include "Resource.h"
 #include "_ap_model_factory.h"
@@ -543,6 +544,14 @@ _model* CBCFView::GetBimModel(BCFBimFile& file)
 		if (candidate->getPath() == path) {
 			m_bimModels[&file] = candidate;
 			return candidate;
+		}
+	}
+
+	if (CUriDownloader::IsUri(path)) {
+		path = CUriDownloader(this).GetLocalPath(path);
+		if (path.IsEmpty()) {
+			m_bimModels[&file] = nullptr;
+			return nullptr;
 		}
 	}
 

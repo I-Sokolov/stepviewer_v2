@@ -691,6 +691,7 @@
     <ClInclude Include="BCF\BCFProjectDlg.h" />
     <ClInclude Include="BCF\BCFTopicDlg.h" />
     <ClInclude Include="BCF\BCFViewPointMgr.h" />
+    <ClInclude Include="BCF\UriDownloader.h" />
     <ClInclude Include="CIS2\CIS2DesignPart.h" />
     <ClInclude Include="CIS2\CIS2Geometry.h" />
     <ClInclude Include="CIS2\CIS2Instance.h" />
@@ -1270,6 +1271,7 @@
     <ClCompile Include="BCF\BCFProjectDlg.cpp" />
     <ClCompile Include="BCF\BCFTopicDlg.cpp" />
     <ClCompile Include="BCF\BCFViewPointMgr.cpp" />
+    <ClCompile Include="BCF\UriDownloader.cpp" />
     <ClCompile Include="CIS2\CIS2DesignPart.cpp" />
     <ClCompile Include="CIS2\CIS2Geometry.cpp" />
     <ClCompile Include="CIS2\CIS2Instance.cpp" />
