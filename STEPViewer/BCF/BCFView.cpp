@@ -379,11 +379,16 @@ void CBCFView::ShowComment(BCFComment* comment)
 void CBCFView::ShowForm(Form form)
 {
 	m_activeForm = form;
-	m_projectForm->ShowWindow(form == ProjectForm ? SW_SHOW : SW_HIDE);
-	m_topicForm->ShowWindow(form == TopicForm ? SW_SHOW : SW_HIDE);
-	m_commentForm->ShowWindow(form == CommentForm ? SW_SHOW : SW_HIDE);
-	AdjustLayout();
-	RefreshCommandUI();
+	if (IsWindow(m_projectForm->GetSafeHwnd()))
+		m_projectForm->ShowWindow (form == ProjectForm ? SW_SHOW : SW_HIDE);
+	if (IsWindow(m_topicForm->GetSafeHwnd()))
+		m_topicForm->ShowWindow (form == TopicForm ? SW_SHOW : SW_HIDE);
+	if (IsWindow (m_commentForm->GetSafeHwnd()))
+		m_commentForm->ShowWindow (form == CommentForm ? SW_SHOW : SW_HIDE);
+	if (IsWindow (GetSafeHwnd ()))	{
+		AdjustLayout ();
+		RefreshCommandUI ();
+		}
 }
 
 void CBCFView::LoadProjectInfo()
@@ -711,7 +716,8 @@ void CBCFView::AdjustLayout()
 	CRect formRect(client.left, headerTop + headerHeight + margin, client.right, client.bottom);
 	m_projectForm->MoveWindow(formRect);
 	m_topicForm->MoveWindow(formRect);
-	m_commentForm->MoveWindow(formRect);
+	if (IsWindow(m_commentForm->GetSafeHwnd()))
+		m_commentForm->MoveWindow(formRect);
 	RedrawWindow(nullptr, nullptr, RDW_INVALIDATE | RDW_ERASE | RDW_ALLCHILDREN);
 }
 

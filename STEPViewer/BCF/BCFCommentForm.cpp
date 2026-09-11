@@ -19,7 +19,14 @@ namespace
 	CString FormatPoint(const BCFPoint& point)
 	{
 		CString value;
-		value.Format(L"%.5g, %.5g, %.5g", point.xyz[0], point.xyz[1], point.xyz[2]);
+		value.Format(L"%.5f, %.5f, %.5f", point.xyz[0], point.xyz[1], point.xyz[2]);
+		return value;
+	}
+
+	CString FormatDouble(double number)
+	{
+		CString value;
+		value.Format(L"%.5f", number);
 		return value;
 	}
 
@@ -106,7 +113,7 @@ BOOL CBCFCommentForm::Create(CBCFView* pane)
 	m_selectionGroup.Create(L"Selection", WS_CHILD | BS_GROUPBOX, CRect(), this, 0);
 	m_grabSelected.Create(L"Grab selected", WS_CHILD | WS_TABSTOP | BS_PUSHBUTTON,
 		CRect(), this, IDC_PANE_COMMENT_GRAB_SELECTED);
-	m_selectComponents.Create(L"Select", WS_CHILD | WS_TABSTOP | BS_PUSHBUTTON,
+	m_selectComponents.Create(L"Apply", WS_CHILD | WS_TABSTOP | BS_PUSHBUTTON,
 		CRect(), this, IDC_PANE_COMMENT_SELECT_COMPONENTS);
 	m_selectedComponents.Create(WS_CHILD | WS_BORDER | ES_MULTILINE | ES_AUTOVSCROLL |
 		ES_READONLY | WS_VSCROLL, CRect(), this, 0);
@@ -115,7 +122,7 @@ BOOL CBCFCommentForm::Create(CBCFView* pane)
 		CRect(), this, IDC_PANE_COMMENT_GRAB_VISIBLE);
 	m_visibleFromSelection.Create(L"Grab selected", WS_CHILD | WS_TABSTOP | BS_PUSHBUTTON,
 		CRect(), this, IDC_PANE_COMMENT_VISIBLE_FROM_SELECTION);
-	m_setVisible.Create(L"Set visible", WS_CHILD | WS_TABSTOP | BS_PUSHBUTTON,
+	m_setVisible.Create(L"Apply", WS_CHILD | WS_TABSTOP | BS_PUSHBUTTON,
 		CRect(), this, IDC_PANE_COMMENT_SET_VISIBLE);
 	m_visibilityMode.Create(WS_CHILD | WS_TABSTOP | WS_VSCROLL | CBS_DROPDOWNLIST,
 		CRect(), this, IDC_PANE_COMMENT_VISIBILITY_MODE);
@@ -147,15 +154,17 @@ BOOL CBCFCommentForm::Create(CBCFView* pane)
 void CBCFCommentForm::Load(BCFComment* comment)
 {
 	m_comment = comment;
-	if (!GetSafeHwnd()) {
+	if (!IsWindow(GetSafeHwnd())) {
 		return;
 	}
 	UpdateHeader();
 	m_text.SetWindowText(comment ? FromUTF8(comment->GetText()) : CString());
 	LoadViewPoint();
-	ReloadSelection();
-	ReloadVisibility();
-	ReloadColoring();
+	if (IsWindow (GetSafeHwnd ())){
+		ReloadSelection ();
+		ReloadVisibility ();
+		ReloadColoring ();
+		}
 }
 
 void CBCFCommentForm::UpdateHeader()
@@ -213,13 +222,12 @@ void CBCFCommentForm::LoadViewPoint()
 		m_cameraValues[Direction].SetWindowText(FormatPoint(point));
 		viewPoint->GetCameraUpVector(point);
 		m_cameraValues[UpVector].SetWindowText(FormatPoint(point));
-		CString value;
-		value.Format(L"%.5g", viewPoint->GetAspectRatio());
-		m_cameraValues[AspectRatio].SetWindowText(value);
-		value.Format(L"%.5g", viewPoint->GetViewToWorldScale());
-		m_cameraValues[Scale].SetWindowText(value);
-		value.Format(L"%.5g", viewPoint->GetFieldOfView());
-		m_cameraValues[FieldOfView].SetWindowText(value);
+		m_cameraValues[AspectRatio].SetWindowText(
+			FormatDouble(viewPoint->GetAspectRatio()));
+		m_cameraValues[Scale].SetWindowText(
+			FormatDouble(viewPoint->GetViewToWorldScale()));
+		m_cameraValues[FieldOfView].SetWindowText(
+			FormatDouble(viewPoint->GetFieldOfView()));
 		CString snapshot = FromUTF8(viewPoint->GetSnapshot());
 		m_snapshot.SetWindowText(snapshot.IsEmpty() ? CString(L"No snapshot") : snapshot);
 	}
@@ -229,7 +237,17 @@ void CBCFCommentForm::LoadViewPoint()
 		}
 		m_snapshot.SetWindowText(L"No snapshot");
 	}
-	UpdateCameraControls();
+
+	if (IsWindow(GetSafeHwnd ())) {
+		UpdateCameraControls ();
+		CRect client;
+		GetClientRect (client);
+		OnSize (SIZE_RESTORED, client.Width (), client.Height ());
+		if (IsWindow (GetSafeHwnd ())){
+			RedrawWindow (nullptr, nullptr,
+						  RDW_INVALIDATE | RDW_ERASE | RDW_ALLCHILDREN | RDW_UPDATENOW);
+			}
+		}
 }
 
 bool CBCFCommentForm::CommitViewPoint()
@@ -587,10 +605,23 @@ void CBCFCommentForm::OnSize(UINT type, int cx, int cy)
 
 	if (m_tabs.GetCurSel() == 0) {
 		const int vectorLabelWidth = static_cast<int>(dc.GetTextExtent(L"View Point:").cx) + margin;
-		const int vectorValueWidth = static_cast<int>(
-			dc.GetTextExtent(L"-12345, -12345, -12345").cx) + 2 * margin;
+		int vectorValueWidth = static_cast<int>(dc.GetTextExtent(L"0.00000, 0.00000, 0.00000").cx);
+		for (int i = ViewPoint; i <= UpVector; ++i) {
+			CString value;
+			m_cameraValues[i].GetWindowText(value);
+			vectorValueWidth = max(vectorValueWidth,
+				static_cast<int>(dc.GetTextExtent(value).cx));
+		}
+		vectorValueWidth += 2 * margin;
 		const int scalarLabelWidth = static_cast<int>(dc.GetTextExtent(L"Field of view:").cx) + margin;
-		const int scalarValueWidth = static_cast<int>(dc.GetTextExtent(L"-12345").cx) + 2 * margin;
+		int scalarValueWidth = static_cast<int>(dc.GetTextExtent(L"0.00000").cx);
+		for (int i = AspectRatio; i <= FieldOfView; ++i) {
+			CString value;
+			m_cameraValues[i].GetWindowText(value);
+			scalarValueWidth = max(scalarValueWidth,
+				static_cast<int>(dc.GetTextExtent(value).cx));
+		}
+		scalarValueWidth += 2 * margin;
 		const int cameraWidth = vectorLabelWidth + vectorValueWidth +
 			scalarLabelWidth + scalarValueWidth + 3 * margin + rowSpacing;
 		const int remainingWidth = max(2 * rowHeight, page.Width() - cameraWidth - 2 * rowSpacing);
@@ -666,9 +697,9 @@ void CBCFCommentForm::OnSize(UINT type, int cx, int cy)
 		const int selectWidth = static_cast<int>(dc.GetTextExtent(selectText).cx) + 2 * margin;
 		const int contentLeft = selectionLeft + margin;
 		const int contentTop = page.top + rowHeight;
-		m_grabSelected.MoveWindow(contentLeft, contentTop, grabWidth, rowHeight);
-		m_selectComponents.MoveWindow(contentLeft + grabWidth + rowSpacing,
-			contentTop, selectWidth, rowHeight);
+		m_selectComponents.MoveWindow(contentLeft, contentTop, selectWidth, rowHeight);
+		m_grabSelected.MoveWindow(selectionLeft + groupWidth - margin - grabWidth,
+			contentTop, grabWidth, rowHeight);
 		const int listTop = contentTop + rowHeight + rowSpacing;
 		m_selectedComponents.MoveWindow(contentLeft, listTop,
 			max(rowHeight, groupWidth - 2 * margin),
@@ -687,14 +718,14 @@ void CBCFCommentForm::OnSize(UINT type, int cx, int cy)
 		const int setVisibleWidth =
 			static_cast<int>(dc.GetTextExtent(setVisibleText).cx) + 2 * margin;
 		const int visibilityContentLeft = visibilityLeft + margin;
-		m_grabVisible.MoveWindow(visibilityContentLeft, contentTop,
-			grabVisibleWidth, rowHeight);
-		const int visibleFromSelectionLeft =
-			visibilityContentLeft + grabVisibleWidth + rowSpacing;
+		m_setVisible.MoveWindow(visibilityContentLeft, contentTop,
+			setVisibleWidth, rowHeight);
+		const int visibleFromSelectionLeft = visibilityLeft + groupWidth -
+			margin - visibleFromSelectionWidth;
 		m_visibleFromSelection.MoveWindow(visibleFromSelectionLeft, contentTop,
 			visibleFromSelectionWidth, rowHeight);
-		m_setVisible.MoveWindow(visibleFromSelectionLeft + visibleFromSelectionWidth + rowSpacing,
-			contentTop, setVisibleWidth, rowHeight);
+		m_grabVisible.MoveWindow(visibleFromSelectionLeft - rowSpacing - grabVisibleWidth,
+			contentTop, grabVisibleWidth, rowHeight);
 		const int modeTop = contentTop + rowHeight + rowSpacing;
 		m_visibilityMode.MoveWindow(visibilityContentLeft, modeTop,
 			max(rowHeight, groupWidth - 2 * margin), 3 * rowHeight);
