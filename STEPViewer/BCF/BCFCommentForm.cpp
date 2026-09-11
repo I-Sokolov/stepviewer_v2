@@ -77,9 +77,8 @@ BOOL CBCFCommentForm::Create(CBCFView* pane)
 	m_text.Create(WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_MULTILINE | ES_AUTOVSCROLL |
 		ES_WANTRETURN | WS_VSCROLL, CRect(), this, IDC_PANE_COMMENT_TEXT);
 	SetBCFControlFont(m_text, this);
-	m_snapshot.Create(L"No snapshot", WS_CHILD | SS_CENTER | SS_CENTERIMAGE | SS_SUNKEN,
+	m_snapshot.Create(L"", WS_CHILD,
 		CRect(), this);
-	SetBCFControlFont(m_snapshot, this);
 	m_selectSnapshot.Create(L"Select file...", WS_CHILD | WS_TABSTOP | BS_PUSHBUTTON,
 		CRect(), this, IDC_PANE_COMMENT_SNAPSHOT_SELECT);
 	m_captureSnapshot.Create(L"Capture", WS_CHILD | WS_TABSTOP | BS_PUSHBUTTON,
@@ -228,14 +227,13 @@ void CBCFCommentForm::LoadViewPoint()
 			FormatDouble(viewPoint->GetViewToWorldScale()));
 		m_cameraValues[FieldOfView].SetWindowText(
 			FormatDouble(viewPoint->GetFieldOfView()));
-		CString snapshot = FromUTF8(viewPoint->GetSnapshot());
-		m_snapshot.SetWindowText(snapshot.IsEmpty() ? CString(L"No snapshot") : snapshot);
+		m_snapshot.Load(FromUTF8(viewPoint->GetSnapshot()));
 	}
 	else {
 		for (CBCFEdit& value : m_cameraValues) {
 			value.SetWindowText(CString());
 		}
-		m_snapshot.SetWindowText(L"No snapshot");
+		m_snapshot.Clear();
 	}
 
 	if (IsWindow(GetSafeHwnd ())) {
@@ -371,7 +369,6 @@ void CBCFCommentForm::OnSelectSnapshot()
 		viewPoint->SetSnapshot(ToUTF8(dialog.GetPathName()).c_str());
 	m_pane->ShowLog(!ok);
 	if (ok) {
-		m_snapshot.SetWindowText(dialog.GetPathName());
 		LoadViewPoint();
 	}
 }

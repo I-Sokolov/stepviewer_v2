@@ -1,6 +1,7 @@
 #pragma once
 
 #include "bcfAPI.h"
+#include "BCFSnapshotCtrl.h"
 #include "BCFViewControls.h"
 
 class CBCFView;
@@ -47,7 +48,7 @@ private:
 	CTabCtrl m_tabs;
 	CStatic m_textLabel;
 	CBCFEdit m_text;
-	CStatic m_snapshot;
+	CBCFSnapshotCtrl m_snapshot;
 	CButton m_selectSnapshot;
 	CButton m_captureSnapshot;
 	CButton m_cameraGroup;
