@@ -77,7 +77,7 @@ BEGIN_MESSAGE_MAP(CBCFView, CDockablePane)
 END_MESSAGE_MAP()
 
 CBCFView::CBCFView()
-	: m_document(nullptr)
+	: m_stepViewerDoc(nullptr)
 	, m_project(nullptr)
 	, m_activeForm(ProjectForm)
 	, m_projectId(new CBCFEdit)
@@ -206,16 +206,16 @@ void CBCFView::NewProject()
 	}
 
 	bool filesAdded = true;
-	if (m_document) {
-		const bool hasModels = std::find_if(m_document->getModels().begin(), m_document->getModels().end(),
-			[](_model* model) { return model != nullptr; }) != m_document->getModels().end();
+	if (m_stepViewerDoc) {
+		const bool hasModels = std::find_if(m_stepViewerDoc->getModels().begin(), m_stepViewerDoc->getModels().end(),
+			[](_model* model) { return model != nullptr; }) != m_stepViewerDoc->getModels().end();
 		const bool external = hasModels &&
 			AfxMessageBox(
 				L"How should the loaded BIM models be added?\n\n"
 				L"Yes - use external files\n"
 				L"No - embed files in the BCF package",
 				MB_YESNO | MB_ICONQUESTION) == IDYES;
-		for (_model* model : m_document->getModels()) {
+		for (_model* model : m_stepViewerDoc->getModels()) {
 			if (model && !topic->AddBimFile(ToUTF8(model->getPath()).c_str(), external)) {
 				filesAdded = false;
 			}
@@ -314,7 +314,7 @@ void CBCFView::CloseProject(bool prompt)
 void CBCFView::OnCloseMainDocument()
 {
 	CloseProject(false);
-	m_document = nullptr;
+	m_stepViewerDoc = nullptr;
 }
 
 void CBCFView::ReleaseProject()
@@ -511,40 +511,59 @@ void CBCFView::ShowLog(bool knownError)
 
 _model* CBCFView::GetBimModel(BCFBimFile& file)
 {
-	auto found = m_bimModels.find(&file);
-	if (found != m_bimModels.end()) {
-		if (m_document) {
-			const auto& models = m_document->getModels();
-			if (std::find(models.begin(), models.end(), found->second) != models.end()) {
-				return found->second;
-			}
-		}
-		m_bimModels.erase(found);
-	}
-	if (!m_document) {
+	if (!m_stepViewerDoc) {
 		return nullptr;
 	}
-	CString path = FromUTF8(file.GetReference());
-	for (_model* candidate : m_document->getModels()) {
+
+	auto found = m_bimModels.find(&file);
+	if (found != m_bimModels.end()) {
+
+		if (found->second == nullptr) {
+			//assume user already asked No to "Do you want to locate the file manually?"
+			return nullptr;
+		}
+
+		//check if the model is still in the Viewer
+		const auto& models = m_stepViewerDoc->getModels();
+		if (std::find(models.begin(), models.end(), found->second) != models.end()) {
+			return found->second;
+		}
+
+		m_bimModels.erase(found); //below will re-load it to viewer
+	}
+
+	auto path8 = file.GetReference();
+	if (!path8 || !*path8) {
+        path8 = file.GetFilename();
+	}
+
+	CString path = FromUTF8(path8);
+							
+	for (_model* candidate : m_stepViewerDoc->getModels()) {
 		if (candidate->getPath() == path) {
 			m_bimModels[&file] = candidate;
 			return candidate;
 		}
 	}
+
 	if (!fs::exists(ToUTF8(path))) {
-		CString message(L"Can not locate BIM file assigned to the topic.\n\n");
-		message.AppendFormat(L"Reference: '%s'\n\nDo you want to locate the file manually?", path.GetString());
+		CString message;
+		message.Format(L"Can not locate BIM file assigned to the topic: '%s'\n\nDo you want to locate the file manually?", path.GetString());
 		if (AfxMessageBox(message, MB_YESNO | MB_ICONEXCLAMATION) != IDYES) {
+			m_bimModels[&file] = nullptr; //avoid repeated asking
 			return nullptr;
 		}
+
+		//search BIM file
 		CFileDialog dialog(TRUE, nullptr, L"", OFN_FILEMUSTEXIST, BIM_MODELS_FILTER);
 		if (dialog.DoModal() != IDOK) {
 			return nullptr;
 		}
 		path = dialog.GetPathName();
 	}
-	_model* model = _ap_model_factory::load(m_document, path, false,
-		m_document->getModels().empty() ? nullptr : m_document->getModels()[0], false);
+
+	_model* model = _ap_model_factory::load(m_stepViewerDoc, path, false,
+		m_stepViewerDoc->getModels().empty() ? nullptr : m_stepViewerDoc->getModels()[0], false);
 	if (model) {
 		_ptr<_ap_model> apModel(model);
 		if (apModel->getAP() == enumAP::IFC) {
@@ -555,12 +574,13 @@ _model* CBCFView::GetBimModel(BCFBimFile& file)
 			model = nullptr;
 		}
 	}
+
 	return model;
 }
 
 void CBCFView::LoadBimFiles(BCFTopic& topic)
 {
-	if (!m_document) {
+	if (!m_stepViewerDoc) {
 		return;
 	}
 	std::vector<_model*> activeModels;
@@ -569,7 +589,7 @@ void CBCFView::LoadBimFiles(BCFTopic& topic)
 			activeModels.push_back(model);
 		}
 	}
-	m_document->enableModelsAddIfNeeded(activeModels);
+	m_stepViewerDoc->enableModelsAddIfNeeded(activeModels);
 }
 
 void CBCFView::RefreshCommandUI()

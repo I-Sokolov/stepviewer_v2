@@ -38,7 +38,7 @@ public:
 	CBCFView();
 	virtual ~CBCFView();
 
-	void SetDocument(CMySTEPViewerDoc* document) { m_document = document; }
+	void SetDocument(CMySTEPViewerDoc* document) { m_stepViewerDoc = document; }
 	void Activate();
 	void NewProject();
 	void OpenProject();
@@ -51,7 +51,7 @@ public:
 	void RefreshCommandUI();
 
 	BCFProject* GetProject() const { return m_project; }
-	CMySTEPViewerDoc* GetDocument() const { return m_document; }
+	CMySTEPViewerDoc* GetDocument() const { return m_stepViewerDoc; }
 	_model* GetBimModel(BCFBimFile& file);
 	void LoadBimFiles(BCFTopic& topic);
 	void ShowLog(bool knownError);
@@ -93,7 +93,7 @@ private:
 	void AdjustLayout();
 	void UpdateCaption();
 
-	CMySTEPViewerDoc* m_document;
+	CMySTEPViewerDoc* m_stepViewerDoc;
 	BCFProject* m_project;
 	CString m_filePath;
 	CString m_email;
