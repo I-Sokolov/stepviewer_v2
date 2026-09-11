@@ -63,7 +63,9 @@ CString GetBCFTopicDisplayName(BCFTopic& topic);
 class CBCFSelectFileDlg : public CFileDialog
 {
 public:
-	CBCFSelectFileDlg(LPCTSTR filePath, bool external, CWnd* parent);
+	CBCFSelectFileDlg(LPCTSTR filePath, bool external, CWnd* parent,
+		LPCTSTR filter = L"All files (*.*)|*.*||",
+		DWORD flags = OFN_FILEMUSTEXIST | OFN_HIDEREADONLY);
 
 	bool IsExternal() const { return m_external; }
 

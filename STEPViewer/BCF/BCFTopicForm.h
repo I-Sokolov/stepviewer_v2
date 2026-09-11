@@ -48,7 +48,7 @@ private:
 	void FormatTopicInfo();
 	void UpdateLabels();
 	void ReloadBimFiles();
-	bool AddBimFile(const CString& path);
+	bool AddBimFile(const CString& path, bool external);
 	void ReloadDocuments(BCFDocumentReference* selectDocument = nullptr);
 	BCFDocumentReference* GetSelectedDocument() const;
 	void ReloadLinks(int selection = LB_ERR);

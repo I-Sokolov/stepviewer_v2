@@ -207,8 +207,16 @@ void CBCFView::NewProject()
 
 	bool filesAdded = true;
 	if (m_document) {
+		const bool hasModels = std::find_if(m_document->getModels().begin(), m_document->getModels().end(),
+			[](_model* model) { return model != nullptr; }) != m_document->getModels().end();
+		const bool external = hasModels &&
+			AfxMessageBox(
+				L"How should the loaded BIM models be added?\n\n"
+				L"Yes - use external files\n"
+				L"No - embed files in the BCF package",
+				MB_YESNO | MB_ICONQUESTION) == IDYES;
 		for (_model* model : m_document->getModels()) {
-			if (model && !topic->AddBimFile(ToUTF8(model->getPath()).c_str(), false)) {
+			if (model && !topic->AddBimFile(ToUTF8(model->getPath()).c_str(), external)) {
 				filesAdded = false;
 			}
 		}

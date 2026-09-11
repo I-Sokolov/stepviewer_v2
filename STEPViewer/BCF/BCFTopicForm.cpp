@@ -43,6 +43,19 @@ namespace
 		text += FromUTF8(path.filename().string().c_str());
 		return text;
 	}
+
+	CString GetBimFileText(BCFBimFile& file)
+	{
+		if (file.GetIsExternal()) {
+			return FromUTF8(file.GetReference());
+		}
+		CString filename = FromUTF8(file.GetFilename());
+		if (filename.IsEmpty()) {
+			const fs::path reference(file.GetReference());
+			filename = FromUTF8(reference.filename().string().c_str());
+		}
+		return filename + L" (embedded)";
+	}
 }
 
 BEGIN_MESSAGE_MAP(CBCFTopicForm, CWnd)
@@ -471,9 +484,13 @@ void CBCFTopicForm::ReloadBimFiles()
 	if (m_pane->GetDocument()) {
 		for (_model* model : m_pane->GetDocument()->getModels()) {
 			if (model) {
-				const int item = m_bimFiles.AddString(model->getPath());
+				auto used = m_usedBimModels.find(model);
+				const CString text = used == m_usedBimModels.end()
+					? model->getPath()
+					: GetBimFileText(*used->second);
+				const int item = m_bimFiles.AddString(text);
 				m_bimFiles.SetItemDataPtr(item, model);
-				m_bimFiles.SetCheck(item, m_usedBimModels.count(model) ? BST_CHECKED : BST_UNCHECKED);
+				m_bimFiles.SetCheck(item, used != m_usedBimModels.end() ? BST_CHECKED : BST_UNCHECKED);
 			}
 		}
 	}
@@ -488,9 +505,9 @@ void CBCFTopicForm::ReloadBimFiles()
 	m_bimFiles.Invalidate();
 }
 
-bool CBCFTopicForm::AddBimFile(const CString& path)
+bool CBCFTopicForm::AddBimFile(const CString& path, bool external)
 {
-	if (!m_topic || !m_topic->AddBimFile(ToUTF8(path).c_str(), false)) {
+	if (!m_topic || !m_topic->AddBimFile(ToUTF8(path).c_str(), external)) {
 		m_pane->ShowLog(true);
 		return false;
 	}
@@ -502,8 +519,8 @@ void CBCFTopicForm::OnAddBimFiles()
 	if (!m_topic) {
 		return;
 	}
-	CFileDialog dialog(TRUE, nullptr, L"",
-		OFN_FILEMUSTEXIST | OFN_HIDEREADONLY | OFN_ALLOWMULTISELECT, BIM_MODELS_FILTER);
+	CBCFSelectFileDlg dialog(L"", false, this, BIM_MODELS_FILTER,
+		OFN_FILEMUSTEXIST | OFN_HIDEREADONLY | OFN_ALLOWMULTISELECT);
 	if (dialog.DoModal() != IDOK) {
 		return;
 	}
@@ -511,7 +528,7 @@ void CBCFTopicForm::OnAddBimFiles()
 	bool ok = true;
 	for (POSITION position = dialog.GetStartPosition(); position;) {
 		CString path = dialog.GetNextPathName(position);
-		ok = AddBimFile(path) && ok;
+		ok = AddBimFile(path, dialog.IsExternal()) && ok;
 		AfxGetApp()->AddToRecentFileList(path);
 	}
 	m_pane->LoadBimFiles(*m_topic);
@@ -528,7 +545,7 @@ void CBCFTopicForm::OnCheckBimFiles()
 		_model* model = static_cast<_model*>(m_bimFiles.GetItemDataPtr(i));
 		auto found = m_usedBimModels.find(model);
 		if (m_bimFiles.GetCheck(i) == BST_CHECKED && found == m_usedBimModels.end()) {
-			AddBimFile(model->getPath());
+			AddBimFile(model->getPath(), false);
 			ReloadBimFiles();
 			return;
 		}

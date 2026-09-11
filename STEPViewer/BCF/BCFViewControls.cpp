@@ -109,9 +109,9 @@ CString GetBCFTopicDisplayName(BCFTopic& topic)
 	return text;
 }
 
-CBCFSelectFileDlg::CBCFSelectFileDlg(LPCTSTR filePath, bool external, CWnd* parent)
-	: CFileDialog(TRUE, nullptr, filePath, OFN_FILEMUSTEXIST | OFN_HIDEREADONLY,
-		L"All files (*.*)|*.*||", parent)
+CBCFSelectFileDlg::CBCFSelectFileDlg(LPCTSTR filePath, bool external, CWnd* parent,
+	LPCTSTR filter, DWORD flags)
+	: CFileDialog(TRUE, nullptr, filePath, flags, filter, parent)
 	, m_external(external)
 {
 	AddRadioButtonList(ModeControl);
