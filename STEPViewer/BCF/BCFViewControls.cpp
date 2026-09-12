@@ -1,6 +1,7 @@
 #include "stdafx.h"
 
 #include "BCFViewControls.h"
+#include "Resource.h"
 
 namespace
 {
@@ -129,6 +130,46 @@ BOOL CBCFSelectFileDlg::OnFileNameOK()
 	}
 	m_external = mode == ExternalFileMode;
 	return CFileDialog::OnFileNameOK();
+}
+
+BEGIN_MESSAGE_MAP(CBCFIncudeLoadedModels, CDialogEx)
+END_MESSAGE_MAP()
+
+CBCFIncudeLoadedModels::CBCFIncudeLoadedModels(
+	const std::vector<CString>& files, CWnd* parent)
+	: CDialogEx(IDD_BCF_INCLUDE_LOADED_MODELS, parent)
+	, m_files(files)
+	, m_mode(1)
+{
+}
+
+void CBCFIncudeLoadedModels::DoDataExchange(CDataExchange* dataExchange)
+{
+	CDialogEx::DoDataExchange(dataExchange);
+	DDX_Control(dataExchange, IDC_BCF_LOADED_MODELS, m_fileList);
+	DDX_Radio(dataExchange, IDC_BCF_LOADED_MODELS_EXTERNAL, m_mode);
+}
+
+BOOL CBCFIncudeLoadedModels::OnInitDialog()
+{
+	CDialogEx::OnInitDialog();
+
+	CClientDC dc(&m_fileList);
+	CFont* oldFont = m_fileList.GetFont()
+		? dc.SelectObject(m_fileList.GetFont())
+		: nullptr;
+	int horizontalExtent = 0;
+	for (const CString& file : m_files) {
+		m_fileList.AddString(file);
+		horizontalExtent = max(horizontalExtent,
+			static_cast<int>(dc.GetTextExtent(file).cx));
+	}
+	if (oldFont) {
+		dc.SelectObject(oldFont);
+	}
+	m_fileList.SetHorizontalExtent(horizontalExtent + 4);
+	UpdateData(FALSE);
+	return TRUE;
 }
 
 BEGIN_MESSAGE_MAP(CBCFEdit, CEdit)

@@ -2,6 +2,8 @@
 
 #include "bcfAPI.h"
 
+#include <vector>
+
 enum BCFViewControlId
 {
 	IDC_PANE_PROJECT_ID = 2100,
@@ -81,6 +83,25 @@ private:
 	};
 
 	bool m_external;
+};
+
+class CBCFIncudeLoadedModels : public CDialogEx
+{
+public:
+	CBCFIncudeLoadedModels(const std::vector<CString>& files, CWnd* parent);
+
+	bool IsExternal() const { return m_mode == 0; }
+
+protected:
+	virtual void DoDataExchange(CDataExchange* dataExchange) override;
+	virtual BOOL OnInitDialog() override;
+
+	DECLARE_MESSAGE_MAP()
+
+private:
+	const std::vector<CString>& m_files;
+	CListBox m_fileList;
+	int m_mode;
 };
 
 class CBCFEdit : public CEdit

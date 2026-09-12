@@ -208,17 +208,21 @@ void CBCFView::NewProject()
 
 	bool filesAdded = true;
 	if (m_stepViewerDoc) {
-		const bool hasModels = std::find_if(m_stepViewerDoc->getModels().begin(), m_stepViewerDoc->getModels().end(),
-			[](_model* model) { return model != nullptr; }) != m_stepViewerDoc->getModels().end();
-		const bool external = hasModels &&
-			AfxMessageBox(
-				L"How should the loaded BIM models be added?\n\n"
-				L"Yes - use external files\n"
-				L"No - embed files in the BCF package",
-				MB_YESNO | MB_ICONQUESTION) == IDYES;
+		std::vector<CString> files;
 		for (_model* model : m_stepViewerDoc->getModels()) {
-			if (model && !topic->AddBimFile(ToUTF8(model->getPath()).c_str(), external)) {
-				filesAdded = false;
+			if (model) {
+				files.push_back(model->getPath());
+			}
+		}
+		if (!files.empty()) {
+			CBCFIncudeLoadedModels includeDialog(files, this);
+			if (includeDialog.DoModal() == IDOK) {
+				for (_model* model : m_stepViewerDoc->getModels()) {
+					if (model && !topic->AddBimFile(
+							ToUTF8(model->getPath()).c_str(), includeDialog.IsExternal())) {
+						filesAdded = false;
+					}
+				}
 			}
 		}
 	}
