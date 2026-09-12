@@ -46,15 +46,18 @@ namespace
 
 	CString GetBimFileText(BCFBimFile& file)
 	{
+		auto name = file.GetReference();
+		if (!name || !*name) {
+			name = file.GetFilename();
+		}
+
 		if (file.GetIsExternal()) {
-			return FromUTF8(file.GetReference());
+			return FromUTF8(name);
 		}
-		CString filename = FromUTF8(file.GetFilename());
-		if (filename.IsEmpty()) {
-			const fs::path reference(file.GetReference());
-			filename = FromUTF8(reference.filename().string().c_str());
+		else {
+			const fs::path reference(name);
+			return FromUTF8(reference.filename().string().c_str()) + CString (L" (embedded)");
 		}
-		return filename + L" (embedded)";
 	}
 }
 
