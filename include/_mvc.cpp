@@ -749,6 +749,29 @@ void _controller::setModels(const vector<_model*>& vecModels)
 
 void _controller::enableModelsAddIfNeeded(const vector<_model*>& vecModels)
 {
+    //check if there is something to change
+    bool needToChange = false;
+
+	//need to change if required model is not loaded
+	for (auto pModel : vecModels) {
+		if (find(m_vecModels.begin(), m_vecModels.end(), pModel) == m_vecModels.end()) {
+			needToChange = true;
+		}
+	}
+
+	//need to change if not enabled
+	for (auto pModel : m_vecModels) {
+        bool needEnable = (find(vecModels.begin(), vecModels.end(), pModel) != vecModels.end());
+		if (pModel->getEnable() != needEnable) {
+			needToChange = true;
+        }
+	}
+
+	if (!needToChange) {
+		return;
+	}
+
+	//change
 	m_bUpdatingModel = true;
 
 	auto itView = m_setViews.begin();
