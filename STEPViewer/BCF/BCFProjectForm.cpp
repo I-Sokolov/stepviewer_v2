@@ -162,7 +162,7 @@ void CBCFProjectForm::OnSize(UINT type, int cx, int cy)
 	const int buttonsTop = max(margin, cy - margin - rowHeight);
 	m_topics.MoveWindow(margin, margin + textHeight + margin,
 		max(20, cx - 2 * margin),
-		max(20, buttonsTop - 2 * margin - textHeight));
+		max(20, buttonsTop - 3 * margin - textHeight));
 	int buttonLeft = cx - margin - deleteWidth;
 	m_deleteTopic.MoveWindow(buttonLeft, buttonsTop, deleteWidth, rowHeight);
 	buttonLeft -= margin + detailsWidth;
