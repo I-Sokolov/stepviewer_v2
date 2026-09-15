@@ -13,6 +13,7 @@ public:
 	void Load(BCFComment* comment);
 	bool Commit();
 	BCFComment* GetComment() const { return m_comment; }
+	void FocusInitialControl();
 
 protected:
 	afx_msg void OnSize(UINT type, int cx, int cy);

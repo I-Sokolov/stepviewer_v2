@@ -471,6 +471,15 @@ void CBCFTopicForm::OnTabChanged(NMHDR*, LRESULT* result)
 	*result = 0;
 }
 
+void CBCFTopicForm::FocusInitialControl()
+{
+	if (m_tabs.GetCurSel() != 0) {
+		m_tabs.SetCurSel(0);
+		ShowTab(0);
+	}
+	m_title.SetFocus();
+}
+
 void CBCFTopicForm::OnShowBCFContent()
 {
 	m_pane->ShowProject();

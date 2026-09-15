@@ -295,6 +295,15 @@ void CBCFCommentForm::OnTabChanged(NMHDR*, LRESULT* result)
 	*result = 0;
 }
 
+void CBCFCommentForm::FocusInitialControl()
+{
+	if (m_tabs.GetCurSel() != 0) {
+		m_tabs.SetCurSel(0);
+		ShowTab(0);
+	}
+	m_text.SetFocus();
+}
+
 void CBCFCommentForm::ShowTab(int tab)
 {
 	const int generalCommand = tab == 0 ? SW_SHOW : SW_HIDE;

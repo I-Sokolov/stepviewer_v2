@@ -335,6 +335,12 @@ void CBCFView::ShowForm(Form form)
 		m_commentForm->ShowWindow (form == CommentForm ? SW_SHOW : SW_HIDE);
 	if (IsWindow (GetSafeHwnd ()))	{
 		AdjustLayout ();
+		if (form == TopicForm) {
+			m_topicForm->FocusInitialControl();
+		}
+		else if (form == CommentForm) {
+			m_commentForm->FocusInitialControl();
+		}
 		}
 }
 
@@ -632,9 +638,9 @@ void CBCFView::OnSetFocus(CWnd*)
 		m_projectForm->SetFocus();
 	}
 	else if (m_activeForm == TopicForm) {
-		m_topicForm->SetFocus();
+		m_topicForm->FocusInitialControl();
 	}
 	else {
-		m_commentForm->SetFocus();
+		m_commentForm->FocusInitialControl();
 	}
 }
