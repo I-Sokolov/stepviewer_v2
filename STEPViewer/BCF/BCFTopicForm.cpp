@@ -94,7 +94,7 @@ BOOL CBCFTopicForm::Create(CBCFView* pane)
 		return FALSE;
 	}
 
-	m_showBCFContent.Create(L"Show BCF content", WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_PUSHBUTTON,
+	m_showBCFContent.Create(L"Back to BCF content", WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_PUSHBUTTON,
 		CRect(), this, IDC_PANE_SHOW_BCF_CONTENT);
 	SetBCFControlFont(m_showBCFContent, this);
 	CreateBCFStaticLabel(m_topicInfo, L"Topic", this);
@@ -883,9 +883,10 @@ void CBCFTopicForm::AdjustLayout()
 	m_showBCFContent.GetWindowText(buttonText);
 	const int buttonWidth = static_cast<int>(dc.GetTextExtent(buttonText).cx) + 2 * margin;
 	m_showBCFContent.MoveWindow(
-		max(0, static_cast<int>(client.right) - buttonWidth), 0, buttonWidth, rowHeight);
-	m_topicInfo.MoveWindow(0, labelOffset,
-		max(rowHeight, client.Width() - buttonWidth - margin), textHeight);
+		max(margin, static_cast<int>(client.right) - buttonWidth - margin),
+		0, buttonWidth, rowHeight);
+	m_topicInfo.MoveWindow(margin, labelOffset,
+		max(rowHeight, client.Width() - buttonWidth - 3 * margin), textHeight);
 	m_separator.MoveWindow(0, separatorTop, client.Width(), separatorHeight);
 	m_tabs.MoveWindow(margin, tabsTop, tabsWidth, tabsHeight);
 
@@ -929,15 +930,16 @@ void CBCFTopicForm::AdjustLayout()
 		const int commentButtonsTop = page.bottom - rowHeight;
 		m_comments.MoveWindow(commentsLeft, page.top, commentsWidth,
 			max(rowHeight, static_cast<int>(commentButtonsTop - page.top - rowSpacing)));
-		int commentButtonLeft = commentsLeft;
+		int commentButtonLeft = page.right -
+			newCommentWidth - detailsWidth - deleteCommentWidth - 2 * rowSpacing;
 		m_newComment.MoveWindow(
 			commentButtonLeft, commentButtonsTop, newCommentWidth, rowHeight);
 		commentButtonLeft += newCommentWidth + rowSpacing;
 		m_showCommentDetails.MoveWindow(
 			commentButtonLeft, commentButtonsTop, detailsWidth, rowHeight);
+		commentButtonLeft += detailsWidth + rowSpacing;
 		m_deleteComment.MoveWindow(
-			page.right - deleteCommentWidth, commentButtonsTop,
-			deleteCommentWidth, rowHeight);
+			commentButtonLeft, commentButtonsTop, deleteCommentWidth, rowHeight);
 	}
 	else if (m_tabs.GetCurSel() == 1) {
 		const int columnWidth = max(rowHeight, (page.Width() - 2 * rowSpacing) / 3);

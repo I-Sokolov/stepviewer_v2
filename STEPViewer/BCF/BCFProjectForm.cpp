@@ -136,12 +136,13 @@ void CBCFProjectForm::OnSize(UINT type, int cx, int cy)
 	if (!m_topics.GetSafeHwnd()) {
 		return;
 	}
-	const int margin = 8;
 	CClientDC dc(this);
 	CFont* oldFont = GetFont() ? dc.SelectObject(GetFont()) : nullptr;
 	TEXTMETRIC metrics = {};
 	dc.GetTextMetrics(&metrics);
-	const int rowHeight = metrics.tmHeight + 2 * margin;
+	const int textHeight = metrics.tmAscent + metrics.tmDescent + metrics.tmExternalLeading;
+	const int rowHeight = textHeight + textHeight / 5;
+	const int margin = rowHeight / 3;
 	auto buttonWidth = [&dc, margin](CButton& button) {
 		CString text;
 		button.GetWindowText(text);
@@ -157,11 +158,11 @@ void CBCFProjectForm::OnSize(UINT type, int cx, int cy)
 		dc.SelectObject(oldFont);
 	}
 
-	m_topicsLabel.MoveWindow(margin, margin, 60, metrics.tmHeight);
+	m_topicsLabel.MoveWindow(margin, margin, 60, textHeight);
 	const int buttonsTop = max(margin, cy - margin - rowHeight);
-	m_topics.MoveWindow(margin, margin + metrics.tmHeight + margin,
+	m_topics.MoveWindow(margin, margin + textHeight + margin,
 		max(20, cx - 2 * margin),
-		max(20, buttonsTop - 2 * margin - metrics.tmHeight));
+		max(20, buttonsTop - 2 * margin - textHeight));
 	int buttonLeft = cx - margin - deleteWidth;
 	m_deleteTopic.MoveWindow(buttonLeft, buttonsTop, deleteWidth, rowHeight);
 	buttonLeft -= margin + detailsWidth;

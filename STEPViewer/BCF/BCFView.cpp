@@ -122,7 +122,7 @@ int CBCFView::OnCreate(LPCREATESTRUCT createStruct)
 	m_menuBar.CreateFromMenu(m_menu.GetSafeHmenu(), TRUE);
 	m_menuBar.SetMessageWnd(this);
 
-	CreateBCFStaticLabel(m_projectIdLabel, L"Project Id:", this);
+	CreateBCFStaticLabel(m_projectIdLabel, L"BCF Project Id:", this);
 	CreateBCFStaticLabel(m_projectNameLabel, L"Name:", this);
 	m_projectSettings.Create(L"Settings...",
 		WS_CHILD | WS_VISIBLE | WS_DISABLED | WS_TABSTOP | BS_PUSHBUTTON,
@@ -701,7 +701,7 @@ void CBCFView::AdjustLayout()
 	TEXTMETRIC textMetrics = {};
 	dc.GetTextMetrics(&textMetrics);
 	const int textHeight = textMetrics.tmAscent + textMetrics.tmDescent + textMetrics.tmExternalLeading;
-	const int rowHeight = textHeight + textHeight / 2;
+	const int rowHeight = textHeight + textHeight / 5;
 	const int margin = rowHeight / 3;
 	const int labelOffset = (rowHeight - textHeight) / 2;
 	const int headerTop = client.top + menuSize.cy + margin;
