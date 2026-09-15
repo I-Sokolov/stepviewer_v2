@@ -16,65 +16,13 @@
 
 namespace fs = std::experimental::filesystem;
 
-class CBCFPopupMenu : public CMFCPopupMenu
-{
-public:
-	virtual BOOL Create(CWnd* parent, int x, int y, HMENU menu, BOOL locked = FALSE,
-		BOOL ownMessage = FALSE) override
-	{
-		const BOOL showAllCommands = CMFCMenuBar::IsShowAllCommands();
-		CMFCMenuBar::SetShowAllCommands(TRUE);
-		const BOOL created = CMFCPopupMenu::Create(parent, x, y, menu, locked, ownMessage);
-		CMFCMenuBar::SetShowAllCommands(showAllCommands);
-		return created;
-	}
-};
-
-class CBCFMenuButton : public CMFCToolBarMenuButton
-{
-	DECLARE_SERIAL(CBCFMenuButton)
-
-public:
-	CBCFMenuButton(HMENU menu = nullptr)
-		: CMFCToolBarMenuButton(static_cast<UINT>(-1), menu, -1)
-	{
-	}
-
-	virtual CMFCPopupMenu* CreatePopupMenu() override
-	{
-		return new CBCFPopupMenu;
-	}
-};
-
-IMPLEMENT_SERIAL(CBCFMenuButton, CMFCToolBarMenuButton, 1)
-
 BEGIN_MESSAGE_MAP(CBCFView, CDockablePane)
 	ON_WM_CREATE()
 	ON_WM_ERASEBKGND()
 	ON_WM_SIZE()
 	ON_WM_SETFOCUS()
-	ON_COMMAND(ID_BCF_FILE_NEW, &CBCFView::OnNewFile)
-	ON_COMMAND(ID_BCF_FILE_OPEN, &CBCFView::OnOpenFile)
-	ON_COMMAND(ID_BCF_FILE_SAVE, &CBCFView::OnSaveFile)
 	ON_BN_CLICKED(IDC_PANE_PROJECT_SETTINGS, &CBCFView::OnProjectSettings)
-	ON_COMMAND(ID_BCF_PANE_ADD_TOPIC, &CBCFView::OnAddTopic)
-	ON_COMMAND(ID_BCF_PANE_DELETE_TOPIC, &CBCFView::OnDeleteTopic)
-	ON_COMMAND(ID_BCF_PANE_TOPIC_DETAILS, &CBCFView::OnTopicDetails)
-	ON_COMMAND(ID_BCF_VIEW_PROJECT, &CBCFView::OnViewProject)
-	ON_COMMAND(ID_BCF_VIEW_TOPIC, &CBCFView::OnViewTopic)
-	ON_COMMAND(ID_BCF_VIEW_COMMENT, &CBCFView::OnViewComment)
-	ON_COMMAND(ID_BCF_PANE_SAVE_COMMENT, &CBCFView::OnSaveComment)
-	ON_COMMAND(ID_BCF_PANE_DELETE_COMMENT, &CBCFView::OnDeleteComment)
-	ON_UPDATE_COMMAND_UI(ID_BCF_FILE_SAVE, &CBCFView::OnUpdateProjectCommand)
-	ON_UPDATE_COMMAND_UI(ID_BCF_PANE_ADD_TOPIC, &CBCFView::OnUpdateProjectCommand)
 	ON_UPDATE_COMMAND_UI(IDC_PANE_PROJECT_SETTINGS, &CBCFView::OnUpdateProjectSettings)
-	ON_UPDATE_COMMAND_UI(ID_BCF_PANE_DELETE_TOPIC, &CBCFView::OnUpdateTopicCommand)
-	ON_UPDATE_COMMAND_UI(ID_BCF_PANE_TOPIC_DETAILS, &CBCFView::OnUpdateTopicCommand)
-	ON_UPDATE_COMMAND_UI(ID_BCF_VIEW_PROJECT, &CBCFView::OnUpdateViewProject)
-	ON_UPDATE_COMMAND_UI(ID_BCF_VIEW_TOPIC, &CBCFView::OnUpdateViewTopic)
-	ON_UPDATE_COMMAND_UI(ID_BCF_VIEW_COMMENT, &CBCFView::OnUpdateViewComment)
-	ON_UPDATE_COMMAND_UI(ID_BCF_PANE_SAVE_COMMENT, &CBCFView::OnUpdateCommentCommand)
-	ON_UPDATE_COMMAND_UI(ID_BCF_PANE_DELETE_COMMENT, &CBCFView::OnUpdateCommentCommand)
 END_MESSAGE_MAP()
 
 CBCFView::CBCFView()
@@ -108,19 +56,6 @@ int CBCFView::OnCreate(LPCREATESTRUCT createStruct)
 	SetFont(m_dialogFont.CreatePointFont(80, L"MS Shell Dlg")
 		? &m_dialogFont
 		: &afxGlobalData.fontRegular);
-
-	if (!m_menuBar.Create(this, AFX_DEFAULT_TOOLBAR_STYLE, IDR_BCF_VIEW_MENU) ||
-		!m_menu.LoadMenu(IDR_BCF_VIEW_MENU)) {
-		return -1;
-	}
-	m_menuBar.SetPaneStyle((m_menuBar.GetPaneStyle() | CBRS_TOOLTIPS | CBRS_FLYBY) &
-		~(CBRS_GRIPPER | CBRS_SIZE_DYNAMIC | CBRS_BORDER_TOP | CBRS_BORDER_BOTTOM | CBRS_BORDER_LEFT | CBRS_BORDER_RIGHT));
-	m_menuBar.SetOwner(this);
-	m_menuBar.SetRouteCommandsViaFrame(FALSE);
-	m_menuBar.SetDefaultMenuResId(IDR_BCF_VIEW_MENU);
-	m_menuBar.SetMenuButtonRTC(RUNTIME_CLASS(CBCFMenuButton));
-	m_menuBar.CreateFromMenu(m_menu.GetSafeHmenu(), TRUE);
-	m_menuBar.SetMessageWnd(this);
 
 	CreateBCFStaticLabel(m_projectIdLabel, L"BCF Project Id:", this);
 	CreateBCFStaticLabel(m_projectNameLabel, L"Name:", this);
@@ -400,7 +335,6 @@ void CBCFView::ShowForm(Form form)
 		m_commentForm->ShowWindow (form == CommentForm ? SW_SHOW : SW_HIDE);
 	if (IsWindow (GetSafeHwnd ()))	{
 		AdjustLayout ();
-		RefreshCommandUI ();
 		}
 }
 
@@ -439,7 +373,7 @@ void CBCFView::UpdateCaption()
 	SetWindowText(caption);
 }
 
-void CBCFView::OnAddTopic()
+void CBCFView::AddTopic()
 {
 	if (!m_project) {
 		return;
@@ -455,7 +389,7 @@ void CBCFView::OnAddTopic()
 	}
 }
 
-void CBCFView::OnDeleteTopic()
+void CBCFView::DeleteTopic()
 {
 	BCFTopic* topic = m_projectForm->GetSelectedTopic();
 	if (!topic) {
@@ -472,35 +406,9 @@ void CBCFView::OnDeleteTopic()
 	}
 }
 
-void CBCFView::OnTopicDetails()
+void CBCFView::ShowTopicDetails()
 {
 	ShowTopic(m_projectForm->GetSelectedTopic());
-}
-
-void CBCFView::OnViewProject() { ShowProject(); }
-void CBCFView::OnViewTopic() { ShowTopic(m_projectForm->GetSelectedTopic()); }
-void CBCFView::OnViewComment() { ShowComment(m_topicForm->GetSelectedComment()); }
-
-void CBCFView::OnSaveComment()
-{
-	if (m_commentForm->Commit()) {
-		m_topicForm->ReloadComments(m_commentForm->GetComment());
-	}
-}
-
-void CBCFView::OnDeleteComment()
-{
-	BCFComment* comment = m_commentForm->GetComment();
-	if (!comment || AfxMessageBox(L"Delete this comment?", MB_YESNO | MB_ICONWARNING) != IDYES) {
-		return;
-	}
-	bool ok = comment->Remove();
-	ShowLog(!ok);
-	if (ok) {
-		m_commentForm->Load(nullptr);
-		m_topicForm->ReloadComments();
-		ShowForm(TopicForm);
-	}
 }
 
 void CBCFView::ShowLog(bool knownError)
@@ -605,57 +513,10 @@ void CBCFView::LoadBimFiles(BCFTopic& topic)
 	m_stepViewerDoc->enableModelsAddIfNeeded(activeModels);
 }
 
-void CBCFView::RefreshCommandUI()
-{
-	if (m_menuBar.GetSafeHwnd()) {
-		m_menuBar.OnUpdateCmdUI(nullptr, FALSE);
-		m_menuBar.Invalidate();
-	}
-}
-
-void CBCFView::OnUpdateProjectCommand(CCmdUI* commandUI)
-{
-	commandUI->Enable(m_activeForm == ProjectForm && m_project != nullptr);
-}
-
 void CBCFView::OnUpdateProjectSettings(CCmdUI* commandUI)
 {
 	commandUI->Enable(m_project != nullptr);
 }
-
-void CBCFView::OnUpdateTopicCommand(CCmdUI* commandUI)
-{
-	commandUI->Enable(m_activeForm == ProjectForm && m_projectForm->GetSelectedTopic() != nullptr);
-}
-
-void CBCFView::OnUpdateCommentCommand(CCmdUI* commandUI)
-{
-	commandUI->Enable(m_activeForm == CommentForm && m_commentForm->GetComment() != nullptr);
-}
-
-void CBCFView::OnUpdateViewProject(CCmdUI* commandUI)
-{
-	commandUI->Enable(TRUE);
-	commandUI->SetRadio(m_activeForm == ProjectForm);
-}
-
-void CBCFView::OnUpdateViewTopic(CCmdUI* commandUI)
-{
-	commandUI->Enable(m_projectForm->GetSelectedTopic() != nullptr);
-	commandUI->SetRadio(m_activeForm == TopicForm);
-}
-
-void CBCFView::OnUpdateViewComment(CCmdUI* commandUI)
-{
-	const bool hasSelectedComment = m_topicForm->GetTopic() == m_projectForm->GetSelectedTopic() &&
-		m_topicForm->GetSelectedComment() != nullptr;
-	commandUI->Enable(hasSelectedComment);
-	commandUI->SetRadio(m_activeForm == CommentForm);
-}
-
-void CBCFView::OnNewFile() { NewProject(); }
-void CBCFView::OnOpenFile() { OpenProject(); }
-void CBCFView::OnSaveFile() { SaveProject(); }
 
 void CBCFView::OnProjectSettings()
 {
@@ -686,14 +547,11 @@ void CBCFView::OnProjectSettings()
 
 void CBCFView::AdjustLayout()
 {
-	if (!GetSafeHwnd() || !m_menuBar.GetSafeHwnd()) {
+	if (!GetSafeHwnd()) {
 		return;
 	}
 	CRect client;
 	GetClientRect(client);
-	CSize menuSize = m_menuBar.CalcFixedLayout(FALSE, TRUE);
-	m_menuBar.SetWindowPos(nullptr, client.left, client.top, client.Width(), menuSize.cy,
-		SWP_NOACTIVATE | SWP_NOZORDER);
 
 	CClientDC dc(this);
 	CFont* font = m_projectIdLabel.GetFont();
@@ -704,7 +562,7 @@ void CBCFView::AdjustLayout()
 	const int rowHeight = textHeight + textHeight / 5;
 	const int margin = rowHeight / 3;
 	const int labelOffset = (rowHeight - textHeight) / 2;
-	const int headerTop = client.top + menuSize.cy + margin;
+	const int headerTop = client.top + margin;
 
 	CString idLabelText;
 	CString nameLabelText;

@@ -411,7 +411,6 @@ void CBCFTopicForm::OnCommentChanged()
 		m_pane->ShowLog(false);
 	}
 	UpdateCommentButtons();
-	m_pane->RefreshCommandUI();
 }
 
 void CBCFTopicForm::OnCommentDoubleClick()

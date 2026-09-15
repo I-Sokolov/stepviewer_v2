@@ -11,27 +11,6 @@ class CBCFEdit;
 class CBCFProjectForm;
 class CBCFTopicForm;
 
-class CBCFPaneMenuBar : public CMFCMenuBar
-{
-public:
-	void SetMessageWnd(CWnd* messageWnd)
-	{
-		for (int i = 0; i < GetCount(); ++i) {
-			if (auto button = dynamic_cast<CMFCToolBarMenuButton*>(GetButton(i))) {
-				button->SetMessageWnd(messageWnd);
-			}
-		}
-	}
-
-	virtual void OnUpdateCmdUI(CFrameWnd*, BOOL disableIfNoHandler) override
-	{
-		CMFCMenuBar::OnUpdateCmdUI((CFrameWnd*)GetOwner(), disableIfNoHandler);
-	}
-	virtual BOOL LoadState(LPCTSTR = nullptr, int = -1, UINT = static_cast<UINT>(-1)) override { return TRUE; }
-	virtual BOOL SaveState(LPCTSTR = nullptr, int = -1, UINT = static_cast<UINT>(-1)) override { return TRUE; }
-	virtual BOOL AllowShowOnList() const override { return FALSE; }
-};
-
 class CBCFView : public CDockablePane
 {
 public:
@@ -42,13 +21,16 @@ public:
 	void Activate();
 	void NewProject();
 	void OpenProject();
+	bool SaveProject();
+	void AddTopic();
+	void DeleteTopic();
+	void ShowTopicDetails();
 	bool AskAndSaveModified();
 	void CloseProject(bool prompt);
 	void OnCloseMainDocument();
 	void ShowProject();
 	void ShowTopic(BCFTopic* topic);
 	void ShowComment(BCFComment* comment);
-	void RefreshCommandUI();
 
 	BCFProject* GetProject() const { return m_project; }
 	CMySTEPViewerDoc* GetDocument() const { return m_stepViewerDoc; }
@@ -63,30 +45,12 @@ protected:
 	afx_msg BOOL OnEraseBkgnd(CDC* dc);
 	afx_msg void OnSize(UINT type, int cx, int cy);
 	afx_msg void OnSetFocus(CWnd* oldWnd);
-	afx_msg void OnNewFile();
-	afx_msg void OnOpenFile();
-	afx_msg void OnSaveFile();
 	afx_msg void OnProjectSettings();
-	afx_msg void OnAddTopic();
-	afx_msg void OnDeleteTopic();
-	afx_msg void OnTopicDetails();
-	afx_msg void OnViewProject();
-	afx_msg void OnViewTopic();
-	afx_msg void OnViewComment();
-	afx_msg void OnSaveComment();
-	afx_msg void OnDeleteComment();
-	afx_msg void OnUpdateProjectCommand(CCmdUI* commandUI);
 	afx_msg void OnUpdateProjectSettings(CCmdUI* commandUI);
-	afx_msg void OnUpdateTopicCommand(CCmdUI* commandUI);
-	afx_msg void OnUpdateCommentCommand(CCmdUI* commandUI);
-	afx_msg void OnUpdateViewProject(CCmdUI* commandUI);
-	afx_msg void OnUpdateViewTopic(CCmdUI* commandUI);
-	afx_msg void OnUpdateViewComment(CCmdUI* commandUI);
 	DECLARE_MESSAGE_MAP()
 
 private:
 	enum Form { ProjectForm, TopicForm, CommentForm };
-	bool SaveProject();
 	bool CommitCurrent();
 	void ReleaseProject();
 	void ShowForm(Form form);
@@ -99,8 +63,6 @@ private:
 	CString m_email;
 	std::map<BCFBimFile*, _model*> m_bimModels;
 	Form m_activeForm;
-	CMenu m_menu;
-	CBCFPaneMenuBar m_menuBar;
 	CFont m_dialogFont;
 	CStatic m_projectIdLabel;
 	CStatic m_projectNameLabel;

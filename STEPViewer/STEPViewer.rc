@@ -791,34 +791,6 @@ END
 // Menu
 //
 
-IDR_BCF_VIEW_MENU MENU
-BEGIN
-    POPUP "&File"
-    BEGIN
-        MENUITEM "&New BCF File",               ID_BCF_FILE_NEW
-        MENUITEM "&Open BCF File...",           ID_BCF_FILE_OPEN
-        MENUITEM SEPARATOR
-        MENUITEM "&Save BCF File",              ID_BCF_FILE_SAVE
-    END
-    POPUP "&Topic"
-    BEGIN
-        MENUITEM "&Add Topic",                  ID_BCF_PANE_ADD_TOPIC
-        MENUITEM "&Delete Topic",               ID_BCF_PANE_DELETE_TOPIC
-        MENUITEM "Topic &Details",              ID_BCF_PANE_TOPIC_DETAILS
-    END
-    POPUP "&Comment"
-    BEGIN
-        MENUITEM "&Save Comment",               ID_BCF_PANE_SAVE_COMMENT
-        MENUITEM "&Delete Comment",             ID_BCF_PANE_DELETE_COMMENT
-    END
-    POPUP "&View"
-    BEGIN
-        MENUITEM "&Project",                    ID_BCF_VIEW_PROJECT
-        MENUITEM "&Topic",                      ID_BCF_VIEW_TOPIC
-        MENUITEM "&Comment",                    ID_BCF_VIEW_COMMENT
-    END
-END
-
 IDR_MAINFRAME MENU
 BEGIN
     POPUP "&File"

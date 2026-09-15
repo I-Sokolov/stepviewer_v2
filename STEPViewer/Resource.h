@@ -144,7 +144,6 @@
 #define IDI_ICON_WARN                   369
 #define IDD_DIALOG_LOG                  370
 #define IDD_BCF_PROJECT_DLG            372
-#define IDR_BCF_VIEW_MENU              373
 #define ID_VIEW_BCF_PROJECT_PANE       374
 #define IDD_BCF_TOPIC_LABELS           376
 #define IDD_BCF_SETTINGS_USER           377
@@ -276,24 +275,13 @@
 #define ID_EXPORT_AS_GLTF               32853
 #define ID_VIEW_IDS_CHECKER             32855
 #define ID_EXPORT_AS_GLTF_BINARY        32857
-#define ID_BCF_FILE_NEW                 32858
-#define ID_BCF_FILE_OPEN                32859
-#define ID_BCF_FILE_SAVE                32860
-#define ID_BCF_PANE_ADD_TOPIC           32861
-#define ID_BCF_PANE_DELETE_TOPIC        32862
-#define ID_BCF_PANE_TOPIC_DETAILS       32863
-#define ID_BCF_VIEW_PROJECT             32864
-#define ID_BCF_PANE_SAVE_COMMENT        32865
-#define ID_BCF_PANE_DELETE_COMMENT      32866
-#define ID_BCF_VIEW_TOPIC               32867
-#define ID_BCF_VIEW_COMMENT             32868
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        381
-#define _APS_NEXT_COMMAND_VALUE         32869
+#define _APS_NEXT_COMMAND_VALUE         32858
 #define _APS_NEXT_CONTROL_VALUE         1079
 #define _APS_NEXT_SYMED_VALUE           323
 #endif

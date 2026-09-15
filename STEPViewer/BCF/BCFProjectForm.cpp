@@ -4,7 +4,6 @@
 #include "BCFProjectDlg.h"
 #include "BCFView.h"
 #include "BCFViewControls.h"
-#include "Resource.h"
 
 namespace
 {
@@ -112,7 +111,6 @@ void CBCFProjectForm::Load(BCFTopic* selectTopic)
 		m_topics.SetItemState(selectedItem, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
 	}
 	UpdateButtons();
-	m_pane->RefreshCommandUI();
 }
 
 bool CBCFProjectForm::Commit()
@@ -180,7 +178,6 @@ void CBCFProjectForm::OnSize(UINT type, int cx, int cy)
 void CBCFProjectForm::OnTopicChanged(NMHDR*, LRESULT* result)
 {
 	UpdateButtons();
-	m_pane->RefreshCommandUI();
 	*result = 0;
 }
 
@@ -194,32 +191,32 @@ void CBCFProjectForm::OnTopicDoubleClick(NMHDR*, LRESULT* result)
 
 void CBCFProjectForm::OnNewTopic()
 {
-	m_pane->SendMessage(WM_COMMAND, ID_BCF_PANE_ADD_TOPIC);
+	m_pane->AddTopic();
 }
 
 void CBCFProjectForm::OnTopicDetails()
 {
-	m_pane->SendMessage(WM_COMMAND, ID_BCF_PANE_TOPIC_DETAILS);
+	m_pane->ShowTopicDetails();
 }
 
 void CBCFProjectForm::OnDeleteTopic()
 {
-	m_pane->SendMessage(WM_COMMAND, ID_BCF_PANE_DELETE_TOPIC);
+	m_pane->DeleteTopic();
 }
 
 void CBCFProjectForm::OnNewFile()
 {
-	m_pane->SendMessage(WM_COMMAND, ID_BCF_FILE_NEW);
+	m_pane->NewProject();
 }
 
 void CBCFProjectForm::OnOpenFile()
 {
-	m_pane->SendMessage(WM_COMMAND, ID_BCF_FILE_OPEN);
+	m_pane->OpenProject();
 }
 
 void CBCFProjectForm::OnSaveFile()
 {
-	m_pane->SendMessage(WM_COMMAND, ID_BCF_FILE_SAVE);
+	m_pane->SaveProject();
 }
 
 void CBCFProjectForm::UpdateButtons()
