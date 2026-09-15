@@ -64,7 +64,7 @@ BOOL CBCFCommentForm::Create(CBCFView* pane)
 	if (!CreateEx(0, RegisterBCFPaneClass(), L"", WS_CHILD | WS_CLIPCHILDREN, CRect(), pane, 0)) {
 		return FALSE;
 	}
-	m_viewTopic.Create(L"<<", WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_PUSHBUTTON,
+	m_viewTopic.Create(L"Back to topic details", WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_PUSHBUTTON,
 		CRect(), this, IDC_PANE_COMMENT_VIEW_TOPIC);
 	SetBCFControlFont(m_viewTopic, this);
 	CreateBCFStaticLabel(m_headerInfo, L"Comment to topic", this);
@@ -584,9 +584,10 @@ void CBCFCommentForm::OnSize(UINT type, int cx, int cy)
 		dc.SelectObject(oldFont);
 	}
 
-	m_viewTopic.MoveWindow(0, 0, buttonWidth, rowHeight);
-	m_headerInfo.MoveWindow(buttonWidth + margin, labelOffset,
-		max(rowHeight, cx - buttonWidth - 2 * margin), textHeight);
+	m_viewTopic.MoveWindow(max(margin, cx - buttonWidth - margin),
+		0, buttonWidth, rowHeight);
+	m_headerInfo.MoveWindow(margin, labelOffset,
+		max(rowHeight, cx - buttonWidth - 3 * margin), textHeight);
 	const int tabsTop = rowHeight + rowSpacing;
 	m_tabs.MoveWindow(margin, tabsTop, max(rowHeight, cx - 2 * margin),
 		max(2 * rowHeight, cy - tabsTop - margin));
