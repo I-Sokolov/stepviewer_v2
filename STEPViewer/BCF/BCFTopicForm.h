@@ -24,7 +24,10 @@ protected:
 	afx_msg void OnTabChanged(NMHDR* header, LRESULT* result);
 	afx_msg void OnCommentChanged();
 	afx_msg void OnCommentDoubleClick();
-	afx_msg void OnViewProject();
+	afx_msg void OnNewComment();
+	afx_msg void OnShowCommentDetails();
+	afx_msg void OnDeleteComment();
+	afx_msg void OnShowBCFContent();
 	afx_msg void OnSelectSnippetFile();
 	afx_msg void OnSelectTopicLabels();
 	afx_msg void OnAddBimFiles();
@@ -47,6 +50,7 @@ private:
 	void LoadExtension(CComboBox& combo, BCFEnumeration enumeration);
 	void FormatTopicInfo();
 	void UpdateLabels();
+	void UpdateCommentButtons();
 	void ReloadBimFiles();
 	bool AddBimFile(const CString& path, bool external);
 	void ReloadDocuments(BCFDocumentReference* selectDocument = nullptr);
@@ -57,7 +61,7 @@ private:
 
 	CBCFView* m_pane = nullptr;
 	BCFTopic* m_topic = nullptr;
-	CButton m_viewProject;
+	CButton m_showBCFContent;
 	CStatic m_topicInfo;
 	CStatic m_separator;
 	CTabCtrl m_tabs;
@@ -87,6 +91,9 @@ private:
 	CButton m_snippetGroup;
 	std::map<_model*, BCFBimFile*> m_usedBimModels;
 	CBCFCommentsListBox m_comments;
+	CButton m_newComment;
+	CButton m_showCommentDetails;
+	CButton m_deleteComment;
 	CStatic m_documentsLabel;
 	CListBox m_documents;
 	CButton m_addDocument;

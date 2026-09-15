@@ -64,7 +64,7 @@ namespace
 BEGIN_MESSAGE_MAP(CBCFTopicForm, CWnd)
 	ON_WM_SIZE()
 	ON_WM_CTLCOLOR()
-	ON_BN_CLICKED(IDC_PANE_VIEW_PROJECT, &CBCFTopicForm::OnViewProject)
+	ON_BN_CLICKED(IDC_PANE_SHOW_BCF_CONTENT, &CBCFTopicForm::OnShowBCFContent)
 	ON_BN_CLICKED(IDC_PANE_SELECT_SNIPPET_FILE, &CBCFTopicForm::OnSelectSnippetFile)
 	ON_BN_CLICKED(IDC_PANE_SELECT_TOPIC_LABELS, &CBCFTopicForm::OnSelectTopicLabels)
 	ON_BN_CLICKED(IDC_PANE_ADD_BIM_FILES, &CBCFTopicForm::OnAddBimFiles)
@@ -72,6 +72,9 @@ BEGIN_MESSAGE_MAP(CBCFTopicForm, CWnd)
 	ON_NOTIFY(TCN_SELCHANGE, IDC_PANE_TABS, &CBCFTopicForm::OnTabChanged)
 	ON_CONTROL(LBN_SELCHANGE, IDC_PANE_COMMENTS, &CBCFTopicForm::OnCommentChanged)
 	ON_CONTROL(LBN_DBLCLK, IDC_PANE_COMMENTS, &CBCFTopicForm::OnCommentDoubleClick)
+	ON_BN_CLICKED(IDC_PANE_NEW_COMMENT, &CBCFTopicForm::OnNewComment)
+	ON_BN_CLICKED(IDC_PANE_SHOW_COMMENT_DETAILS, &CBCFTopicForm::OnShowCommentDetails)
+	ON_BN_CLICKED(IDC_PANE_DELETE_COMMENT, &CBCFTopicForm::OnDeleteComment)
 	ON_BN_CLICKED(IDC_PANE_ADD_DOCUMENT, &CBCFTopicForm::OnAddDocument)
 	ON_BN_CLICKED(IDC_PANE_REMOVE_DOCUMENT, &CBCFTopicForm::OnRemoveDocument)
 	ON_CONTROL(LBN_SELCHANGE, IDC_PANE_DOCUMENTS, &CBCFTopicForm::OnDocumentChanged)
@@ -91,9 +94,9 @@ BOOL CBCFTopicForm::Create(CBCFView* pane)
 		return FALSE;
 	}
 
-	m_viewProject.Create(L"<<", WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_PUSHBUTTON,
-		CRect(), this, IDC_PANE_VIEW_PROJECT);
-	SetBCFControlFont(m_viewProject, this);
+	m_showBCFContent.Create(L"Show BCF content", WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_PUSHBUTTON,
+		CRect(), this, IDC_PANE_SHOW_BCF_CONTENT);
+	SetBCFControlFont(m_showBCFContent, this);
 	CreateBCFStaticLabel(m_topicInfo, L"Topic", this);
 	m_separator.Create(L"", WS_CHILD | WS_VISIBLE | SS_ETCHEDHORZ, CRect(), this);
 
@@ -173,6 +176,15 @@ BOOL CBCFTopicForm::Create(CBCFView* pane)
 	m_comments.Create(WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VSCROLL | LBS_NOTIFY | LBS_OWNERDRAWVARIABLE |
 		LBS_HASSTRINGS | LBS_NOINTEGRALHEIGHT, CRect(), this, IDC_PANE_COMMENTS);
 	SetBCFControlFont(m_comments, this);
+	m_newComment.Create(L"New comment...", WS_CHILD | WS_TABSTOP | BS_PUSHBUTTON,
+		CRect(), this, IDC_PANE_NEW_COMMENT);
+	m_showCommentDetails.Create(L"Show details", WS_CHILD | WS_TABSTOP | BS_PUSHBUTTON,
+		CRect(), this, IDC_PANE_SHOW_COMMENT_DETAILS);
+	m_deleteComment.Create(L"Delete comment...", WS_CHILD | WS_TABSTOP | BS_PUSHBUTTON,
+		CRect(), this, IDC_PANE_DELETE_COMMENT);
+	SetBCFControlFont(m_newComment, this);
+	SetBCFControlFont(m_showCommentDetails, this);
+	SetBCFControlFont(m_deleteComment, this);
 	CreateBCFStaticLabel(m_documentsLabel, L"Documents", this);
 	m_documents.Create(WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VSCROLL | WS_HSCROLL |
 		LBS_NOTIFY | LBS_SORT | LBS_NOINTEGRALHEIGHT,
@@ -375,7 +387,6 @@ void CBCFTopicForm::ReloadComments(BCFComment* selectComment)
 				selected = item;
 			}
 		}
-		m_comments.AddAction(L"<< Add comment >>");
 	}
 	if (selected < 0 && m_comments.GetCount() > 0) {
 		selected = 0;
@@ -399,30 +410,60 @@ void CBCFTopicForm::OnCommentChanged()
 		CBCFViewPointMgr(*m_pane->GetDocument()).SetViewFromComment(*comment);
 		m_pane->ShowLog(false);
 	}
+	UpdateCommentButtons();
 	m_pane->RefreshCommandUI();
 }
 
 void CBCFTopicForm::OnCommentDoubleClick()
 {
-	int selection = m_comments.GetCurSel();
-	if (selection == LB_ERR || !m_topic) {
+	OnShowCommentDetails();
+}
+
+void CBCFTopicForm::OnNewComment()
+{
+	if (!m_topic) {
 		return;
 	}
-	BCFComment* comment = static_cast<BCFComment*>(m_comments.GetItemDataPtr(selection));
+	BCFComment* comment = m_topic->AddComment();
+	m_pane->ShowLog(!comment);
 	if (!comment) {
-		comment = m_topic->AddComment();
-		m_pane->ShowLog(!comment);
-		if (!comment) {
-			return;
-		}
-		if (m_pane->GetDocument()) {
-			const bool ok = CBCFViewPointMgr(*m_pane->GetDocument())
-				.SaveCurrentViewToComent(*comment);
-			m_pane->ShowLog(!ok);
-		}
-		ReloadComments(comment);
+		return;
 	}
+	if (m_pane->GetDocument()) {
+		const bool ok = CBCFViewPointMgr(*m_pane->GetDocument())
+			.SaveCurrentViewToComent(*comment);
+		m_pane->ShowLog(!ok);
+	}
+	ReloadComments(comment);
 	m_pane->ShowComment(comment);
+}
+
+void CBCFTopicForm::OnShowCommentDetails()
+{
+	m_pane->ShowComment(GetSelectedComment());
+}
+
+void CBCFTopicForm::OnDeleteComment()
+{
+	BCFComment* comment = GetSelectedComment();
+	if (!comment ||
+		AfxMessageBox(L"Delete this comment?", MB_YESNO | MB_ICONWARNING) != IDYES) {
+		return;
+	}
+	const bool ok = comment->Remove();
+	m_pane->ShowLog(!ok);
+	if (ok) {
+		ReloadComments();
+	}
+}
+
+void CBCFTopicForm::UpdateCommentButtons()
+{
+	const bool hasTopic = m_topic != nullptr;
+	const bool hasComment = GetSelectedComment() != nullptr;
+	m_newComment.EnableWindow(hasTopic);
+	m_showCommentDetails.EnableWindow(hasComment);
+	m_deleteComment.EnableWindow(hasComment);
 }
 
 void CBCFTopicForm::OnTabChanged(NMHDR*, LRESULT* result)
@@ -431,7 +472,7 @@ void CBCFTopicForm::OnTabChanged(NMHDR*, LRESULT* result)
 	*result = 0;
 }
 
-void CBCFTopicForm::OnViewProject()
+void CBCFTopicForm::OnShowBCFContent()
 {
 	m_pane->ShowProject();
 }
@@ -806,6 +847,9 @@ void CBCFTopicForm::ShowTab(int tab)
 	m_addRelatedTopic.ShowWindow(tab == 2 ? SW_SHOW : SW_HIDE);
 	m_removeRelatedTopic.ShowWindow(tab == 2 ? SW_SHOW : SW_HIDE);
 	m_comments.ShowWindow(tab == 0 ? SW_SHOW : SW_HIDE);
+	m_newComment.ShowWindow(tab == 0 ? SW_SHOW : SW_HIDE);
+	m_showCommentDetails.ShowWindow(tab == 0 ? SW_SHOW : SW_HIDE);
+	m_deleteComment.ShowWindow(tab == 0 ? SW_SHOW : SW_HIDE);
 	RedrawWindow(nullptr, nullptr,
 		RDW_INVALIDATE | RDW_ERASE | RDW_FRAME | RDW_ALLCHILDREN | RDW_UPDATENOW);
 }
@@ -836,11 +880,12 @@ void CBCFTopicForm::AdjustLayout()
 	const int tabsHeight = max(2 * rowHeight, client.Height() - tabsTop - margin);
 
 	CString buttonText;
-	m_viewProject.GetWindowText(buttonText);
+	m_showBCFContent.GetWindowText(buttonText);
 	const int buttonWidth = static_cast<int>(dc.GetTextExtent(buttonText).cx) + 2 * margin;
-	m_viewProject.MoveWindow(0, 0, buttonWidth, rowHeight);
-	m_topicInfo.MoveWindow(buttonWidth + margin, labelOffset,
-		max(rowHeight, client.Width() - buttonWidth - 2 * margin), textHeight);
+	m_showBCFContent.MoveWindow(
+		max(0, static_cast<int>(client.right) - buttonWidth), 0, buttonWidth, rowHeight);
+	m_topicInfo.MoveWindow(0, labelOffset,
+		max(rowHeight, client.Width() - buttonWidth - margin), textHeight);
 	m_separator.MoveWindow(0, separatorTop, client.Width(), separatorHeight);
 	m_tabs.MoveWindow(margin, tabsTop, tabsWidth, tabsHeight);
 
@@ -869,7 +914,30 @@ void CBCFTopicForm::AdjustLayout()
 		const int descriptionTop = descriptionLabelTop + textHeight + rowSpacing;
 		m_description.MoveWindow(page.left, descriptionTop, titleWidth,
 			max(rowHeight, static_cast<int>(page.bottom) - descriptionTop));
-		m_comments.MoveWindow(commentsLeft, page.top, commentsWidth, page.Height());
+		CString newCommentText;
+		CString detailsText;
+		CString deleteCommentText;
+		m_newComment.GetWindowText(newCommentText);
+		m_showCommentDetails.GetWindowText(detailsText);
+		m_deleteComment.GetWindowText(deleteCommentText);
+		const int newCommentWidth =
+			static_cast<int>(dc.GetTextExtent(newCommentText).cx) + 2 * margin;
+		const int detailsWidth =
+			static_cast<int>(dc.GetTextExtent(detailsText).cx) + 2 * margin;
+		const int deleteCommentWidth =
+			static_cast<int>(dc.GetTextExtent(deleteCommentText).cx) + 2 * margin;
+		const int commentButtonsTop = page.bottom - rowHeight;
+		m_comments.MoveWindow(commentsLeft, page.top, commentsWidth,
+			max(rowHeight, static_cast<int>(commentButtonsTop - page.top - rowSpacing)));
+		int commentButtonLeft = commentsLeft;
+		m_newComment.MoveWindow(
+			commentButtonLeft, commentButtonsTop, newCommentWidth, rowHeight);
+		commentButtonLeft += newCommentWidth + rowSpacing;
+		m_showCommentDetails.MoveWindow(
+			commentButtonLeft, commentButtonsTop, detailsWidth, rowHeight);
+		m_deleteComment.MoveWindow(
+			page.right - deleteCommentWidth, commentButtonsTop,
+			deleteCommentWidth, rowHeight);
 	}
 	else if (m_tabs.GetCurSel() == 1) {
 		const int columnWidth = max(rowHeight, (page.Width() - 2 * rowSpacing) / 3);
