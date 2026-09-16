@@ -793,15 +793,18 @@ void CMySTEPViewerView::SetBCFView(
 							getAspectRatio,
 							dLengthConversionFactor
 						);
-#if 0
+#if 1
                         ASSERT(getPerspective == (camera == BCFCamera::BCFCameraPerspective));
 						ASSERT_EQ(getViewpoint, viewpoint);
                         ASSERT_EQ(getDirection, direction);
                         ASSERT_EQ(getUpVector, upVector);
-                        ASSERT_EQ(getViewToWorldScale, viewToWorldScale);
-						ASSERT_EQ(getFieldOfView, fieldOfView);
+						if (getPerspective) {
+							ASSERT_EQ(getFieldOfView, fieldOfView);
+						}
+						else {
+							ASSERT_EQ(getViewToWorldScale, viewToWorldScale);
+						}
                         ASSERT_EQ(getAspectRatio, aspectRatio);
-                        ASSERT_EQ(getViewToWorldScale, viewToWorldScale);
 #endif
 #endif
 					}

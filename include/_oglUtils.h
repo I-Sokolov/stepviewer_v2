@@ -2412,9 +2412,11 @@ protected: // Fields
 
 	// Camera
 	bool m_bCameraSettings;
+	bool m_bCameraSettingsChanged;
 	_vector3d m_vecViewPoint;
 	_vector3d m_vecDirection;
 	_vector3d m_vecUpVector;
+	double m_dViewToWorldScale;
 	double m_dFieldOfView;
 	double m_dAspectRatio;
 
