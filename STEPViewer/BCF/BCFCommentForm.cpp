@@ -175,9 +175,10 @@ void CBCFCommentForm::LoadViewPoint()
 	CString details;
 	if (viewPoint) {
 		BCFPoint point = {};
+		const BCFCamera cameraType = viewPoint->GetCameraType();
 		viewPoint->GetCameraViewPoint(point);
 		details.Format(L"Type: %s\r\nView point: %s",
-			viewPoint->GetCameraType() == BCFCameraOrthogonal
+			cameraType == BCFCameraOrthogonal
 				? L"Orthogonal"
 				: L"Perspective",
 			FormatPoint(point).GetString());
@@ -187,10 +188,14 @@ void CBCFCommentForm::LoadViewPoint()
 		details.AppendFormat(L"\r\nUp vector: %s", FormatPoint(point).GetString());
 		details.AppendFormat(L"\r\nAspect ratio: %s",
 			FormatDouble(viewPoint->GetAspectRatio()).GetString());
-		details.AppendFormat(L"\r\nScale: %s",
-			FormatDouble(viewPoint->GetViewToWorldScale()).GetString());
-		details.AppendFormat(L"\r\nField of view: %s",
-			FormatDouble(viewPoint->GetFieldOfView()).GetString());
+		if (cameraType == BCFCameraOrthogonal) {
+			details.AppendFormat(L"\r\nView to world scale: %s",
+				FormatDouble(viewPoint->GetViewToWorldScale()).GetString());
+		}
+		else {
+			details.AppendFormat(L"\r\nField of view: %s",
+				FormatDouble(viewPoint->GetFieldOfView()).GetString());
+		}
 		m_snapshot.Load(FromUTF8(viewPoint->GetSnapshot()));
 	}
 	else {
