@@ -178,6 +178,12 @@ bool CBCFExtensionEnumerationPage::IsEmpty()
 		: m_extensions.GetElement(m_enumeration, 0) == nullptr;
 }
 
+bool CBCFExtensionEnumerationPage::IsRequired() const
+{
+	return m_enumeration == BCFTopicTypes ||
+		m_enumeration == BCFTopicStatuses;
+}
+
 bool CBCFExtensionEnumerationPage::Apply()
 {
 	if (!m_values.GetSafeHwnd()) {
@@ -282,11 +288,22 @@ void CBCFProjectSettingsDlg::OnApplySettings()
 		AfxMessageBox(L"User is required.", MB_OK | MB_ICONERROR);
 		return;
 	}
+	CString emptyRequiredEnumerations;
 	CString emptyEnumerations;
 	for (const auto& page : m_extensionPages) {
 		if (page->IsEmpty()) {
-			emptyEnumerations.AppendFormat(L"\n- %s", page->GetTitle().GetString());
+			CString& list = page->IsRequired()
+				? emptyRequiredEnumerations
+				: emptyEnumerations;
+			list.AppendFormat(L"\n- %s", page->GetTitle().GetString());
 		}
+	}
+	if (!emptyRequiredEnumerations.IsEmpty()) {
+		CString message(L"The following required enumerations are empty:\n");
+		message += emptyRequiredEnumerations;
+		message += L"\n\nAdd at least one value to each enumeration.";
+		AfxMessageBox(message, MB_OK | MB_ICONERROR);
+		return;
 	}
 	if (!emptyEnumerations.IsEmpty()) {
 		CString message(L"The following enumerations are empty:\n");

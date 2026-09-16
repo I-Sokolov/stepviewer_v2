@@ -471,13 +471,16 @@ void CBCFTopicForm::OnTabChanged(NMHDR*, LRESULT* result)
 	*result = 0;
 }
 
-void CBCFTopicForm::FocusInitialControl()
+void CBCFTopicForm::FocusInitialControl(bool selectTitle)
 {
 	if (m_tabs.GetCurSel() != 0) {
 		m_tabs.SetCurSel(0);
 		ShowTab(0);
 	}
 	m_title.SetFocus();
+	if (selectTitle) {
+		m_title.SetSel(0, -1);
+	}
 }
 
 void CBCFTopicForm::OnShowBCFContent()

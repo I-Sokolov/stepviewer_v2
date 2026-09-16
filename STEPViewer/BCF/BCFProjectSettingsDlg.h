@@ -27,6 +27,7 @@ public:
 
 	bool Apply();
 	bool IsEmpty();
+	bool IsRequired() const;
 	CString GetTitle() const { return m_title; }
 
 protected:

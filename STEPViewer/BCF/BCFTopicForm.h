@@ -18,7 +18,7 @@ public:
 	BCFTopic* GetTopic() const { return m_topic; }
 	BCFComment* GetSelectedComment() const;
 	void ReloadComments(BCFComment* selectComment = nullptr);
-	void FocusInitialControl();
+	void FocusInitialControl(bool selectTitle = false);
 
 protected:
 	afx_msg void OnSize(UINT type, int cx, int cy);

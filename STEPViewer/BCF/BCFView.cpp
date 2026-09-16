@@ -133,9 +133,8 @@ void CBCFView::NewProject()
 	LoadProjectInfo();
 	UpdateCaption();
 
-	BCFTopic* topic = m_project->AddTopic(nullptr, nullptr, nullptr);
+	BCFTopic* topic = CreateTopic();
 	if (!topic) {
-		ShowLog(true);
 		ShowProject();
 		Activate();
 		return;
@@ -166,6 +165,7 @@ void CBCFView::NewProject()
 	m_projectForm->Load(topic);
 	ShowTopic(topic);
 	Activate();
+	m_topicForm->FocusInitialControl(true);
 }
 
 void CBCFView::OpenProject()
@@ -387,12 +387,32 @@ void CBCFView::AddTopic()
 	if (!m_projectForm->Commit()) {
 		return;
 	}
-	BCFTopic* topic = m_project->AddTopic(nullptr, nullptr, nullptr);
-	ShowLog(!topic);
+	BCFTopic* topic = CreateTopic();
 	if (topic) {
 		m_projectForm->Load(topic);
 		ShowTopic(topic);
+		m_topicForm->FocusInitialControl(true);
 	}
+}
+
+BCFTopic* CBCFView::CreateTopic()
+{
+	if (!m_project) {
+		return nullptr;
+	}
+	BCFExtensions& extensions = m_project->GetExtensions();
+	const char* topicType = extensions.GetElement(BCFTopicTypes, 0);
+	const char* topicStatus = extensions.GetElement(BCFTopicStatuses, 0);
+	if (!topicType || !topicStatus) {
+		AfxMessageBox(
+			L"Topic Types and Topic Statuses must contain at least one value.",
+			MB_OK | MB_ICONERROR);
+		return nullptr;
+	}
+	BCFTopic* topic = m_project->AddTopic(
+		topicType, "<< Enter topic title >>", topicStatus);
+	ShowLog(!topic);
+	return topic;
 }
 
 void CBCFView::DeleteTopic()

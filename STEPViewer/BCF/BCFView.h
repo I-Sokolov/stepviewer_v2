@@ -56,6 +56,7 @@ private:
 	void ShowForm(Form form);
 	void AdjustLayout();
 	void UpdateCaption();
+	BCFTopic* CreateTopic();
 
 	CMySTEPViewerDoc* m_stepViewerDoc;
 	BCFProject* m_project;
