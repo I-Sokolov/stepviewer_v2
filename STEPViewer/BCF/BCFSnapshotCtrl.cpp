@@ -29,6 +29,27 @@ void CBCFSnapshotCtrl::Clear()
 	}
 }
 
+int CBCFSnapshotCtrl::GetPreferredWidth(int height)
+{
+	const int border = 2;
+	if (!m_image.IsNull() && m_image.GetWidth() > 0 && m_image.GetHeight() > 0) {
+		return MulDiv(max(0, height - 2 * border),
+			m_image.GetWidth(), m_image.GetHeight()) + 2 * border;
+	}
+
+	CClientDC dc(this);
+	CFont* font = GetFont();
+	CFont* oldFont = font ? dc.SelectObject(font) : nullptr;
+	TEXTMETRIC metrics = {};
+	dc.GetTextMetrics(&metrics);
+	const int width = static_cast<int>(dc.GetTextExtent(L"No snapshot").cx) +
+		2 * metrics.tmAveCharWidth + 2 * border;
+	if (oldFont) {
+		dc.SelectObject(oldFont);
+	}
+	return width;
+}
+
 void CBCFSnapshotCtrl::OnPaint()
 {
 	CPaintDC dc(this);
@@ -38,7 +59,20 @@ void CBCFSnapshotCtrl::OnPaint()
 	dc.DrawEdge(client, EDGE_SUNKEN, BF_RECT);
 	client.DeflateRect(2, 2);
 
-	if (m_image.IsNull() || client.IsRectEmpty()) {
+	if (client.IsRectEmpty()) {
+		return;
+	}
+
+	if (m_image.IsNull()) {
+		CFont* font = GetFont();
+		CFont* oldFont = font ? dc.SelectObject(font) : nullptr;
+		dc.SetBkMode(TRANSPARENT);
+		dc.SetTextColor(::GetSysColor(COLOR_GRAYTEXT));
+		dc.DrawText(L"No snapshot", client,
+			DT_CENTER | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX);
+		if (oldFont) {
+			dc.SelectObject(oldFont);
+		}
 		return;
 	}
 

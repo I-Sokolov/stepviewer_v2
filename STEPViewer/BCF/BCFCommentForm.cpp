@@ -57,6 +57,7 @@ BOOL CBCFCommentForm::Create(CBCFView* pane)
 	SetBCFControlFont(m_text, this);
 	m_snapshot.Create(L"", WS_CHILD,
 		CRect(), this);
+	SetBCFControlFont(m_snapshot, this);
 	m_selectSnapshot.Create(L"Select file...", WS_CHILD | WS_TABSTOP | BS_PUSHBUTTON,
 		CRect(), this, IDC_PANE_COMMENT_SNAPSHOT_SELECT);
 	SetBCFControlFont(m_selectSnapshot, this);
@@ -542,23 +543,27 @@ void CBCFCommentForm::AdjustLayout()
 		const int cameraWidth = max(
 			cameraDetailsWidth + 2 * margin,
 			applyWidth + getFromViewWidth + 3 * margin);
-		const int remainingWidth = max(2 * rowHeight, page.Width() - cameraWidth - 2 * rowSpacing);
-		const int firstWidth = remainingWidth / 2;
-		const int secondWidth = remainingWidth - firstWidth;
-		const int secondLeft = page.left + firstWidth + rowSpacing;
-		const int cameraLeft = secondLeft + secondWidth + rowSpacing;
-
-		m_textLabel.MoveWindow(page.left, page.top + labelOffset, firstWidth, textHeight);
-		m_text.MoveWindow(page.left, page.top + rowHeight, firstWidth,
-			max(rowHeight, page.Height() - rowHeight));
-
-		m_snapshot.MoveWindow(secondLeft, page.top, secondWidth,
-			max(rowHeight, page.Height() - rowHeight - rowSpacing));
 		CString selectText;
 		m_selectSnapshot.GetWindowText(selectText);
-		const int selectWidth = static_cast<int>(dc.GetTextExtent(selectText).cx) + 2 * margin;
+		const int selectWidth =
+			static_cast<int>(dc.GetTextExtent(selectText).cx) + 2 * margin;
+		const int snapshotHeight =
+			max(rowHeight, page.Height() - rowHeight - rowSpacing);
+		const int snapshotWidth =
+			max(selectWidth, m_snapshot.GetPreferredWidth(snapshotHeight));
+		const int textWidth = max(rowHeight,
+			page.Width() - cameraWidth - snapshotWidth - 2 * rowSpacing);
+		const int snapshotLeft = page.left + textWidth + rowSpacing;
+		const int cameraLeft = snapshotLeft + snapshotWidth + rowSpacing;
+
+		m_textLabel.MoveWindow(page.left, page.top + labelOffset, textWidth, textHeight);
+		m_text.MoveWindow(page.left, page.top + rowHeight, textWidth,
+			max(rowHeight, page.Height() - rowHeight));
+
+		m_snapshot.MoveWindow(snapshotLeft, page.top, snapshotWidth, snapshotHeight);
 		const int snapshotButtonsTop = page.bottom - rowHeight;
-		m_selectSnapshot.MoveWindow(secondLeft, snapshotButtonsTop, selectWidth, rowHeight);
+		m_selectSnapshot.MoveWindow(
+			snapshotLeft, snapshotButtonsTop, selectWidth, rowHeight);
 
 		m_cameraGroup.MoveWindow(cameraLeft, page.top, cameraWidth, page.Height());
 		const int cameraContentLeft = cameraLeft + margin;
