@@ -99,6 +99,20 @@ int CBCFView::OnCreate(LPCREATESTRUCT createStruct)
 	return 0;
 }
 
+BOOL CBCFView::OnCommand(WPARAM wParam, LPARAM lParam)
+{
+	const BOOL handled = CDockablePane::OnCommand(wParam, lParam);
+	if (HIWORD(wParam) == EN_KILLFOCUS &&
+		LOWORD(wParam) == IDC_PANE_PROJECT_NAME &&
+		m_projectName->GetModify()) {
+		if (CommitProjectInfo()) {
+			m_projectName->SetModify(FALSE);
+		}
+	}
+	UpdateSaveButton();
+	return handled;
+}
+
 BOOL CBCFView::OnEraseBkgnd(CDC* dc)
 {
 	CRect client;
@@ -369,6 +383,8 @@ void CBCFView::LoadProjectInfo()
 	}
 	m_projectId->SetWindowText(m_project ? FromUTF8(m_project->GetProjectId()) : CString());
 	m_projectName->SetWindowText(m_project ? FromUTF8(m_project->GetName()) : CString());
+	m_projectName->SetModify(FALSE);
+	UpdateSaveButton();
 }
 
 bool CBCFView::CommitProjectInfo()
@@ -585,6 +601,13 @@ void CBCFView::OnUpdateBCFFileCommand(CCmdUI* commandUI)
 void CBCFView::OnUpdateSaveBCF(CCmdUI* commandUI)
 {
 	commandUI->Enable(m_project && m_project->IsModified());
+}
+
+void CBCFView::UpdateSaveButton()
+{
+	if (m_saveBCF.GetSafeHwnd()) {
+		m_saveBCF.EnableWindow(m_project && m_project->IsModified());
+	}
 }
 
 void CBCFView::OnProjectSettings()

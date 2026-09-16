@@ -21,6 +21,7 @@ public:
 	void FocusInitialControl(bool selectTitle = false);
 
 protected:
+	virtual BOOL OnCommand(WPARAM wParam, LPARAM lParam) override;
 	afx_msg void OnSize(UINT type, int cx, int cy);
 	afx_msg void OnTabChanged(NMHDR* header, LRESULT* result);
 	afx_msg void OnCommentChanged();

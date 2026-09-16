@@ -59,6 +59,36 @@ namespace
 			return FromUTF8(reference.filename().string().c_str()) + CString (L" (embedded)");
 		}
 	}
+
+	bool IsTopicEditControl(UINT id)
+	{
+		switch (id) {
+		case IDC_PANE_TOPIC_TITLE:
+		case IDC_PANE_TOPIC_DESCRIPTION:
+		case IDC_PANE_TOPIC_DUE:
+		case IDC_PANE_TOPIC_SCHEMA:
+		case IDC_PANE_TOPIC_INDEX:
+		case IDC_PANE_TOPIC_SERVER_ID:
+			return true;
+		default:
+			return false;
+		}
+	}
+
+	bool IsTopicComboControl(UINT id)
+	{
+		switch (id) {
+		case IDC_PANE_TOPIC_TYPE:
+		case IDC_PANE_TOPIC_STAGE:
+		case IDC_PANE_TOPIC_STATUS:
+		case IDC_PANE_TOPIC_ASSIGNED:
+		case IDC_PANE_TOPIC_PRIORITY:
+		case IDC_PANE_TOPIC_SNIPPET:
+			return true;
+		default:
+			return false;
+		}
+	}
 }
 
 BEGIN_MESSAGE_MAP(CBCFTopicForm, CWnd)
@@ -234,6 +264,25 @@ BOOL CBCFTopicForm::Create(CBCFView* pane)
 	return TRUE;
 }
 
+BOOL CBCFTopicForm::OnCommand(WPARAM wParam, LPARAM lParam)
+{
+	const UINT id = LOWORD(wParam);
+	const UINT notification = HIWORD(wParam);
+	CWnd* control = GetDlgItem(id);
+	const bool commitEdit = notification == EN_KILLFOCUS &&
+		IsTopicEditControl(id) && control &&
+		control->SendMessage(EM_GETMODIFY) != 0;
+	const bool commitCombo = notification == CBN_SELCHANGE &&
+		IsTopicComboControl(id);
+
+	const BOOL handled = CWnd::OnCommand(wParam, lParam);
+	if (commitEdit || commitCombo) {
+		Commit();
+	}
+	m_pane->UpdateSaveButton();
+	return handled;
+}
+
 void CBCFTopicForm::LoadExtension(CComboBox& combo, BCFEnumeration enumeration)
 {
 	combo.ResetContent();
@@ -293,6 +342,12 @@ void CBCFTopicForm::Load(BCFTopic* topic)
 		reference = path.filename().wstring().c_str();
 	}
 	m_snippetReference.SetWindowText(reference);
+	CEdit* edits[] = {
+		&m_title, &m_description, &m_due, &m_snippetSchema, &m_index, &m_serverId
+	};
+	for (CEdit* edit : edits) {
+		edit->SetModify(FALSE);
+	}
 	FormatTopicInfo();
 	
 	ReloadComments();
@@ -354,6 +409,14 @@ bool CBCFTopicForm::Commit()
 	FormatTopicInfo ();
 	
 	m_pane->ShowLog (!ok);
+	if (ok) {
+		CEdit* edits[] = {
+			&m_title, &m_description, &m_due, &m_snippetSchema, &m_index, &m_serverId
+		};
+		for (CEdit* edit : edits) {
+			edit->SetModify(FALSE);
+		}
+	}
 	return ok;
 }
 

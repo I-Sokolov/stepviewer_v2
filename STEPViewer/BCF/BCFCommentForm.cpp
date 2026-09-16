@@ -113,6 +113,23 @@ BOOL CBCFCommentForm::Create(CBCFView* pane)
 	return TRUE;
 }
 
+BOOL CBCFCommentForm::OnCommand(WPARAM wParam, LPARAM lParam)
+{
+	const UINT id = LOWORD(wParam);
+	const UINT notification = HIWORD(wParam);
+	const bool commitText = notification == EN_KILLFOCUS &&
+		id == IDC_PANE_COMMENT_TEXT && m_text.GetModify();
+	const bool commitCombo = notification == CBN_SELCHANGE &&
+		id == IDC_PANE_COMMENT_VISIBILITY_MODE;
+
+	const BOOL handled = CWnd::OnCommand(wParam, lParam);
+	if (commitText || commitCombo) {
+		Commit();
+	}
+	m_pane->UpdateSaveButton();
+	return handled;
+}
+
 void CBCFCommentForm::Load(BCFComment* comment)
 {
 	m_comment = comment;
@@ -121,6 +138,7 @@ void CBCFCommentForm::Load(BCFComment* comment)
 	}
 	UpdateHeader();
 	m_text.SetWindowText(comment ? FromUTF8(comment->GetText()) : CString());
+	m_text.SetModify(FALSE);
 	LoadViewPoint();
 	if (IsWindow (GetSafeHwnd ())){
 		ReloadSelection ();
@@ -164,6 +182,7 @@ bool CBCFCommentForm::Commit()
 	ok = CommitVisibility() && ok;
 	m_pane->ShowLog(!ok);
 	if (ok) {
+		m_text.SetModify(FALSE);
 		UpdateHeader();
 	}
 	return ok;

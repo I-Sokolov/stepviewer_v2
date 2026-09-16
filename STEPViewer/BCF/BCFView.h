@@ -39,8 +39,10 @@ public:
 	void ShowLog(bool knownError);
 	void LoadProjectInfo();
 	bool CommitProjectInfo();
+	void UpdateSaveButton();
 
 protected:
+	virtual BOOL OnCommand(WPARAM wParam, LPARAM lParam) override;
 	afx_msg int OnCreate(LPCREATESTRUCT createStruct);
 	afx_msg BOOL OnEraseBkgnd(CDC* dc);
 	afx_msg void OnSize(UINT type, int cx, int cy);

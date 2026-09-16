@@ -57,6 +57,13 @@ BOOL CBCFProjectForm::Create(CBCFView* pane)
 	return TRUE;
 }
 
+BOOL CBCFProjectForm::OnCommand(WPARAM wParam, LPARAM lParam)
+{
+	const BOOL handled = CWnd::OnCommand(wParam, lParam);
+	m_pane->UpdateSaveButton();
+	return handled;
+}
+
 void CBCFProjectForm::Load(BCFTopic* selectTopic)
 {
 	BCFTopic* selected = selectTopic ? selectTopic : GetSelectedTopic();

@@ -13,6 +13,7 @@ public:
 	BCFTopic* GetSelectedTopic() const;
 
 protected:
+	virtual BOOL OnCommand(WPARAM wParam, LPARAM lParam) override;
 	afx_msg void OnSize(UINT type, int cx, int cy);
 	afx_msg void OnTopicChanged(NMHDR* header, LRESULT* result);
 	afx_msg void OnTopicDoubleClick(NMHDR* header, LRESULT* result);
