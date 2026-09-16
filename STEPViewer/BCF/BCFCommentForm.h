@@ -30,6 +30,7 @@ protected:
 	DECLARE_MESSAGE_MAP()
 
 private:
+	void AdjustLayout();
 	void UpdateHeader();
 	void LoadViewPoint();
 	void ShowTab(int tab);

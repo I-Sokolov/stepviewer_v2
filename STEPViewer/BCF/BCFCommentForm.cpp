@@ -200,9 +200,7 @@ void CBCFCommentForm::LoadViewPoint()
 	m_getFromView.EnableWindow(m_comment != nullptr && m_pane->GetDocument() != nullptr);
 
 	if (IsWindow(GetSafeHwnd ())) {
-		CRect client;
-		GetClientRect (client);
-		OnSize (SIZE_RESTORED, client.Width (), client.Height ());
+		AdjustLayout();
 		if (IsWindow (GetSafeHwnd ())){
 			RedrawWindow (nullptr, nullptr,
 						  RDW_INVALIDATE | RDW_ERASE | RDW_ALLCHILDREN | RDW_UPDATENOW);
@@ -246,9 +244,7 @@ void CBCFCommentForm::ShowTab(int tab)
 	for (CWnd* control : visualizationControls) {
 		control->ShowWindow(visualizationCommand);
 	}
-	CRect client;
-	GetClientRect(client);
-	OnSize(SIZE_RESTORED, client.Width(), client.Height());
+	AdjustLayout();
 	RedrawWindow(nullptr, nullptr,
 		RDW_INVALIDATE | RDW_ERASE | RDW_FRAME | RDW_ALLCHILDREN | RDW_UPDATENOW);
 }
@@ -471,10 +467,19 @@ void CBCFCommentForm::OnViewTopic()
 void CBCFCommentForm::OnSize(UINT type, int cx, int cy)
 {
 	CWnd::OnSize(type, cx, cy);
+	AdjustLayout();
+}
+
+void CBCFCommentForm::AdjustLayout()
+{
 	if (!m_text.GetSafeHwnd()) {
 		return;
 	}
 
+	CRect client;
+	GetClientRect(client);
+	const int cx = client.Width();
+	const int cy = client.Height();
 	CClientDC dc(this);
 	CFont* font = m_headerInfo.GetFont();
 	CFont* oldFont = font ? dc.SelectObject(font) : nullptr;
@@ -488,9 +493,6 @@ void CBCFCommentForm::OnSize(UINT type, int cx, int cy)
 	CString buttonText;
 	m_viewTopic.GetWindowText(buttonText);
 	const int buttonWidth = static_cast<int>(dc.GetTextExtent(buttonText).cx) + 2 * margin;
-	if (oldFont) {
-		dc.SelectObject(oldFont);
-	}
 
 	m_viewTopic.MoveWindow(max(margin, cx - buttonWidth - margin),
 		0, buttonWidth, rowHeight);
@@ -517,14 +519,28 @@ void CBCFCommentForm::OnSize(UINT type, int cx, int cy)
 		CString cameraText;
 		m_cameraDetails.GetWindowText(cameraText);
 		int cameraTextWidth = 0;
+		CClientDC cameraDC(&m_cameraDetails);
+		CFont* cameraFont = m_cameraDetails.GetFont();
+		CFont* oldCameraFont = cameraFont ? cameraDC.SelectObject(cameraFont) : nullptr;
+		TEXTMETRIC cameraMetrics = {};
+		cameraDC.GetTextMetrics(&cameraMetrics);
 		int tokenPosition = 0;
 		while (tokenPosition != -1) {
 			const CString line = cameraText.Tokenize(L"\r\n", tokenPosition);
 			cameraTextWidth = max(cameraTextWidth,
-				static_cast<int>(dc.GetTextExtent(line).cx));
+				static_cast<int>(cameraDC.GetTextExtent(line).cx));
 		}
+		if (oldCameraFont) {
+			cameraDC.SelectObject(oldCameraFont);
+		}
+		const DWORD editMargins = static_cast<DWORD>(
+			m_cameraDetails.SendMessage(EM_GETMARGINS));
+		const int cameraDetailsWidth =
+			cameraTextWidth + LOWORD(editMargins) + HIWORD(editMargins) +
+			2 * ::GetSystemMetrics(SM_CXBORDER) +
+			::GetSystemMetrics(SM_CXVSCROLL) + 2 * cameraMetrics.tmAveCharWidth;
 		const int cameraWidth = max(
-			cameraTextWidth + 2 * margin + ::GetSystemMetrics(SM_CXVSCROLL),
+			cameraDetailsWidth + 2 * margin,
 			applyWidth + getFromViewWidth + 3 * margin);
 		const int remainingWidth = max(2 * rowHeight, page.Width() - cameraWidth - 2 * rowSpacing);
 		const int firstWidth = remainingWidth / 2;
@@ -632,5 +648,8 @@ void CBCFCommentForm::OnSize(UINT type, int cx, int cy)
 		m_coloringDetails.MoveWindow(coloringLeft + margin, page.top + rowHeight,
 			max(rowHeight, coloringWidth - 2 * margin),
 			max(rowHeight, page.Height() - rowHeight - margin));
+	}
+	if (oldFont) {
+		dc.SelectObject(oldFont);
 	}
 }
