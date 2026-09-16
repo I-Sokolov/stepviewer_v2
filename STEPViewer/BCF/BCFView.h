@@ -39,7 +39,7 @@ public:
 	void ShowLog(bool knownError);
 	void LoadProjectInfo();
 	bool CommitProjectInfo();
-	void UpdateSaveButton();
+	void UpdateSaveButton(bool setFocus = false);
 
 protected:
 	virtual BOOL OnCommand(WPARAM wParam, LPARAM lParam) override;

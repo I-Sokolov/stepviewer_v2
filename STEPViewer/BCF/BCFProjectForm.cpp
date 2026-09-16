@@ -60,7 +60,7 @@ BOOL CBCFProjectForm::Create(CBCFView* pane)
 BOOL CBCFProjectForm::OnCommand(WPARAM wParam, LPARAM lParam)
 {
 	const BOOL handled = CWnd::OnCommand(wParam, lParam);
-	m_pane->UpdateSaveButton();
+	m_pane->UpdateSaveButton(HIWORD(wParam) == BN_CLICKED);
 	return handled;
 }
 

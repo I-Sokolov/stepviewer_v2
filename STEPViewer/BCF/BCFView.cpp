@@ -109,7 +109,7 @@ BOOL CBCFView::OnCommand(WPARAM wParam, LPARAM lParam)
 			m_projectName->SetModify(FALSE);
 		}
 	}
-	UpdateSaveButton();
+	UpdateSaveButton(HIWORD(wParam) == BN_CLICKED);
 	return handled;
 }
 
@@ -359,18 +359,19 @@ void CBCFView::ShowComment(BCFComment* comment)
 void CBCFView::ShowForm(Form form)
 {
 	m_activeForm = form;
+	const bool hasProject = m_project != nullptr;
 	if (IsWindow(m_projectForm->GetSafeHwnd()))
-		m_projectForm->ShowWindow (form == ProjectForm ? SW_SHOW : SW_HIDE);
+		m_projectForm->ShowWindow (hasProject && form == ProjectForm ? SW_SHOW : SW_HIDE);
 	if (IsWindow(m_topicForm->GetSafeHwnd()))
-		m_topicForm->ShowWindow (form == TopicForm ? SW_SHOW : SW_HIDE);
+		m_topicForm->ShowWindow (hasProject && form == TopicForm ? SW_SHOW : SW_HIDE);
 	if (IsWindow (m_commentForm->GetSafeHwnd()))
-		m_commentForm->ShowWindow (form == CommentForm ? SW_SHOW : SW_HIDE);
+		m_commentForm->ShowWindow (hasProject && form == CommentForm ? SW_SHOW : SW_HIDE);
 	if (IsWindow (GetSafeHwnd ()))	{
 		AdjustLayout ();
-		if (form == TopicForm) {
+		if (hasProject && form == TopicForm) {
 			m_topicForm->FocusInitialControl();
 		}
-		else if (form == CommentForm) {
+		else if (hasProject && form == CommentForm) {
 			m_commentForm->FocusInitialControl();
 		}
 		}
@@ -384,7 +385,22 @@ void CBCFView::LoadProjectInfo()
 	m_projectId->SetWindowText(m_project ? FromUTF8(m_project->GetProjectId()) : CString());
 	m_projectName->SetWindowText(m_project ? FromUTF8(m_project->GetName()) : CString());
 	m_projectName->SetModify(FALSE);
+	const int projectCommand = m_project ? SW_SHOW : SW_HIDE;
+	m_projectIdLabel.ShowWindow(projectCommand);
+	m_projectId->ShowWindow(projectCommand);
+	m_projectNameLabel.ShowWindow(projectCommand);
+	m_projectName->ShowWindow(projectCommand);
+	m_projectSettings.ShowWindow(projectCommand);
+	m_saveBCF.ShowWindow(projectCommand);
+	m_newBCF.ShowWindow(SW_SHOW);
+	m_openBCF.ShowWindow(SW_SHOW);
+	if (!m_project) {
+		m_projectForm->ShowWindow(SW_HIDE);
+		m_topicForm->ShowWindow(SW_HIDE);
+		m_commentForm->ShowWindow(SW_HIDE);
+	}
 	UpdateSaveButton();
+	AdjustLayout();
 }
 
 bool CBCFView::CommitProjectInfo()
@@ -600,13 +616,21 @@ void CBCFView::OnUpdateBCFFileCommand(CCmdUI* commandUI)
 
 void CBCFView::OnUpdateSaveBCF(CCmdUI* commandUI)
 {
+	UpdateSaveButton();
 	commandUI->Enable(m_project && m_project->IsModified());
 }
 
-void CBCFView::UpdateSaveButton()
+void CBCFView::UpdateSaveButton(bool setFocus)
 {
 	if (m_saveBCF.GetSafeHwnd()) {
-		m_saveBCF.EnableWindow(m_project && m_project->IsModified());
+		const bool enabled = m_project && m_project->IsModified();
+		m_saveBCF.EnableWindow(enabled);
+		if (enabled) {
+			m_saveBCF.SetButtonStyle(
+				enabled ? BS_DEFPUSHBUTTON : BS_PUSHBUTTON, TRUE);
+			m_newBCF.SetButtonStyle(BS_PUSHBUTTON, TRUE);
+			m_openBCF.SetButtonStyle(BS_PUSHBUTTON, TRUE);
+		}
 	}
 }
 
@@ -684,6 +708,15 @@ void CBCFView::AdjustLayout()
 		dc.SelectObject(oldFont);
 	}
 
+	if (!m_project) {
+		m_newBCF.MoveWindow(margin, headerTop, newWidth, rowHeight);
+		m_openBCF.MoveWindow(
+			margin + newWidth + margin, headerTop, openWidth, rowHeight);
+		RedrawWindow(nullptr, nullptr,
+			RDW_INVALIDATE | RDW_ERASE | RDW_ALLCHILDREN);
+		return;
+	}
+
 	const int openLeft = client.right - margin - openWidth;
 	const int newLeft = openLeft - margin - newWidth;
 	const int saveLeft = newLeft - margin - saveWidth;
@@ -726,7 +759,10 @@ void CBCFView::OnSize(UINT type, int cx, int cy)
 
 void CBCFView::OnSetFocus(CWnd*)
 {
-	if (m_activeForm == ProjectForm) {
+	if (!m_project) {
+		m_newBCF.SetFocus();
+	}
+	else if (m_activeForm == ProjectForm) {
 		m_projectForm->SetFocus();
 	}
 	else if (m_activeForm == TopicForm) {
