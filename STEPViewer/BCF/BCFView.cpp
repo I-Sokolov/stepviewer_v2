@@ -21,6 +21,12 @@ BEGIN_MESSAGE_MAP(CBCFView, CDockablePane)
 	ON_WM_ERASEBKGND()
 	ON_WM_SIZE()
 	ON_WM_SETFOCUS()
+	ON_BN_CLICKED(IDC_PANE_SAVE_FILE, &CBCFView::OnSaveBCF)
+	ON_BN_CLICKED(IDC_PANE_NEW_FILE, &CBCFView::OnNewBCF)
+	ON_BN_CLICKED(IDC_PANE_OPEN_FILE, &CBCFView::OnOpenBCF)
+	ON_UPDATE_COMMAND_UI(IDC_PANE_SAVE_FILE, &CBCFView::OnUpdateSaveBCF)
+	ON_UPDATE_COMMAND_UI(IDC_PANE_NEW_FILE, &CBCFView::OnUpdateBCFFileCommand)
+	ON_UPDATE_COMMAND_UI(IDC_PANE_OPEN_FILE, &CBCFView::OnUpdateBCFFileCommand)
 	ON_BN_CLICKED(IDC_PANE_PROJECT_SETTINGS, &CBCFView::OnProjectSettings)
 	ON_UPDATE_COMMAND_UI(IDC_PANE_PROJECT_SETTINGS, &CBCFView::OnUpdateProjectSettings)
 END_MESSAGE_MAP()
@@ -59,9 +65,21 @@ int CBCFView::OnCreate(LPCREATESTRUCT createStruct)
 
 	CreateBCFStaticLabel(m_projectIdLabel, L"BCF Project Id:", this);
 	CreateBCFStaticLabel(m_projectNameLabel, L"Name:", this);
-	m_projectSettings.Create(L"Settings...",
+	m_saveBCF.Create(L"Save BCF",
+		WS_CHILD | WS_VISIBLE | WS_DISABLED | WS_TABSTOP | BS_DEFPUSHBUTTON,
+		CRect(), this, IDC_PANE_SAVE_FILE);
+	m_newBCF.Create(L"New BCF",
+		WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_PUSHBUTTON,
+		CRect(), this, IDC_PANE_NEW_FILE);
+	m_openBCF.Create(L"Open BCF",
+		WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_PUSHBUTTON,
+		CRect(), this, IDC_PANE_OPEN_FILE);
+	m_projectSettings.Create(L"Settings",
 		WS_CHILD | WS_VISIBLE | WS_DISABLED | WS_TABSTOP | BS_PUSHBUTTON,
 		CRect(), this, IDC_PANE_PROJECT_SETTINGS);
+	SetBCFControlFont(m_saveBCF, this);
+	SetBCFControlFont(m_newBCF, this);
+	SetBCFControlFont(m_openBCF, this);
 	SetBCFControlFont(m_projectSettings, this);
 	
 	m_projectId->Create(WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL | ES_READONLY,
@@ -544,6 +562,31 @@ void CBCFView::OnUpdateProjectSettings(CCmdUI* commandUI)
 	commandUI->Enable(m_project != nullptr);
 }
 
+void CBCFView::OnSaveBCF()
+{
+	SaveProject();
+}
+
+void CBCFView::OnNewBCF()
+{
+	NewProject();
+}
+
+void CBCFView::OnOpenBCF()
+{
+	OpenProject();
+}
+
+void CBCFView::OnUpdateBCFFileCommand(CCmdUI* commandUI)
+{
+	commandUI->Enable(TRUE);
+}
+
+void CBCFView::OnUpdateSaveBCF(CCmdUI* commandUI)
+{
+	commandUI->Enable(m_project && m_project->IsModified());
+}
+
 void CBCFView::OnProjectSettings()
 {
 	if (!m_project) {
@@ -593,10 +636,16 @@ void CBCFView::AdjustLayout()
 	CString idLabelText;
 	CString nameLabelText;
 	CString projectIdText;
+	CString saveText;
+	CString newText;
+	CString openText;
 	CString settingsText;
 	m_projectIdLabel.GetWindowText(idLabelText);
 	m_projectNameLabel.GetWindowText(nameLabelText);
 	m_projectId->GetWindowText(projectIdText);
+	m_saveBCF.GetWindowText(saveText);
+	m_newBCF.GetWindowText(newText);
+	m_openBCF.GetWindowText(openText);
 	m_projectSettings.GetWindowText(settingsText);
 	const int idLabelWidth = dc.GetTextExtent(idLabelText).cx + margin;
 	const int nameLabelWidth = dc.GetTextExtent(nameLabelText).cx + margin;
@@ -604,41 +653,41 @@ void CBCFView::AdjustLayout()
 	const int projectIdWidth = max(rowHeight,
 		static_cast<int>(dc.GetTextExtent(projectIdText).cx) +
 		LOWORD(projectIdMargins) + HIWORD(projectIdMargins));
+	const int saveWidth = static_cast<int>(dc.GetTextExtent(saveText).cx) + 2 * margin;
+	const int newWidth = static_cast<int>(dc.GetTextExtent(newText).cx) + 2 * margin;
+	const int openWidth = static_cast<int>(dc.GetTextExtent(openText).cx) + 2 * margin;
 	const int settingsWidth = static_cast<int>(dc.GetTextExtent(settingsText).cx) + 2 * margin;
 	if (oldFont) {
 		dc.SelectObject(oldFont);
 	}
 
-	int headerHeight = rowHeight;
-	const int minEditWidth = 3 * rowHeight;
-	const int twoColumnWidth =
-		4 * margin + idLabelWidth + projectIdWidth + nameLabelWidth + minEditWidth + settingsWidth;
-	if (client.Width() >= twoColumnWidth) {
-		m_projectIdLabel.MoveWindow(margin, headerTop + labelOffset, idLabelWidth, textHeight);
-		m_projectId->MoveWindow(margin + idLabelWidth, headerTop + labelOffset,
-			projectIdWidth, rowHeight - labelOffset);
-		const int second = 2 * margin + idLabelWidth + projectIdWidth;
-		m_projectNameLabel.MoveWindow(second, headerTop + labelOffset, nameLabelWidth, textHeight);
-		m_projectName->MoveWindow(second + nameLabelWidth, headerTop + labelOffset,
-			client.right - second - nameLabelWidth - settingsWidth - 2 * margin,
-			rowHeight - labelOffset);
-		m_projectSettings.MoveWindow(client.right - settingsWidth - margin,
-			headerTop, settingsWidth, rowHeight);
-	}
-	else {
-		const int labelWidth = max(idLabelWidth, nameLabelWidth);
-		const int editWidth = max(rowHeight, client.Width() - 2 * margin - labelWidth);
-		m_projectIdLabel.MoveWindow(margin, headerTop + labelOffset, labelWidth, textHeight);
-		m_projectId->MoveWindow(margin + labelWidth, headerTop + labelOffset,
-			min(projectIdWidth, editWidth), rowHeight - labelOffset);
-		m_projectNameLabel.MoveWindow(margin, headerTop + rowHeight + labelOffset, labelWidth, textHeight);
-		m_projectName->MoveWindow(margin + labelWidth, headerTop + rowHeight + labelOffset,
-			max(rowHeight, editWidth - settingsWidth - margin), rowHeight - labelOffset);
-		m_projectSettings.MoveWindow(client.right - settingsWidth - margin,
-			headerTop + rowHeight, settingsWidth, rowHeight);
-		headerHeight = 2 * rowHeight;
-	}
-	CRect formRect(client.left, headerTop + headerHeight + margin, client.right, client.bottom);
+	const int openLeft = client.right - margin - openWidth;
+	const int newLeft = openLeft - margin - newWidth;
+	const int saveLeft = newLeft - margin - saveWidth;
+	const int settingsLeft = saveLeft - margin - settingsWidth;
+
+	int left = margin;
+	m_projectIdLabel.MoveWindow(
+		left, headerTop + labelOffset, idLabelWidth, textHeight);
+	left += idLabelWidth;
+	m_projectId->MoveWindow(
+		left, headerTop + labelOffset, projectIdWidth, rowHeight - labelOffset);
+	left += projectIdWidth + margin;
+	m_projectNameLabel.MoveWindow(
+		left, headerTop + labelOffset, nameLabelWidth, textHeight);
+	left += nameLabelWidth;
+	m_projectName->MoveWindow(
+		left, headerTop + labelOffset,
+		max(rowHeight, settingsLeft - margin - left), rowHeight - labelOffset);
+
+	m_projectSettings.MoveWindow(
+		settingsLeft, headerTop, settingsWidth, rowHeight);
+	m_saveBCF.MoveWindow(saveLeft, headerTop, saveWidth, rowHeight);
+	m_newBCF.MoveWindow(newLeft, headerTop, newWidth, rowHeight);
+	m_openBCF.MoveWindow(openLeft, headerTop, openWidth, rowHeight);
+
+	CRect formRect(client.left,
+		headerTop + rowHeight + margin, client.right, client.bottom);
 	m_projectForm->MoveWindow(formRect);
 	m_topicForm->MoveWindow(formRect);
 	if (IsWindow(m_commentForm->GetSafeHwnd()))

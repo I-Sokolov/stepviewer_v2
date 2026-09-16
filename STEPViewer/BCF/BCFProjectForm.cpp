@@ -22,9 +22,6 @@ BEGIN_MESSAGE_MAP(CBCFProjectForm, CWnd)
 	ON_BN_CLICKED(IDC_PANE_NEW_TOPIC, &CBCFProjectForm::OnNewTopic)
 	ON_BN_CLICKED(IDC_PANE_TOPIC_DETAILS, &CBCFProjectForm::OnTopicDetails)
 	ON_BN_CLICKED(IDC_PANE_DELETE_TOPIC, &CBCFProjectForm::OnDeleteTopic)
-	ON_BN_CLICKED(IDC_PANE_NEW_FILE, &CBCFProjectForm::OnNewFile)
-	ON_BN_CLICKED(IDC_PANE_OPEN_FILE, &CBCFProjectForm::OnOpenFile)
-	ON_BN_CLICKED(IDC_PANE_SAVE_FILE, &CBCFProjectForm::OnSaveFile)
 END_MESSAGE_MAP()
 
 BOOL CBCFProjectForm::Create(CBCFView* pane)
@@ -46,21 +43,12 @@ BOOL CBCFProjectForm::Create(CBCFView* pane)
 		m_topics.InsertColumn(column, COLUMN_NAMES[column], LVCFMT_LEFT, COLUMN_WIDTHS[column]);
 	}
 
-	m_newFile.Create(L"New BCF file...", WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_PUSHBUTTON,
-		CRect(), this, IDC_PANE_NEW_FILE);
-	m_openFile.Create(L"Open BCF file...", WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_PUSHBUTTON,
-		CRect(), this, IDC_PANE_OPEN_FILE);
-	m_saveFile.Create(L"Save BCF file...", WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_PUSHBUTTON,
-		CRect(), this, IDC_PANE_SAVE_FILE);
 	m_newTopic.Create(L"New topic", WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_PUSHBUTTON,
 		CRect(), this, IDC_PANE_NEW_TOPIC);
 	m_topicDetails.Create(L"Topic details", WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_PUSHBUTTON,
 		CRect(), this, IDC_PANE_TOPIC_DETAILS);
 	m_deleteTopic.Create(L"Delete topic", WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_PUSHBUTTON,
 		CRect(), this, IDC_PANE_DELETE_TOPIC);
-	SetBCFControlFont(m_newFile, this);
-	SetBCFControlFont(m_openFile, this);
-	SetBCFControlFont(m_saveFile, this);
 	SetBCFControlFont(m_newTopic, this);
 	SetBCFControlFont(m_topicDetails, this);
 	SetBCFControlFont(m_deleteTopic, this);
@@ -149,9 +137,6 @@ void CBCFProjectForm::OnSize(UINT type, int cx, int cy)
 	const int newWidth = buttonWidth(m_newTopic);
 	const int detailsWidth = buttonWidth(m_topicDetails);
 	const int deleteWidth = buttonWidth(m_deleteTopic);
-	const int newFileWidth = buttonWidth(m_newFile);
-	const int openFileWidth = buttonWidth(m_openFile);
-	const int saveFileWidth = buttonWidth(m_saveFile);
 	if (oldFont) {
 		dc.SelectObject(oldFont);
 	}
@@ -167,12 +152,6 @@ void CBCFProjectForm::OnSize(UINT type, int cx, int cy)
 	m_topicDetails.MoveWindow(buttonLeft, buttonsTop, detailsWidth, rowHeight);
 	buttonLeft -= margin + newWidth;
 	m_newTopic.MoveWindow(buttonLeft, buttonsTop, newWidth, rowHeight);
-	buttonLeft = margin;
-	m_newFile.MoveWindow(buttonLeft, buttonsTop, newFileWidth, rowHeight);
-	buttonLeft += newFileWidth + margin;
-	m_openFile.MoveWindow(buttonLeft, buttonsTop, openFileWidth, rowHeight);
-	buttonLeft += openFileWidth + margin;
-	m_saveFile.MoveWindow(buttonLeft, buttonsTop, saveFileWidth, rowHeight);
 }
 
 void CBCFProjectForm::OnTopicChanged(NMHDR*, LRESULT* result)
@@ -204,28 +183,10 @@ void CBCFProjectForm::OnDeleteTopic()
 	m_pane->DeleteTopic();
 }
 
-void CBCFProjectForm::OnNewFile()
-{
-	m_pane->NewProject();
-}
-
-void CBCFProjectForm::OnOpenFile()
-{
-	m_pane->OpenProject();
-}
-
-void CBCFProjectForm::OnSaveFile()
-{
-	m_pane->SaveProject();
-}
-
 void CBCFProjectForm::UpdateButtons()
 {
 	const bool hasProject = m_pane && m_pane->GetProject();
 	const bool hasTopic = hasProject && GetSelectedTopic();
-	m_newFile.EnableWindow(TRUE);
-	m_openFile.EnableWindow(TRUE);
-	m_saveFile.EnableWindow(hasProject && m_pane->GetProject()->IsModified());
 	m_newTopic.EnableWindow(hasProject);
 	m_topicDetails.EnableWindow(hasTopic);
 	m_deleteTopic.EnableWindow(hasTopic);
