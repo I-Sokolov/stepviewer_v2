@@ -103,7 +103,7 @@ BOOL CBCFTopicForm::Create(CBCFView* pane)
 	m_tabs.Create(WS_CHILD | WS_VISIBLE | WS_TABSTOP | TCS_TABS, CRect(), this, IDC_PANE_TABS);	
 	SetBCFControlFont(m_tabs, this);
 	
-	m_tabs.InsertItem(0, L"Title && Comment");
+	m_tabs.InsertItem(0, L"Title && Comments");
 	m_tabs.InsertItem(1, L"Details");
 	m_tabs.InsertItem(2, L"References");
 

@@ -19,10 +19,9 @@ protected:
 	afx_msg void OnSize(UINT type, int cx, int cy);
 	afx_msg void OnViewTopic();
 	afx_msg void OnTabChanged(NMHDR* header, LRESULT* result);
-	afx_msg void OnCameraChanged();
 	afx_msg void OnSelectSnapshot();
-	afx_msg void OnFromView();
-	afx_msg void OnToView();
+	afx_msg void OnGetFromView();
+	afx_msg void OnApplyView();
 	afx_msg void OnGrabSelected();
 	afx_msg void OnSelectComponents();
 	afx_msg void OnGrabVisible();
@@ -33,9 +32,7 @@ protected:
 private:
 	void UpdateHeader();
 	void LoadViewPoint();
-	bool CommitViewPoint();
 	void ShowTab(int tab);
-	void UpdateCameraControls();
 	void ReloadSelection();
 	void ReloadVisibility();
 	bool CommitVisibility();
@@ -52,11 +49,9 @@ private:
 	CBCFSnapshotCtrl m_snapshot;
 	CButton m_selectSnapshot;
 	CButton m_cameraGroup;
-	CStatic m_cameraLabels[6];
-	CComboBox m_camera;
-	CBCFEdit m_cameraValues[6];
-	CButton m_fromView;
-	CButton m_toView;
+	CBCFEdit m_cameraDetails;
+	CButton m_getFromView;
+	CButton m_applyView;
 	CButton m_selectionGroup;
 	CButton m_grabSelected;
 	CButton m_selectComponents;

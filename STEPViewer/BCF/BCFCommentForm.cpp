@@ -6,16 +6,6 @@
 
 namespace
 {
-	enum CameraValue
-	{
-		ViewPoint,
-		Direction,
-		UpVector,
-		AspectRatio,
-		Scale,
-		FieldOfView
-	};
-
 	CString FormatPoint(const BCFPoint& point)
 	{
 		CString value;
@@ -30,27 +20,15 @@ namespace
 		return value;
 	}
 
-	bool ParsePoint(const CString& value, BCFPoint& point)
-	{
-		return swscanf_s(value, L" %lf , %lf , %lf ",
-			&point.xyz[0], &point.xyz[1], &point.xyz[2]) == 3;
-	}
-
-	bool ParseDouble(const CString& value, double& result)
-	{
-		wchar_t tail = 0;
-		return swscanf_s(value, L" %lf %c", &result, &tail, 1) == 1;
-	}
 }
 
 BEGIN_MESSAGE_MAP(CBCFCommentForm, CWnd)
 	ON_WM_SIZE()
 	ON_BN_CLICKED(IDC_PANE_COMMENT_VIEW_TOPIC, &CBCFCommentForm::OnViewTopic)
 	ON_NOTIFY(TCN_SELCHANGE, IDC_PANE_COMMENT_TABS, &CBCFCommentForm::OnTabChanged)
-	ON_CBN_SELCHANGE(IDC_PANE_COMMENT_CAMERA, &CBCFCommentForm::OnCameraChanged)
 	ON_BN_CLICKED(IDC_PANE_COMMENT_SNAPSHOT_SELECT, &CBCFCommentForm::OnSelectSnapshot)
-	ON_BN_CLICKED(IDC_PANE_COMMENT_FROM_VIEW, &CBCFCommentForm::OnFromView)
-	ON_BN_CLICKED(IDC_PANE_COMMENT_TO_VIEW, &CBCFCommentForm::OnToView)
+	ON_BN_CLICKED(IDC_PANE_COMMENT_GET_FROM_VIEW, &CBCFCommentForm::OnGetFromView)
+	ON_BN_CLICKED(IDC_PANE_COMMENT_APPLY_VIEW, &CBCFCommentForm::OnApplyView)
 	ON_BN_CLICKED(IDC_PANE_COMMENT_GRAB_SELECTED, &CBCFCommentForm::OnGrabSelected)
 	ON_BN_CLICKED(IDC_PANE_COMMENT_SELECT_COMPONENTS, &CBCFCommentForm::OnSelectComponents)
 	ON_BN_CLICKED(IDC_PANE_COMMENT_GRAB_VISIBLE, &CBCFCommentForm::OnGrabVisible)
@@ -84,27 +62,15 @@ BOOL CBCFCommentForm::Create(CBCFView* pane)
 	SetBCFControlFont(m_selectSnapshot, this);
 	m_cameraGroup.Create(L"Camera", WS_CHILD | BS_GROUPBOX, CRect(), this, 0);
 	SetBCFControlFont(m_cameraGroup, this);
-	const wchar_t* labels[] = {
-		L"View Point:", L"Direction:", L"Up vector:", L"Aspect Ratio:", L"Scale:", L"Field of view:"
-	};
-	for (size_t i = 0; i < _countof(m_cameraLabels); ++i) {
-		CreateBCFStaticLabel(m_cameraLabels[i], labels[i], this);
-		m_cameraValues[i].Create(WS_CHILD | WS_TABSTOP | ES_AUTOHSCROLL,
-			CRect(), this, 0);
-		SetBCFControlFont(m_cameraValues[i], this);
-	}
-	m_camera.Create(WS_CHILD | WS_TABSTOP | WS_VSCROLL | CBS_DROPDOWNLIST,
-		CRect(), this, IDC_PANE_COMMENT_CAMERA);
-	SetBCFControlFont(m_camera, this);
-	m_camera.AddString(L"No");
-	m_camera.AddString(L"Orthogonal");
-	m_camera.AddString(L"Perspective");
-	m_fromView.Create(L"From View", WS_CHILD | WS_TABSTOP | BS_PUSHBUTTON,
-		CRect(), this, IDC_PANE_COMMENT_FROM_VIEW);
-	m_toView.Create(L"To View", WS_CHILD | WS_TABSTOP | BS_PUSHBUTTON,
-		CRect(), this, IDC_PANE_COMMENT_TO_VIEW);
-	SetBCFControlFont(m_fromView, this);
-	SetBCFControlFont(m_toView, this);
+	m_cameraDetails.Create(WS_CHILD | WS_BORDER | ES_MULTILINE | ES_AUTOVSCROLL |
+		ES_READONLY | WS_VSCROLL, CRect(), this, 0);
+	m_applyView.Create(L"Apply", WS_CHILD | WS_TABSTOP | BS_PUSHBUTTON,
+		CRect(), this, IDC_PANE_COMMENT_APPLY_VIEW);
+	m_getFromView.Create(L"Get From View", WS_CHILD | WS_TABSTOP | BS_PUSHBUTTON,
+		CRect(), this, IDC_PANE_COMMENT_GET_FROM_VIEW);
+	SetBCFControlFont(m_cameraDetails, this);
+	SetBCFControlFont(m_applyView, this);
+	SetBCFControlFont(m_getFromView, this);
 	m_selectionGroup.Create(L"Selection", WS_CHILD | BS_GROUPBOX, CRect(), this, 0);
 	m_grabSelected.Create(L"Grab selected", WS_CHILD | WS_TABSTOP | BS_PUSHBUTTON,
 		CRect(), this, IDC_PANE_COMMENT_GRAB_SELECTED);
@@ -194,7 +160,6 @@ bool CBCFCommentForm::Commit()
 	CString text;
 	m_text.GetWindowText(text);
 	bool ok = m_comment->SetText(ToUTF8(text).c_str());
-	ok = CommitViewPoint() && ok;
 	ok = CommitVisibility() && ok;
 	m_pane->ShowLog(!ok);
 	if (ok) {
@@ -206,34 +171,35 @@ bool CBCFCommentForm::Commit()
 void CBCFCommentForm::LoadViewPoint()
 {
 	BCFViewPoint* viewPoint = m_comment ? m_comment->GetViewPoint() : nullptr;
-	m_camera.SetCurSel(viewPoint
-		? (viewPoint->GetCameraType() == BCFCameraOrthogonal ? 1 : 2)
-		: 0);
+	CString details;
 	if (viewPoint) {
 		BCFPoint point = {};
 		viewPoint->GetCameraViewPoint(point);
-		m_cameraValues[ViewPoint].SetWindowText(FormatPoint(point));
+		details.Format(L"Type: %s\r\nView point: %s",
+			viewPoint->GetCameraType() == BCFCameraOrthogonal
+				? L"Orthogonal"
+				: L"Perspective",
+			FormatPoint(point).GetString());
 		viewPoint->GetCameraDirection(point);
-		m_cameraValues[Direction].SetWindowText(FormatPoint(point));
+		details.AppendFormat(L"\r\nDirection: %s", FormatPoint(point).GetString());
 		viewPoint->GetCameraUpVector(point);
-		m_cameraValues[UpVector].SetWindowText(FormatPoint(point));
-		m_cameraValues[AspectRatio].SetWindowText(
-			FormatDouble(viewPoint->GetAspectRatio()));
-		m_cameraValues[Scale].SetWindowText(
-			FormatDouble(viewPoint->GetViewToWorldScale()));
-		m_cameraValues[FieldOfView].SetWindowText(
-			FormatDouble(viewPoint->GetFieldOfView()));
+		details.AppendFormat(L"\r\nUp vector: %s", FormatPoint(point).GetString());
+		details.AppendFormat(L"\r\nAspect ratio: %s",
+			FormatDouble(viewPoint->GetAspectRatio()).GetString());
+		details.AppendFormat(L"\r\nScale: %s",
+			FormatDouble(viewPoint->GetViewToWorldScale()).GetString());
+		details.AppendFormat(L"\r\nField of view: %s",
+			FormatDouble(viewPoint->GetFieldOfView()).GetString());
 		m_snapshot.Load(FromUTF8(viewPoint->GetSnapshot()));
 	}
 	else {
-		for (CBCFEdit& value : m_cameraValues) {
-			value.SetWindowText(CString());
-		}
 		m_snapshot.Clear();
 	}
+	m_cameraDetails.SetWindowText(details);
+	m_applyView.EnableWindow(viewPoint != nullptr);
+	m_getFromView.EnableWindow(m_comment != nullptr && m_pane->GetDocument() != nullptr);
 
 	if (IsWindow(GetSafeHwnd ())) {
-		UpdateCameraControls ();
 		CRect client;
 		GetClientRect (client);
 		OnSize (SIZE_RESTORED, client.Width (), client.Height ());
@@ -242,51 +208,6 @@ void CBCFCommentForm::LoadViewPoint()
 						  RDW_INVALIDATE | RDW_ERASE | RDW_ALLCHILDREN | RDW_UPDATENOW);
 			}
 		}
-}
-
-bool CBCFCommentForm::CommitViewPoint()
-{
-	if (!m_comment) {
-		return true;
-	}
-	const int camera = m_camera.GetCurSel();
-	if (camera <= 0) {
-		return true;
-	}
-	BCFViewPoint* viewPoint = m_comment->GetViewPoint();
-	if (!viewPoint) {
-		viewPoint = m_comment->GetTopic().AddViewPoint();
-		if (!viewPoint || !m_comment->SetViewPoint(viewPoint)) {
-			return false;
-		}
-	}
-
-	BCFPoint points[3] = {};
-	double values[3] = {};
-	CString text;
-	for (int i = 0; i < 3; ++i) {
-		m_cameraValues[i].GetWindowText(text);
-		if (!ParsePoint(text, points[i])) {
-			AfxMessageBox(L"Camera point must contain three numeric coordinates.", MB_ICONERROR);
-			return false;
-		}
-	}
-	for (int i = AspectRatio; i <= FieldOfView; ++i) {
-		m_cameraValues[i].GetWindowText(text);
-		if (!ParseDouble(text, values[i - AspectRatio])) {
-			AfxMessageBox(L"Camera value must be numeric.", MB_ICONERROR);
-			return false;
-		}
-	}
-
-	bool ok = viewPoint->SetCameraType(camera == 1 ? BCFCameraOrthogonal : BCFCameraPerspective);
-	ok = viewPoint->SetCameraViewPoint(&points[0]) && ok;
-	ok = viewPoint->SetCameraDirection(&points[1]) && ok;
-	ok = viewPoint->SetCameraUpVector(&points[2]) && ok;
-	ok = viewPoint->SetAspectRatio(values[0]) && ok;
-	ok = viewPoint->SetViewToWorldScale(values[1]) && ok;
-	ok = viewPoint->SetFieldOfView(values[2]) && ok;
-	return ok;
 }
 
 void CBCFCommentForm::OnTabChanged(NMHDR*, LRESULT* result)
@@ -312,13 +233,9 @@ void CBCFCommentForm::ShowTab(int tab)
 	m_snapshot.ShowWindow(generalCommand);
 	m_selectSnapshot.ShowWindow(generalCommand);
 	m_cameraGroup.ShowWindow(generalCommand);
-	m_camera.ShowWindow(generalCommand);
-	m_fromView.ShowWindow(generalCommand);
-	m_toView.ShowWindow(generalCommand);
-	for (size_t i = 0; i < _countof(m_cameraLabels); ++i) {
-		m_cameraLabels[i].ShowWindow(generalCommand);
-		m_cameraValues[i].ShowWindow(generalCommand);
-	}
+	m_cameraDetails.ShowWindow(generalCommand);
+	m_getFromView.ShowWindow(generalCommand);
+	m_applyView.ShowWindow(generalCommand);
 	const int visualizationCommand = tab == 1 ? SW_SHOW : SW_HIDE;
 	CWnd* visualizationControls[] = {
 		&m_selectionGroup, &m_grabSelected, &m_selectComponents,
@@ -334,24 +251,6 @@ void CBCFCommentForm::ShowTab(int tab)
 	OnSize(SIZE_RESTORED, client.Width(), client.Height());
 	RedrawWindow(nullptr, nullptr,
 		RDW_INVALIDATE | RDW_ERASE | RDW_FRAME | RDW_ALLCHILDREN | RDW_UPDATENOW);
-}
-
-void CBCFCommentForm::UpdateCameraControls()
-{
-	const int camera = m_camera.GetCurSel();
-	for (int i = 0; i < static_cast<int>(_countof(m_cameraValues)); ++i) {
-		const bool enabled = camera > 0 &&
-			(i != Scale || camera == 1) &&
-			(i != FieldOfView || camera == 2);
-		m_cameraLabels[i].EnableWindow(enabled);
-		m_cameraValues[i].EnableWindow(enabled);
-	}
-	m_toView.EnableWindow(m_comment && m_comment->GetViewPoint() && camera > 0);
-}
-
-void CBCFCommentForm::OnCameraChanged()
-{
-	UpdateCameraControls();
 }
 
 void CBCFCommentForm::OnSelectSnapshot()
@@ -377,7 +276,7 @@ void CBCFCommentForm::OnSelectSnapshot()
 	}
 }
 
-void CBCFCommentForm::OnFromView()
+void CBCFCommentForm::OnGetFromView()
 {
 	if (!m_comment || !m_pane->GetDocument()) {
 		return;
@@ -392,7 +291,7 @@ void CBCFCommentForm::OnFromView()
 	}
 }
 
-void CBCFCommentForm::OnToView()
+void CBCFCommentForm::OnApplyView()
 {
 	if (m_comment && m_comment->GetViewPoint() && m_pane->GetDocument()) {
 		CBCFViewPointMgr(*m_pane->GetDocument()).SetViewFromComment(*m_comment);
@@ -426,7 +325,7 @@ void CBCFCommentForm::OnGrabSelected()
 	m_pane->ShowLog(!ok);
 	if (ok) {
 		ReloadSelection();
-		UpdateCameraControls();
+		LoadViewPoint();
 	}
 }
 
@@ -487,7 +386,7 @@ void CBCFCommentForm::OnGrabVisible()
 	m_pane->ShowLog(!ok);
 	if (ok) {
 		ReloadVisibility();
-		UpdateCameraControls();
+		LoadViewPoint();
 	}
 }
 
@@ -558,7 +457,7 @@ void CBCFCommentForm::OnVisibleFromSelection()
 	m_pane->ShowLog(!ok);
 	if (ok) {
 		ReloadVisibility();
-		UpdateCameraControls();
+		LoadViewPoint();
 	}
 }
 
@@ -606,26 +505,27 @@ void CBCFCommentForm::OnSize(UINT type, int cx, int cy)
 	page.DeflateRect(margin, margin);
 
 	if (m_tabs.GetCurSel() == 0) {
-		const int vectorLabelWidth = static_cast<int>(dc.GetTextExtent(L"View Point:").cx) + margin;
-		int vectorValueWidth = static_cast<int>(dc.GetTextExtent(L"0.00000, 0.00000, 0.00000").cx);
-		for (int i = ViewPoint; i <= UpVector; ++i) {
-			CString value;
-			m_cameraValues[i].GetWindowText(value);
-			vectorValueWidth = max(vectorValueWidth,
-				static_cast<int>(dc.GetTextExtent(value).cx));
+		CString applyText;
+		CString getFromViewText;
+		m_applyView.GetWindowText(applyText);
+		m_getFromView.GetWindowText(getFromViewText);
+		const int applyWidth =
+			static_cast<int>(dc.GetTextExtent(applyText).cx) + 2 * margin;
+		const int getFromViewWidth =
+			static_cast<int>(dc.GetTextExtent(getFromViewText).cx) + 2 * margin;
+
+		CString cameraText;
+		m_cameraDetails.GetWindowText(cameraText);
+		int cameraTextWidth = 0;
+		int tokenPosition = 0;
+		while (tokenPosition != -1) {
+			const CString line = cameraText.Tokenize(L"\r\n", tokenPosition);
+			cameraTextWidth = max(cameraTextWidth,
+				static_cast<int>(dc.GetTextExtent(line).cx));
 		}
-		vectorValueWidth += 2 * margin;
-		const int scalarLabelWidth = static_cast<int>(dc.GetTextExtent(L"Field of view:").cx) + margin;
-		int scalarValueWidth = static_cast<int>(dc.GetTextExtent(L"0.00000").cx);
-		for (int i = AspectRatio; i <= FieldOfView; ++i) {
-			CString value;
-			m_cameraValues[i].GetWindowText(value);
-			scalarValueWidth = max(scalarValueWidth,
-				static_cast<int>(dc.GetTextExtent(value).cx));
-		}
-		scalarValueWidth += 2 * margin;
-		const int cameraWidth = vectorLabelWidth + vectorValueWidth +
-			scalarLabelWidth + scalarValueWidth + 3 * margin + rowSpacing;
+		const int cameraWidth = max(
+			cameraTextWidth + 2 * margin + ::GetSystemMetrics(SM_CXVSCROLL),
+			applyWidth + getFromViewWidth + 3 * margin);
 		const int remainingWidth = max(2 * rowHeight, page.Width() - cameraWidth - 2 * rowSpacing);
 		const int firstWidth = remainingWidth / 2;
 		const int secondWidth = remainingWidth - firstWidth;
@@ -646,35 +546,19 @@ void CBCFCommentForm::OnSize(UINT type, int cx, int cy)
 
 		m_cameraGroup.MoveWindow(cameraLeft, page.top, cameraWidth, page.Height());
 		const int cameraContentLeft = cameraLeft + margin;
-		const int vectorControlLeft = cameraContentLeft + vectorLabelWidth;
-		const int scalarLabelLeft = vectorControlLeft + vectorValueWidth + rowSpacing;
-		const int scalarControlLeft = scalarLabelLeft + scalarLabelWidth;
-		CString fromText;
-		CString toText;
-		m_fromView.GetWindowText(fromText);
-		m_toView.GetWindowText(toText);
-		const int fromWidth = static_cast<int>(dc.GetTextExtent(fromText).cx) + 2 * margin;
-		const int toWidth = static_cast<int>(dc.GetTextExtent(toText).cx) + 2 * margin;
-		const int cameraButtonsWidth = fromWidth + rowSpacing + toWidth;
-		const int cameraTop = page.top + rowHeight;
-		m_camera.MoveWindow(cameraContentLeft, page.top + rowHeight,
-			max(rowHeight, cameraWidth - 2 * margin - cameraButtonsWidth - rowSpacing),
-			3 * rowHeight);
-		m_fromView.MoveWindow(cameraLeft + cameraWidth - margin - cameraButtonsWidth,
-			cameraTop, fromWidth, rowHeight);
-		m_toView.MoveWindow(cameraLeft + cameraWidth - margin - toWidth,
-			cameraTop, toWidth, rowHeight);
-		for (int i = 0; i < static_cast<int>(_countof(m_cameraLabels)); ++i) {
-			const bool scalar = i >= AspectRatio;
-			const int row = scalar ? i - AspectRatio : i;
-			const int top = page.top + (row + 2) * (rowHeight + rowSpacing);
-			const int labelLeft = scalar ? scalarLabelLeft : cameraContentLeft;
-			const int controlLeft = scalar ? scalarControlLeft : vectorControlLeft;
-			m_cameraLabels[i].MoveWindow(labelLeft, top + labelOffset,
-				scalar ? scalarLabelWidth : vectorLabelWidth, textHeight);
-			m_cameraValues[i].MoveWindow(controlLeft, top + labelOffset,
-				scalar ? scalarValueWidth : vectorValueWidth, rowHeight - labelOffset);
-		}
+		const int cameraButtonsTop = page.top + rowHeight;
+		m_applyView.MoveWindow(
+			cameraContentLeft, cameraButtonsTop, applyWidth, rowHeight);
+		m_getFromView.MoveWindow(
+			cameraLeft + cameraWidth - margin - getFromViewWidth,
+			cameraButtonsTop, getFromViewWidth, rowHeight);
+		const int cameraDetailsTop =
+			cameraButtonsTop + rowHeight + rowSpacing;
+		m_cameraDetails.MoveWindow(
+			cameraContentLeft, cameraDetailsTop,
+			max(rowHeight, cameraWidth - 2 * margin),
+			max(rowHeight, static_cast<int>(page.bottom) -
+				cameraDetailsTop - margin));
 	}
 	else if (m_tabs.GetCurSel() == 1) {
 		const int groupWidth = max(rowHeight, (page.Width() - 2 * rowSpacing) / 3);
