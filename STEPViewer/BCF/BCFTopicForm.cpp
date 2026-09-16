@@ -350,7 +350,6 @@ void CBCFTopicForm::Load(BCFTopic* topic)
 	}
 	FormatTopicInfo();
 	
-	ReloadComments();
 	ReloadDocuments();
 	ReloadLinks();
 	ReloadRelatedTopics();
@@ -358,6 +357,7 @@ void CBCFTopicForm::Load(BCFTopic* topic)
 	ReloadBimFiles();
 	m_tabs.SetCurSel(0);
 	ShowTab(0);
+	ReloadComments();
 }
 
 bool CBCFTopicForm::Commit()

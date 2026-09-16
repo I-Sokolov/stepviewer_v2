@@ -543,6 +543,10 @@ bool CBCFViewPointMgr::SaveVisibility(BCFViewPoint& vp)
 
 			for (auto inst : model->getInstances()) {
 
+				if (!inst->hasGeometry()) {
+					continue;
+				}
+
 				int ind = inst->getEnable() ? 0 : 1;
 
 				allInstances[ind]++;
@@ -597,6 +601,10 @@ bool CBCFViewPointMgr::SaveVisibility(BCFViewPoint& vp)
 			}
 
 			for (auto inst : model->getInstances()) {
+
+				if (!inst->hasGeometry()) {
+					continue;
+				}
 
 				bool visible = vp.GetDefaultVisibility();
 
