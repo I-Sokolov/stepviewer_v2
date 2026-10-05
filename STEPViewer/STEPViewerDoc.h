@@ -7,7 +7,6 @@
 
 #include "Controller.h"
 #include "ModelCheckDlg.h"
-#include "BCF\BCFProjectDlg.h"
 
 // ************d************************************************************************************
 static TCHAR BCF_PACKAGES_FILTER[] = _T("BCF Packages (*.bcf; *.bcfzip)|*.bcf; *.bcfzip|All Files (*.*)|*.*||");
@@ -63,7 +62,6 @@ public:
 
 protected:
 	CModelCheckDlg		m_wndModelChecker;
-	CBCFProjectDlg     m_wndBCFProjectDlg;
 
 // Generated message map functions
 protected:
@@ -82,12 +80,6 @@ public:
 	afx_msg void OnUpdateFileSave(CCmdUI* pCmdUI);
 	afx_msg void OnFileSaveAs();
 	afx_msg void OnUpdateFileSaveAs(CCmdUI* pCmdUI);
-	afx_msg void OnBcfAddbim();
-	afx_msg void OnUpdateBcfAddbim(CCmdUI* pCmdUI);
-	afx_msg void OnBcfNew();
-	afx_msg void OnUpdateBcfNew(CCmdUI* pCmdUI);
-	afx_msg void OnBcfOpen();
-	afx_msg void OnUpdateBcfOpen(CCmdUI* pCmdUI);
 	afx_msg void OnExportAsGltf();
 	afx_msg void OnUpdateExportAsGltf(CCmdUI* pCmdUI);
 	afx_msg void OnViewIdsChecker();

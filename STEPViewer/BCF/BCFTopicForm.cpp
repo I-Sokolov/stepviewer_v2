@@ -429,11 +429,11 @@ void CBCFTopicForm::FormatTopicInfo ()
 	CString value;
 	value.Format(L"Topic %s created by %s %s", FromUTF8(m_topic->GetGuid()).GetString(),
 		FromUTF8(m_topic->GetCreationAuthor()).GetString(),
-		CBCFProjectDlg::FormatDateTime(m_topic->GetCreationDate()).GetString());
+		FormatBCFDateTime(m_topic->GetCreationDate()).GetString());
 
 	if (*m_topic->GetModifiedAuthor() || *m_topic->GetModifiedDate()) {
 		value.AppendFormat(L", modified by %s %s", FromUTF8(m_topic->GetModifiedAuthor()).GetString(),
-			CBCFProjectDlg::FormatDateTime(m_topic->GetModifiedDate()).GetString());
+			FormatBCFDateTime(m_topic->GetModifiedDate()).GetString());
 	}
 
 	m_topicInfo.SetWindowText(value);

@@ -1,7 +1,6 @@
 #pragma once
 
 #include "bcfAPI.h"
-#include "BCFTopicDlg.h"
 #include "BCFViewControls.h"
 
 #include <map>

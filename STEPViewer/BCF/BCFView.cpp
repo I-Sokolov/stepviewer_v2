@@ -203,28 +203,37 @@ void CBCFView::NewProject()
 void CBCFView::OpenProject()
 {
 	CFileDialog dialog(TRUE, nullptr, L"", OFN_FILEMUSTEXIST | OFN_HIDEREADONLY, BCF_PACKAGES_FILTER);
-	if (dialog.DoModal() != IDOK || !AskAndSaveModified()) {
+	if (dialog.DoModal() != IDOK) {
 		return;
+	}
+	OpenProject(dialog.GetPathName());
+}
+
+bool CBCFView::OpenProject(LPCTSTR filePath)
+{
+	if (!filePath || !*filePath || !AskAndSaveModified()) {
+		return false;
 	}
 	ReleaseProject();
 	m_project = BCFProject::Create();
 	if (!m_project) {
 		AfxMessageBox(L"Failed to initialize BCF project.", MB_OK | MB_ICONERROR);
-		return;
+		return false;
 	}
 	m_email = AfxGetApp()->GetProfileString(L"BCF", L"User");
 	m_project->SetOptions(ToUTF8(m_email).c_str(), true, true);
 
-	m_filePath = dialog.GetPathName();
+	m_filePath = filePath;
 	if (!m_project->ReadFile(ToUTF8(m_filePath).c_str(), true)) {
 		ShowLog(true);
 		ReleaseProject();
-		return;
+		return false;
 	}
 	LoadProjectInfo();
 	UpdateCaption();
 	ShowProject();
 	Activate();
+	return true;
 }
 
 bool CBCFView::CommitCurrent()

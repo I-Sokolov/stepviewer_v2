@@ -217,9 +217,6 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	lstBasicCommands.AddTail(ID_FILE_SAVE_AS);
 	lstBasicCommands.AddTail(ID_EXPORT_AS_GLTF);
 	lstBasicCommands.AddTail(ID_EXPORT_AS_GLTF_BINARY);
-	lstBasicCommands.AddTail(ID_BCF_NEW);
-	lstBasicCommands.AddTail(ID_BCF_OPEN);
-	lstBasicCommands.AddTail(ID_BCF_ADDBIM);
 	lstBasicCommands.AddTail(ID_APP_EXIT);
 	lstBasicCommands.AddTail(ID_EDIT_CUT);
 	lstBasicCommands.AddTail(ID_EDIT_PASTE);

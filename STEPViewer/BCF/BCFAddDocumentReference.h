@@ -1,6 +1,5 @@
 #pragma once
 
-class CBCFTopicDlg;
 class CBCFView;
 struct BCFTopic;
 
@@ -11,7 +10,6 @@ class CBCFAddDocumentReference : public CDialogEx
 	DECLARE_DYNAMIC(CBCFAddDocumentReference)
 
 public:
-	CBCFAddDocumentReference(CBCFTopicDlg& view);   // standard constructor
 	CBCFAddDocumentReference(CBCFView& view, BCFTopic& topic);
 	virtual ~CBCFAddDocumentReference();
 
@@ -34,6 +32,5 @@ public:
 
 private:
 	BCFTopic* m_topic;
-	CBCFTopicDlg* m_topicView;
 	CBCFView* m_paneView;
 };

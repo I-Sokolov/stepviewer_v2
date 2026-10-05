@@ -240,16 +240,10 @@
     <ClInclude Include="BCF\BCFAddDocumentReference.h">
       <Filter>BCF</Filter>
     </ClInclude>
-    <ClInclude Include="BCF\BCFAddLabel.h">
-      <Filter>BCF</Filter>
-    </ClInclude>
     <ClInclude Include="BCF\BCFAddReferenceLink.h">
       <Filter>BCF</Filter>
     </ClInclude>
     <ClInclude Include="BCF\BCFAddRelatedTopic.h">
-      <Filter>BCF</Filter>
-    </ClInclude>
-    <ClInclude Include="BCF\BCFBimFiles.h">
       <Filter>BCF</Filter>
     </ClInclude>
     <ClInclude Include="BCF\BCFCommentForm.h">
@@ -274,12 +268,6 @@
       <Filter>BCF</Filter>
     </ClInclude>
     <ClInclude Include="BCF\BCFViewControls.h">
-      <Filter>BCF</Filter>
-    </ClInclude>
-    <ClInclude Include="BCF\BCFTopicDlg.h">
-      <Filter>BCF</Filter>
-    </ClInclude>
-    <ClInclude Include="BCF\BCFProjectDlg.h">
       <Filter>BCF</Filter>
     </ClInclude>
     <ClInclude Include="BCF\BCFViewPointMgr.h">
@@ -524,16 +512,10 @@
     <ClCompile Include="BCF\BCFAddDocumentReference.cpp">
       <Filter>BCF</Filter>
     </ClCompile>
-    <ClCompile Include="BCF\BCFAddLabel.cpp">
-      <Filter>BCF</Filter>
-    </ClCompile>
     <ClCompile Include="BCF\BCFAddReferenceLink.cpp">
       <Filter>BCF</Filter>
     </ClCompile>
     <ClCompile Include="BCF\BCFAddRelatedTopic.cpp">
-      <Filter>BCF</Filter>
-    </ClCompile>
-    <ClCompile Include="BCF\BCFBimFiles.cpp">
       <Filter>BCF</Filter>
     </ClCompile>
     <ClCompile Include="BCF\BCFCommentForm.cpp">
@@ -558,12 +540,6 @@
       <Filter>BCF</Filter>
     </ClCompile>
     <ClCompile Include="BCF\BCFViewControls.cpp">
-      <Filter>BCF</Filter>
-    </ClCompile>
-    <ClCompile Include="BCF\BCFTopicDlg.cpp">
-      <Filter>BCF</Filter>
-    </ClCompile>
-    <ClCompile Include="BCF\BCFProjectDlg.cpp">
       <Filter>BCF</Filter>
     </ClCompile>
     <ClCompile Include="BCF\BCFViewPointMgr.cpp">

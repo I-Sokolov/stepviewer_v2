@@ -21,6 +21,7 @@ public:
 	void Activate();
 	void NewProject();
 	void OpenProject();
+	bool OpenProject(LPCTSTR filePath);
 	bool SaveProject();
 	void AddTopic();
 	void DeleteTopic();

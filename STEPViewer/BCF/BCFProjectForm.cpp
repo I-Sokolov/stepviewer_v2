@@ -1,7 +1,6 @@
 #include "stdafx.h"
 
 #include "BCFProjectForm.h"
-#include "BCFProjectDlg.h"
 #include "BCFView.h"
 #include "BCFViewControls.h"
 
@@ -81,12 +80,12 @@ void CBCFProjectForm::Load(BCFTopic* selectTopic)
 			m_topics.SetItemText(item, 5, FromUTF8(topic->GetAssignedTo()));
 			m_topics.SetItemText(item, 6, FromUTF8(topic->GetPriority()));
 			m_topics.SetItemText(item, 7, FromUTF8(topic->GetDueDate()));
-			CString created = CBCFProjectDlg::FormatDateTime(topic->GetCreationDate());
+			CString created = FormatBCFDateTime(topic->GetCreationDate());
 			if (*topic->GetCreationAuthor()) {
 				created.AppendFormat(L" - %s", FromUTF8(topic->GetCreationAuthor()).GetString());
 			}
 			m_topics.SetItemText(item, 8, created);
-			CString modified = CBCFProjectDlg::FormatDateTime(topic->GetModifiedDate());
+			CString modified = FormatBCFDateTime(topic->GetModifiedDate());
 			if (*topic->GetModifiedAuthor()) {
 				modified.AppendFormat(L" - %s", FromUTF8(topic->GetModifiedAuthor()).GetString());
 			}

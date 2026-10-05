@@ -4,7 +4,6 @@
 #include "stdafx.h"
 #include "STEPViewer.h"
 #include "BCFAddRelatedTopic.h"
-#include "BCFTopicDlg.h"
 #include "BCFView.h"
 #include "BCFViewControls.h"
 
@@ -13,19 +12,9 @@
 
 IMPLEMENT_DYNAMIC(CBCFAddRelatedTopic, CDialogEx)
 
-CBCFAddRelatedTopic::CBCFAddRelatedTopic(CBCFTopicDlg& bcfView)
-	: CDialogEx(IDD_BCF_ADDRELATEDTOPIC, &bcfView)
-	, m_topic(&bcfView.GetTopic())
-	, m_topicView(&bcfView)
-	, m_paneView(nullptr)
-{
-
-}
-
 CBCFAddRelatedTopic::CBCFAddRelatedTopic(CBCFView& view, BCFTopic& topic)
 	: CDialogEx(IDD_BCF_ADDRELATEDTOPIC, &view)
 	, m_topic(&topic)
-	, m_topicView(nullptr)
 	, m_paneView(&view)
 {
 }
@@ -88,12 +77,7 @@ void CBCFAddRelatedTopic::OnOK()
 				CDialogEx::OnOK();
 			}
 			else{
-				if (m_topicView) {
-					m_topicView->ShowLog(true);
-				}
-				else {
-					m_paneView->ShowLog(true);
-				}
+				m_paneView->ShowLog(true);
 			}
 		}
 	}

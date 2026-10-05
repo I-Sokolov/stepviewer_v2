@@ -4,24 +4,11 @@
 #include "stdafx.h"
 #include "STEPViewer.h"
 #include "BCFAddDocumentReference.h"
-#include "BCFTopicDlg.h"
 #include "BCFView.h"
 
 // CBCFAddDocumentReference dialog
 
 IMPLEMENT_DYNAMIC(CBCFAddDocumentReference, CDialogEx)
-
-CBCFAddDocumentReference::CBCFAddDocumentReference(CBCFTopicDlg& view)
-	: CDialogEx(IDD_BCF_ADDOCUMENT, &view)
-	, m_strPath(_T(""))
-	, m_strDescription(_T(""))
-	, m_isExternal(TRUE)
-	, m_topic(&view.GetTopic())
-	, m_topicView(&view)
-	, m_paneView(nullptr)
-{
-
-}
 
 CBCFAddDocumentReference::CBCFAddDocumentReference(CBCFView& view, BCFTopic& topic)
 	: CDialogEx(IDD_BCF_ADDOCUMENT, &view)
@@ -29,7 +16,6 @@ CBCFAddDocumentReference::CBCFAddDocumentReference(CBCFView& view, BCFTopic& top
 	, m_strDescription(_T(""))
 	, m_isExternal(TRUE)
 	, m_topic(&topic)
-	, m_topicView(nullptr)
 	, m_paneView(&view)
 {
 }
@@ -69,23 +55,13 @@ void CBCFAddDocumentReference::OnOK()
 
 	auto doc = m_topic->AddDocumentReference(ToUTF8(m_strPath).c_str(), m_isExternal);
 	if (!doc) {
-		if (m_topicView) {
-			m_topicView->ShowLog(true);
-		}
-		else {
-			m_paneView->ShowLog(true);
-		}
+		m_paneView->ShowLog(true);
 		return;
 	}
 
 	if (!m_strDescription.IsEmpty()) {
 		if (!doc->SetDescription(ToUTF8(m_strDescription).c_str())) {
-			if (m_topicView) {
-				m_topicView->ShowLog(true);
-			}
-			else {
-				m_paneView->ShowLog(true);
-			}
+			m_paneView->ShowLog(true);
 		}
 	}
 

@@ -68,7 +68,27 @@ void SetBCFComboValue(CComboBox& combo, const CString& value);
 BOOL CreateBCFStaticLabel(CStatic& label, LPCTSTR text, CWnd* parent);
 CString FormatBCFCommentCreated(BCFComment& comment);
 CString FormatBCFCommentModified(BCFComment& comment);
+CString FormatBCFDateTime(const char* value);
 CString GetBCFTopicDisplayName(BCFTopic& topic);
+
+class CBCFCommentsListBox : public CListBox
+{
+public:
+	int AddComment(BCFComment& comment);
+	int AddAction(LPCTSTR text);
+
+protected:
+	virtual void DrawItem(LPDRAWITEMSTRUCT drawItem) override;
+	virtual void MeasureItem(LPMEASUREITEMSTRUCT measureItem) override;
+
+	afx_msg void OnSize(UINT type, int cx, int cy);
+	DECLARE_MESSAGE_MAP()
+
+private:
+	int MeasureCommentHeight(BCFComment* comment) const;
+	int MeasureActionHeight() const;
+	void UpdateItemHeights();
+};
 
 class CBCFSelectFileDlg : public CFileDialog
 {

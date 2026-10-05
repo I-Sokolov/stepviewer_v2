@@ -1,6 +1,5 @@
 #pragma once
 
-class CBCFTopicDlg;
 class CBCFView;
 struct BCFTopic;
 
@@ -9,7 +8,6 @@ class CBCFAddReferenceLink : public CDialogEx
 	DECLARE_DYNAMIC(CBCFAddReferenceLink)
 
 public:
-	CBCFAddReferenceLink(CBCFTopicDlg& view);
 	CBCFAddReferenceLink(CBCFView& view, BCFTopic& topic);
 	virtual ~CBCFAddReferenceLink();
 
@@ -31,6 +29,5 @@ public:
 
 private:
 	BCFTopic* m_topic;
-	CBCFTopicDlg* m_topicView;
 	CBCFView* m_paneView;
 };

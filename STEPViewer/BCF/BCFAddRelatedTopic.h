@@ -1,6 +1,5 @@
 #pragma once
 
-class CBCFTopicDlg;
 class CBCFView;
 struct BCFTopic;
 
@@ -10,7 +9,6 @@ public:
 	DECLARE_DYNAMIC(CBCFAddRelatedTopic)
 
 public:
-	CBCFAddRelatedTopic(CBCFTopicDlg& bcfView);   // standard constructor
 	CBCFAddRelatedTopic(CBCFView& view, BCFTopic& topic);
 	virtual ~CBCFAddRelatedTopic();
 
@@ -29,7 +27,6 @@ protected:
 
 private:
 	BCFTopic* m_topic;
-	CBCFTopicDlg* m_topicView;
 	CBCFView* m_paneView;
 	CListBox	m_wndListTopic;
 	CButton		m_wndOK;
