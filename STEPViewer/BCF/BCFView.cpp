@@ -624,7 +624,7 @@ void CBCFView::OnUpdateSaveBCF(CCmdUI* commandUI)
 	commandUI->Enable(m_project && m_project->IsModified());
 }
 
-void CBCFView::UpdateSaveButton(bool setFocus)
+void CBCFView::UpdateSaveButton(bool /*setFocus*/)
 {
 	if (m_saveBCF.GetSafeHwnd()) {
 		const bool enabled = m_project && m_project->IsModified();
