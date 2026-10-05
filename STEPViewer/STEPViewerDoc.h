@@ -75,6 +75,8 @@ public:
 	afx_msg void OnFileOpen();
 	afx_msg void OnFileNewBCF();
 	afx_msg void OnFileOpenBCF();
+	afx_msg void OnFileSaveBCF();
+	afx_msg void OnUpdateFileSaveBCF(CCmdUI* commandUI);
 	afx_msg void OnFileCloseBCF();
 	afx_msg void OnUpdateFileCloseBCF(CCmdUI* commandUI);
 	afx_msg void OnViewZoomOut();

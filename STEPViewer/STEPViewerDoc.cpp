@@ -234,6 +234,8 @@ BEGIN_MESSAGE_MAP(CMySTEPViewerDoc, CDocument)
 	ON_COMMAND(ID_FILE_OPEN, &CMySTEPViewerDoc::OnFileOpen)
 	ON_COMMAND(ID_FILE_NEW_BCF, &CMySTEPViewerDoc::OnFileNewBCF)
 	ON_COMMAND(ID_FILE_OPEN_BCF, &CMySTEPViewerDoc::OnFileOpenBCF)
+	ON_COMMAND(ID_FILE_SAVE_BCF, &CMySTEPViewerDoc::OnFileSaveBCF)
+	ON_UPDATE_COMMAND_UI(ID_FILE_SAVE_BCF, &CMySTEPViewerDoc::OnUpdateFileSaveBCF)
 	ON_COMMAND(ID_FILE_CLOSE_BCF, &CMySTEPViewerDoc::OnFileCloseBCF)
 	ON_UPDATE_COMMAND_UI(ID_FILE_CLOSE_BCF, &CMySTEPViewerDoc::OnUpdateFileCloseBCF)
 	ON_COMMAND(ID_VIEW_ZOOM_OUT, &CMySTEPViewerDoc::OnViewZoomOut)
@@ -444,6 +446,19 @@ void CMySTEPViewerDoc::OnFileOpenBCF()
 	if (auto frame = dynamic_cast<CMainFrame*>(AfxGetMainWnd())) {
 		frame->GetBCFView().OpenProject();
 	}
+}
+
+void CMySTEPViewerDoc::OnFileSaveBCF()
+{
+	if (auto frame = dynamic_cast<CMainFrame*>(AfxGetMainWnd())) {
+		frame->GetBCFView().SaveProject();
+	}
+}
+
+void CMySTEPViewerDoc::OnUpdateFileSaveBCF(CCmdUI* commandUI)
+{
+	auto frame = dynamic_cast<CMainFrame*>(AfxGetMainWnd());
+	commandUI->Enable(frame && frame->GetBCFView().GetProject());
 }
 
 void CMySTEPViewerDoc::OnFileCloseBCF()

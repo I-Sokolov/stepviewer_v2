@@ -126,7 +126,6 @@ BOOL CBCFCommentForm::OnCommand(WPARAM wParam, LPARAM lParam)
 	if (commitText || commitCombo) {
 		Commit();
 	}
-	m_pane->UpdateSaveButton(notification == BN_CLICKED);
 	return handled;
 }
 

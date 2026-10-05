@@ -279,7 +279,6 @@ BOOL CBCFTopicForm::OnCommand(WPARAM wParam, LPARAM lParam)
 	if (commitEdit || commitCombo) {
 		Commit();
 	}
-	m_pane->UpdateSaveButton(notification == BN_CLICKED);
 	return handled;
 }
 

@@ -40,7 +40,6 @@ public:
 	void ShowLog(bool knownError);
 	void LoadProjectInfo();
 	bool CommitProjectInfo();
-	void UpdateSaveButton(bool setFocus = false);
 
 protected:
 	virtual BOOL OnCommand(WPARAM wParam, LPARAM lParam) override;
@@ -48,8 +47,6 @@ protected:
 	afx_msg BOOL OnEraseBkgnd(CDC* dc);
 	afx_msg void OnSize(UINT type, int cx, int cy);
 	afx_msg void OnSetFocus(CWnd* oldWnd);
-	afx_msg void OnSaveBCF();
-	afx_msg void OnUpdateSaveBCF(CCmdUI* commandUI);
 	afx_msg void OnProjectSettings();
 	afx_msg void OnUpdateProjectSettings(CCmdUI* commandUI);
 	DECLARE_MESSAGE_MAP()
@@ -74,7 +71,6 @@ private:
 	CStatic m_emptyMessage;
 	CStatic m_projectIdLabel;
 	CStatic m_projectNameLabel;
-	CButton m_saveBCF;
 	CButton m_projectSettings;
 	CBCFEdit* m_projectId;
 	CBCFEdit* m_projectName;
