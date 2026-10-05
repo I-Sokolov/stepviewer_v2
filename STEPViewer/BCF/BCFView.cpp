@@ -59,8 +59,11 @@ int CBCFView::OnCreate(LPCREATESTRUCT createStruct)
 		? &m_dialogFont
 		: &afxGlobalData.fontRegular);
 
-	m_emptyMessage.Create(L"Use File menu to open or create BCF file",
-		WS_CHILD | SS_CENTER | SS_CENTERIMAGE, CRect(), this);
+	if (!m_emptyMessage.Create(L"Use File menu to open or create BCF file",
+			WS_CHILD | SS_CENTER | SS_CENTERIMAGE, CRect(), this,
+			IDC_PANE_EMPTY_MESSAGE)) {
+		return -1;
+	}
 	SetBCFControlFont(m_emptyMessage, this);
 	CreateBCFStaticLabel(m_projectIdLabel, L"BCF Project Id:", this);
 	CreateBCFStaticLabel(m_projectNameLabel, L"Name:", this);
@@ -440,6 +443,10 @@ bool CBCFView::CommitProjectInfo()
 
 void CBCFView::UpdateCaption()
 {
+	if (!GetSafeHwnd()) {
+		return;
+	}
+
 	CString caption(L"BCF View");
 	if (!m_filePath.IsEmpty()) {
 		fs::path path(ToUTF8(m_filePath));
