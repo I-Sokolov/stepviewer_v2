@@ -1,5 +1,6 @@
 #include "stdafx.h"
 
+#include "BCFViewPointMgr.h"
 #include "BCFCommentForm.h"
 #include "BCFProjectSettingsDlg.h"
 #include "BCFProjectForm.h"
@@ -478,6 +479,17 @@ BCFTopic* CBCFView::CreateTopic()
 	}
 	BCFTopic* topic = m_project->AddTopic(
 		topicType, "<< Enter topic title >>", topicStatus);
+	
+	if (topic) {
+		if (auto doc = GetDocument()) {
+			if (auto comment = topic->AddComment()) {
+				comment->SetText("My view");
+				const bool ok = CBCFViewPointMgr(*doc)
+					.SaveCurrentViewToComent(*comment);
+			}
+		}
+	}
+
 	ShowLog(!topic);
 	return topic;
 }
