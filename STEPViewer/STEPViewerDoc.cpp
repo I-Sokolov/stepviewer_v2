@@ -42,6 +42,20 @@ namespace
 		auto frame = dynamic_cast<CMainFrame*>(AfxGetMainWnd());
 		return frame && frame->GetBCFView().OpenProject(filePath);
 	}
+
+	CString GetOpenFileFilter()
+	{
+		CString filter(DESIGN_MODELS_FILTER);
+
+		const CString allFiles = L"All Files (*.*)|*.*||";
+		if (filter.Right(allFiles.GetLength()) == allFiles) {
+			filter.Delete(filter.GetLength() - allFiles.GetLength(), allFiles.GetLength());
+		}
+
+		filter += BCF_PACKAGES_FILTER;
+
+		return filter;
+	}
 }
 
 // ************************************************************************************************
@@ -218,6 +232,10 @@ IMPLEMENT_DYNCREATE(CMySTEPViewerDoc, CDocument)
 
 BEGIN_MESSAGE_MAP(CMySTEPViewerDoc, CDocument)
 	ON_COMMAND(ID_FILE_OPEN, &CMySTEPViewerDoc::OnFileOpen)
+	ON_COMMAND(ID_FILE_NEW_BCF, &CMySTEPViewerDoc::OnFileNewBCF)
+	ON_COMMAND(ID_FILE_OPEN_BCF, &CMySTEPViewerDoc::OnFileOpenBCF)
+	ON_COMMAND(ID_FILE_CLOSE_BCF, &CMySTEPViewerDoc::OnFileCloseBCF)
+	ON_UPDATE_COMMAND_UI(ID_FILE_CLOSE_BCF, &CMySTEPViewerDoc::OnUpdateFileCloseBCF)
 	ON_COMMAND(ID_VIEW_ZOOM_OUT, &CMySTEPViewerDoc::OnViewZoomOut)
 	ON_COMMAND(ID_VIEW_MODEL_CHECKER, &CMySTEPViewerDoc::OnViewModelChecker)
 	ON_UPDATE_COMMAND_UI(ID_VIEW_MODEL_CHECKER, &CMySTEPViewerDoc::OnUpdateViewModelChecker)
@@ -372,7 +390,9 @@ void CMySTEPViewerDoc::Dump(CDumpContext& dc) const
 
 void CMySTEPViewerDoc::OnFileOpen()
 {
-	CFileDialog dlgFile(TRUE, nullptr, _T(""), OFN_OVERWRITEPROMPT | OFN_HIDEREADONLY | OFN_ALLOWMULTISELECT, DESIGN_MODELS_FILTER);
+	const CString filter = GetOpenFileFilter();
+	CFileDialog dlgFile(TRUE, nullptr, _T(""),
+		OFN_FILEMUSTEXIST | OFN_HIDEREADONLY | OFN_ALLOWMULTISELECT, filter);
 	if (dlgFile.DoModal() != IDOK) {
 		return;
 	}
@@ -382,11 +402,26 @@ void CMySTEPViewerDoc::OnFileOpen()
 	while (pos != nullptr) {
 		CString strFileName = dlgFile.GetNextPathName(pos);
 		vecModels.push_back(strFileName);
-
-		// MRU
-		AfxGetApp()->AddToRecentFileList(vecModels[0]);
+	}
+	if (vecModels.empty()) {
+		return;
 	}
 
+	const auto bcf = std::find_if(vecModels.begin(), vecModels.end(),
+		[](const CString& path) { return IsBCFFile(path); });
+	if (bcf != vecModels.end()) {
+		if (vecModels.size() != 1) {
+			AfxMessageBox(L"Open one BCF package at a time, without design models.",
+				MB_OK | MB_ICONINFORMATION);
+			return;
+		}
+		if (OpenBCFFile(*bcf)) {
+			AfxGetApp()->AddToRecentFileList(*bcf);
+		}
+		return;
+	}
+
+	AfxGetApp()->AddToRecentFileList(vecModels[0]);
 	OpenModels(vecModels);
 
 	// Title
@@ -395,6 +430,33 @@ void CMySTEPViewerDoc::OnFileOpen()
 	strTitle += vecModels[0];
 	strTitle += vecModels.size() > 1 ? L", ..." : L"";
 	AfxGetMainWnd()->SetWindowTextW(strTitle);
+}
+
+void CMySTEPViewerDoc::OnFileNewBCF()
+{
+	if (auto frame = dynamic_cast<CMainFrame*>(AfxGetMainWnd())) {
+		frame->GetBCFView().NewProject();
+	}
+}
+
+void CMySTEPViewerDoc::OnFileOpenBCF()
+{
+	if (auto frame = dynamic_cast<CMainFrame*>(AfxGetMainWnd())) {
+		frame->GetBCFView().OpenProject();
+	}
+}
+
+void CMySTEPViewerDoc::OnFileCloseBCF()
+{
+	if (auto frame = dynamic_cast<CMainFrame*>(AfxGetMainWnd())) {
+		frame->GetBCFView().CloseProject(true);
+	}
+}
+
+void CMySTEPViewerDoc::OnUpdateFileCloseBCF(CCmdUI* commandUI)
+{
+	auto frame = dynamic_cast<CMainFrame*>(AfxGetMainWnd());
+	commandUI->Enable(frame && frame->GetBCFView().GetProject());
 }
 
 void CMySTEPViewerDoc::OnViewZoomOut()

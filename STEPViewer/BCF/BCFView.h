@@ -49,9 +49,6 @@ protected:
 	afx_msg void OnSize(UINT type, int cx, int cy);
 	afx_msg void OnSetFocus(CWnd* oldWnd);
 	afx_msg void OnSaveBCF();
-	afx_msg void OnNewBCF();
-	afx_msg void OnOpenBCF();
-	afx_msg void OnUpdateBCFFileCommand(CCmdUI* commandUI);
 	afx_msg void OnUpdateSaveBCF(CCmdUI* commandUI);
 	afx_msg void OnProjectSettings();
 	afx_msg void OnUpdateProjectSettings(CCmdUI* commandUI);
@@ -65,6 +62,7 @@ private:
 	void AdjustLayout();
 	void UpdateCaption();
 	BCFTopic* CreateTopic();
+	bool CloseActiveProjectForOperation(LPCTSTR operation);
 
 	CMySTEPViewerDoc* m_stepViewerDoc;
 	BCFProject* m_project;
@@ -73,11 +71,10 @@ private:
 	std::map<BCFBimFile*, _model*> m_bimModels;
 	Form m_activeForm;
 	CFont m_dialogFont;
+	CStatic m_emptyMessage;
 	CStatic m_projectIdLabel;
 	CStatic m_projectNameLabel;
 	CButton m_saveBCF;
-	CButton m_newBCF;
-	CButton m_openBCF;
 	CButton m_projectSettings;
 	CBCFEdit* m_projectId;
 	CBCFEdit* m_projectName;

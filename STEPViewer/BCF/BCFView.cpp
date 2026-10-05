@@ -22,11 +22,7 @@ BEGIN_MESSAGE_MAP(CBCFView, CDockablePane)
 	ON_WM_SIZE()
 	ON_WM_SETFOCUS()
 	ON_BN_CLICKED(IDC_PANE_SAVE_FILE, &CBCFView::OnSaveBCF)
-	ON_BN_CLICKED(IDC_PANE_NEW_FILE, &CBCFView::OnNewBCF)
-	ON_BN_CLICKED(IDC_PANE_OPEN_FILE, &CBCFView::OnOpenBCF)
 	ON_UPDATE_COMMAND_UI(IDC_PANE_SAVE_FILE, &CBCFView::OnUpdateSaveBCF)
-	ON_UPDATE_COMMAND_UI(IDC_PANE_NEW_FILE, &CBCFView::OnUpdateBCFFileCommand)
-	ON_UPDATE_COMMAND_UI(IDC_PANE_OPEN_FILE, &CBCFView::OnUpdateBCFFileCommand)
 	ON_BN_CLICKED(IDC_PANE_PROJECT_SETTINGS, &CBCFView::OnProjectSettings)
 	ON_UPDATE_COMMAND_UI(IDC_PANE_PROJECT_SETTINGS, &CBCFView::OnUpdateProjectSettings)
 END_MESSAGE_MAP()
@@ -63,23 +59,18 @@ int CBCFView::OnCreate(LPCREATESTRUCT createStruct)
 		? &m_dialogFont
 		: &afxGlobalData.fontRegular);
 
+	m_emptyMessage.Create(L"Use File menu to open or create BCF file",
+		WS_CHILD | SS_CENTER | SS_CENTERIMAGE, CRect(), this);
+	SetBCFControlFont(m_emptyMessage, this);
 	CreateBCFStaticLabel(m_projectIdLabel, L"BCF Project Id:", this);
 	CreateBCFStaticLabel(m_projectNameLabel, L"Name:", this);
 	m_saveBCF.Create(L"Save BCF",
 		WS_CHILD | WS_VISIBLE | WS_DISABLED | WS_TABSTOP | BS_DEFPUSHBUTTON,
 		CRect(), this, IDC_PANE_SAVE_FILE);
-	m_newBCF.Create(L"New BCF",
-		WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_PUSHBUTTON,
-		CRect(), this, IDC_PANE_NEW_FILE);
-	m_openBCF.Create(L"Open BCF",
-		WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_PUSHBUTTON,
-		CRect(), this, IDC_PANE_OPEN_FILE);
 	m_projectSettings.Create(L"Settings",
 		WS_CHILD | WS_VISIBLE | WS_DISABLED | WS_TABSTOP | BS_PUSHBUTTON,
 		CRect(), this, IDC_PANE_PROJECT_SETTINGS);
 	SetBCFControlFont(m_saveBCF, this);
-	SetBCFControlFont(m_newBCF, this);
-	SetBCFControlFont(m_openBCF, this);
 	SetBCFControlFont(m_projectSettings, this);
 	
 	m_projectId->Create(WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL | ES_READONLY,
@@ -129,10 +120,9 @@ void CBCFView::Activate()
 
 void CBCFView::NewProject()
 {
-	if (!AskAndSaveModified()) {
+	if (!CloseActiveProjectForOperation(L"create a new BCF project")) {
 		return;
 	}
-	ReleaseProject();
 
 	m_project = BCFProject::Create();
 	if (!m_project) {
@@ -202,6 +192,9 @@ void CBCFView::NewProject()
 
 void CBCFView::OpenProject()
 {
+	if (!CloseActiveProjectForOperation(L"open another BCF project")) {
+		return;
+	}
 	CFileDialog dialog(TRUE, nullptr, L"", OFN_FILEMUSTEXIST | OFN_HIDEREADONLY, BCF_PACKAGES_FILTER);
 	if (dialog.DoModal() != IDOK) {
 		return;
@@ -211,10 +204,10 @@ void CBCFView::OpenProject()
 
 bool CBCFView::OpenProject(LPCTSTR filePath)
 {
-	if (!filePath || !*filePath || !AskAndSaveModified()) {
+	if (!filePath || !*filePath ||
+		!CloseActiveProjectForOperation(L"open another BCF project")) {
 		return false;
 	}
-	ReleaseProject();
 	m_project = BCFProject::Create();
 	if (!m_project) {
 		AfxMessageBox(L"Failed to initialize BCF project.", MB_OK | MB_ICONERROR);
@@ -234,6 +227,24 @@ bool CBCFView::OpenProject(LPCTSTR filePath)
 	ShowProject();
 	Activate();
 	return true;
+}
+
+bool CBCFView::CloseActiveProjectForOperation(LPCTSTR operation)
+{
+	if (!m_project) {
+		return true;
+	}
+
+	CString message;
+	message.Format(
+		L"The active BCF project must be closed before you %s.\n\nClose it now?",
+		operation);
+	if (AfxMessageBox(message, MB_YESNO | MB_ICONQUESTION) != IDYES) {
+		return false;
+	}
+
+	CloseProject(true);
+	return m_project == nullptr;
 }
 
 bool CBCFView::CommitCurrent()
@@ -401,8 +412,7 @@ void CBCFView::LoadProjectInfo()
 	m_projectName->ShowWindow(projectCommand);
 	m_projectSettings.ShowWindow(projectCommand);
 	m_saveBCF.ShowWindow(projectCommand);
-	m_newBCF.ShowWindow(SW_SHOW);
-	m_openBCF.ShowWindow(SW_SHOW);
+	m_emptyMessage.ShowWindow(m_project ? SW_HIDE : SW_SHOW);
 	if (!m_project) {
 		m_projectForm->ShowWindow(SW_HIDE);
 		m_topicForm->ShowWindow(SW_HIDE);
@@ -608,21 +618,6 @@ void CBCFView::OnSaveBCF()
 	SaveProject();
 }
 
-void CBCFView::OnNewBCF()
-{
-	NewProject();
-}
-
-void CBCFView::OnOpenBCF()
-{
-	OpenProject();
-}
-
-void CBCFView::OnUpdateBCFFileCommand(CCmdUI* commandUI)
-{
-	commandUI->Enable(TRUE);
-}
-
 void CBCFView::OnUpdateSaveBCF(CCmdUI* commandUI)
 {
 	UpdateSaveButton();
@@ -637,8 +632,6 @@ void CBCFView::UpdateSaveButton(bool setFocus)
 		if (enabled) {
 			m_saveBCF.SetButtonStyle(
 				enabled ? BS_DEFPUSHBUTTON : BS_PUSHBUTTON, TRUE);
-			m_newBCF.SetButtonStyle(BS_PUSHBUTTON, TRUE);
-			m_openBCF.SetButtonStyle(BS_PUSHBUTTON, TRUE);
 		}
 	}
 }
@@ -693,15 +686,11 @@ void CBCFView::AdjustLayout()
 	CString nameLabelText;
 	CString projectIdText;
 	CString saveText;
-	CString newText;
-	CString openText;
 	CString settingsText;
 	m_projectIdLabel.GetWindowText(idLabelText);
 	m_projectNameLabel.GetWindowText(nameLabelText);
 	m_projectId->GetWindowText(projectIdText);
 	m_saveBCF.GetWindowText(saveText);
-	m_newBCF.GetWindowText(newText);
-	m_openBCF.GetWindowText(openText);
 	m_projectSettings.GetWindowText(settingsText);
 	const int idLabelWidth = dc.GetTextExtent(idLabelText).cx + margin;
 	const int nameLabelWidth = dc.GetTextExtent(nameLabelText).cx + margin;
@@ -710,25 +699,19 @@ void CBCFView::AdjustLayout()
 		static_cast<int>(dc.GetTextExtent(projectIdText).cx) +
 		LOWORD(projectIdMargins) + HIWORD(projectIdMargins));
 	const int saveWidth = static_cast<int>(dc.GetTextExtent(saveText).cx) + 2 * margin;
-	const int newWidth = static_cast<int>(dc.GetTextExtent(newText).cx) + 2 * margin;
-	const int openWidth = static_cast<int>(dc.GetTextExtent(openText).cx) + 2 * margin;
 	const int settingsWidth = static_cast<int>(dc.GetTextExtent(settingsText).cx) + 2 * margin;
 	if (oldFont) {
 		dc.SelectObject(oldFont);
 	}
 
 	if (!m_project) {
-		m_newBCF.MoveWindow(margin, headerTop, newWidth, rowHeight);
-		m_openBCF.MoveWindow(
-			margin + newWidth + margin, headerTop, openWidth, rowHeight);
+		m_emptyMessage.MoveWindow(client);
 		RedrawWindow(nullptr, nullptr,
 			RDW_INVALIDATE | RDW_ERASE | RDW_ALLCHILDREN);
 		return;
 	}
 
-	const int openLeft = client.right - margin - openWidth;
-	const int newLeft = openLeft - margin - newWidth;
-	const int saveLeft = newLeft - margin - saveWidth;
+	const int saveLeft = client.right - margin - saveWidth;
 	const int settingsLeft = saveLeft - margin - settingsWidth;
 
 	int left = margin;
@@ -748,8 +731,6 @@ void CBCFView::AdjustLayout()
 	m_projectSettings.MoveWindow(
 		settingsLeft, headerTop, settingsWidth, rowHeight);
 	m_saveBCF.MoveWindow(saveLeft, headerTop, saveWidth, rowHeight);
-	m_newBCF.MoveWindow(newLeft, headerTop, newWidth, rowHeight);
-	m_openBCF.MoveWindow(openLeft, headerTop, openWidth, rowHeight);
 
 	CRect formRect(client.left,
 		headerTop + rowHeight + margin, client.right, client.bottom);
@@ -769,9 +750,9 @@ void CBCFView::OnSize(UINT type, int cx, int cy)
 void CBCFView::OnSetFocus(CWnd*)
 {
 	if (!m_project) {
-		m_newBCF.SetFocus();
+		return;
 	}
-	else if (m_activeForm == ProjectForm) {
+	if (m_activeForm == ProjectForm) {
 		m_projectForm->SetFocus();
 	}
 	else if (m_activeForm == TopicForm) {

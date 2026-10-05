@@ -624,6 +624,11 @@ BEGIN
     BEGIN
         MENUITEM "&New\tCtrl+N",                ID_FILE_NEW
         MENUITEM "&Open...\tCtrl+O",            ID_FILE_OPEN
+        MENUITEM SEPARATOR
+        MENUITEM "New BCF",                     ID_FILE_NEW_BCF
+        MENUITEM "Open BCF...",                 ID_FILE_OPEN_BCF
+        MENUITEM "Close BCF",                   ID_FILE_CLOSE_BCF
+        MENUITEM SEPARATOR
         MENUITEM "&Save\tCtrl+S",               ID_FILE_SAVE
         MENUITEM "Save &As...",                 ID_FILE_SAVE_AS
         POPUP "Export As..."
@@ -965,6 +970,9 @@ BEGIN
     ID_FILE_CLOSE           "Close the active document\nClose"
     ID_FILE_SAVE            "Save the active document\nSave"
     ID_FILE_SAVE_AS         "Save the active document with a new name\nSave As"
+    ID_FILE_NEW_BCF         "Create a new BCF project\nNew BCF"
+    ID_FILE_OPEN_BCF        "Open a BCF project\nOpen BCF"
+    ID_FILE_CLOSE_BCF       "Close the active BCF project\nClose BCF"
     ID_FILE_PAGE_SETUP      "Change the printing options\nPage Setup"
     ID_FILE_PRINT_SETUP     "Change the printer and printing options\nPrint Setup"
     ID_FILE_PRINT           "Print the active document\nPrint"
