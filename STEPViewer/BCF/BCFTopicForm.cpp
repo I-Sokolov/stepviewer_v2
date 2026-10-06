@@ -588,7 +588,8 @@ void CBCFTopicForm::ReloadBimFiles()
 	m_usedBimModels.clear();
 	if (m_topic) {
 		for (uint16_t i = 0; BCFBimFile* file = m_topic->GetBimFile(i); ++i) {
-			if (_model* model = m_pane->GetBimModel(*file)) {
+			CString model = m_pane->GetBimModel(*file);
+			if (!model.IsEmpty()) {
 				m_usedBimModels[model] = file;
 			}
 		}
@@ -601,7 +602,7 @@ void CBCFTopicForm::ReloadBimFiles()
 	if (m_pane->GetDocument()) {
 		for (_model* model : m_pane->GetDocument()->getModels()) {
 			if (model) {
-				auto used = m_usedBimModels.find(model);
+				auto used = m_usedBimModels.find(model->getPath());
 				const CString text = used == m_usedBimModels.end()
 					? model->getPath()
 					: GetBimFileText(*used->second);
@@ -660,7 +661,7 @@ void CBCFTopicForm::OnCheckBimFiles()
 	}
 	for (int i = 0; i < m_bimFiles.GetCount(); ++i) {
 		_model* model = static_cast<_model*>(m_bimFiles.GetItemDataPtr(i));
-		auto found = m_usedBimModels.find(model);
+		auto found = m_usedBimModels.find(model->getPath());
 		if (m_bimFiles.GetCheck(i) == BST_CHECKED && found == m_usedBimModels.end()) {
 			AddBimFile(model->getPath(), false);
 			ReloadBimFiles();

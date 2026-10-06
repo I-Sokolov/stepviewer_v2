@@ -34,7 +34,7 @@ public:
 
 	BCFProject* GetProject() const { return m_project; }
 	CMySTEPViewerDoc* GetDocument() const { return m_stepViewerDoc; }
-	_model* GetBimModel(BCFBimFile& file);
+	CString GetBimModel(BCFBimFile& file, _model** ppLoadedModel = NULL);
 	void LoadBimFiles(BCFTopic& topic);
 	void ShowLog(bool knownError);
 	void LoadProjectInfo();
@@ -64,7 +64,7 @@ private:
 	BCFProject* m_project;
 	CString m_filePath;
 	CString m_email;
-	std::map<BCFBimFile*, _model*> m_bimModels;
+	std::map<BCFBimFile*, CString> m_bimModels; //maps to loaded path file, we can not keep _model* if may be deleted by controller
 	Form m_activeForm;
 	CFont m_dialogFont;
 	CStatic m_emptyMessage;

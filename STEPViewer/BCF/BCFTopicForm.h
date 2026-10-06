@@ -90,7 +90,7 @@ private:
 	CCheckListBox m_bimFiles;
 	CButton m_addBimFiles;
 	CButton m_snippetGroup;
-	std::map<_model*, BCFBimFile*> m_usedBimModels;
+    std::map<CString, BCFBimFile*> m_usedBimModels; //maps loaded file path to BCFBimFile, we can not keep _model* if may be deleted by controller
 	CBCFCommentsListBox m_comments;
 	CButton m_newComment;
 	CButton m_showCommentDetails;
