@@ -4,6 +4,25 @@
 #include "_string.h"
 #include "_ptr.h"
 
+#ifdef _DEBUG
+
+static void ASSERT_REAL_VALID(double v)
+{
+	if(isnan(v) || isinf(v))
+        assert(!"wrong double value");
+}
+
+static void ASSERT_REAL_VALID(glm::mat4& m)
+{
+	for (int i = 0; i < 4; i++)
+		for (int j = 0; j < 4; j++)
+			ASSERT_REAL_VALID(m[i][j]);
+}
+
+#else
+#define ASSERT_REAL_VALID(v) /*noop*/
+#endif
+
 // ************************************************************************************************
 static glm::vec3 directionToEulerAngles(const glm::vec3& direction, const glm::vec3& upVector)
 {
@@ -1556,6 +1575,10 @@ void _oglRenderer::_prepare(
 	m_fZoomMax = ((m_fZmin + m_fZmax) / 2.f);
 	m_fZoomInterval = m_fZoomMax - m_fZoomMin;
 
+	ASSERT_REAL_VALID(m_fZoomMin);
+	ASSERT_REAL_VALID(m_fZoomMax);
+	ASSERT_REAL_VALID(m_fZoomInterval);
+
 	// Pan X
 	m_fPanXMin = -(m_fXmax - m_fXmin) / 2.f;
 	m_fPanXMin -= fBoundingSphereDiameter * 1.25f;
@@ -1664,6 +1687,7 @@ void _oglRenderer::_prepare(
 			eye,
 			eye + direction,
 			glm::vec3(m_vecUpVector.x, m_vecUpVector.y, m_vecUpVector.z));
+		ASSERT_REAL_VALID(m_matModelView);
 
 		glm::mat4 interaction = glm::translate(
 			glm::identity<glm::mat4>(),
@@ -1694,6 +1718,7 @@ void _oglRenderer::_prepare(
 			assert(false);
 		}
 		m_matModelView = interaction * m_matModelView;
+		ASSERT_REAL_VALID(m_matModelView);
 	}
 	else {
 		m_matModelView = glm::identity<glm::mat4>();
@@ -1704,6 +1729,7 @@ void _oglRenderer::_prepare(
 		else {
 			m_matModelView = glm::translate(m_matModelView, glm::vec3(0.f, 0.f, DEFAULT_TRANSLATION));
 		}
+		ASSERT_REAL_VALID(m_matModelView);
 
 		float fXTranslation = fXmin;
 		fXTranslation += (fXmax - fXmin) / 2.f;
@@ -1717,12 +1743,18 @@ void _oglRenderer::_prepare(
 		fZTranslation += (fZmax - fZmin) / 2.f;
 		fZTranslation = -fZTranslation;
 
+		ASSERT_REAL_VALID(fXTranslation);
+		ASSERT_REAL_VALID(fYTranslation);
+		ASSERT_REAL_VALID(fZTranslation);
+
 		m_matModelView = glm::translate(m_matModelView, glm::vec3(-fXTranslation, -fYTranslation, -fZTranslation));
+		ASSERT_REAL_VALID(m_matModelView);
 
 		if (m_enRotationMode == enumRotationMode::XY) {
 			m_matModelView = glm::rotate(m_matModelView, glm::radians(m_fXAngle), glm::vec3(1.f, 0.f, 0.f));
 			m_matModelView = glm::rotate(m_matModelView, glm::radians(m_fYAngle), glm::vec3(0.f, 1.f, 0.f));
 			m_matModelView = glm::rotate(m_matModelView, glm::radians(m_fZAngle), glm::vec3(0.f, 0.f, 1.f));
+			ASSERT_REAL_VALID(m_matModelView);
 		}
 		else if (m_enRotationMode == enumRotationMode::XYZ) {
 			// Apply rotation...
@@ -1737,12 +1769,18 @@ void _oglRenderer::_prepare(
 			delete[] pRotationMatrix;
 
 			m_matModelView = m_matModelView * matTransformation;
+			ASSERT_REAL_VALID(m_matModelView);
 		}
 		else {
 			assert(false);
 		}
 
+		ASSERT_REAL_VALID(fXTranslation);
+		ASSERT_REAL_VALID(fYTranslation);
+		ASSERT_REAL_VALID(fZTranslation);
+
 		m_matModelView = glm::translate(m_matModelView, glm::vec3(fXTranslation, fYTranslation, fZTranslation));
+		ASSERT_REAL_VALID(m_matModelView);
 	}
 	m_pOGLProgram->_setModelViewMatrix(m_matModelView);
 	m_pOGLProgram->_setNormalMatrix(m_matModelView);
