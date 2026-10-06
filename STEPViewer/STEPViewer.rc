@@ -190,9 +190,11 @@ CAPTION "Include loaded BIM models"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
     LTEXT           "Loaded BIM models:",IDC_STATIC,7,7,74,8
-    LISTBOX         IDC_BCF_LOADED_MODELS,7,19,316,110,LBS_NOINTEGRALHEIGHT | WS_HSCROLL | WS_VSCROLL | WS_TABSTOP
-    CONTROL         "Use external files",IDC_BCF_LOADED_MODELS_EXTERNAL,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,7,137,79,10
-    CONTROL         "Embed to BCF package",IDC_BCF_LOADED_MODELS_EMBEDDED,"Button",BS_AUTORADIOBUTTON | WS_TABSTOP,7,152,96,10
+    LISTBOX         IDC_BCF_LOADED_MODELS,7,19,316,110,LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_HSCROLL | WS_TABSTOP
+    CONTROL         "Use external files",IDC_BCF_LOADED_MODELS_EXTERNAL,
+                    "Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,7,137,79,10
+    CONTROL         "Embed to BCF package",IDC_BCF_LOADED_MODELS_EMBEDDED,
+                    "Button",BS_AUTORADIOBUTTON | WS_TABSTOP,7,152,96,10
     DEFPUSHBUTTON   "OK",IDOK,217,169,50,14
     PUSHBUTTON      "Cancel",IDCANCEL,273,169,50,14
 END
@@ -347,7 +349,6 @@ BEGIN
         TOPMARGIN, 7
         BOTTOMMARGIN, 230
     END
-
 END
 #endif    // APSTUDIO_INVOKED
 
@@ -625,9 +626,9 @@ BEGIN
         MENUITEM "&New\tCtrl+N",                ID_FILE_NEW
         MENUITEM "&Open...\tCtrl+O",            ID_FILE_OPEN
         MENUITEM SEPARATOR
-        MENUITEM "New BCF",                     ID_FILE_NEW_BCF
+        MENUITEM "New BCF...",                  ID_FILE_NEW_BCF
         MENUITEM "Open BCF...",                 ID_FILE_OPEN_BCF
-        MENUITEM "Save BCF",                    ID_FILE_SAVE_BCF
+        MENUITEM "Save BCF...",                 ID_FILE_SAVE_BCF
         MENUITEM "Close BCF",                   ID_FILE_CLOSE_BCF
         MENUITEM SEPARATOR
         MENUITEM "&Save\tCtrl+S",               ID_FILE_SAVE
@@ -971,15 +972,19 @@ BEGIN
     ID_FILE_CLOSE           "Close the active document\nClose"
     ID_FILE_SAVE            "Save the active document\nSave"
     ID_FILE_SAVE_AS         "Save the active document with a new name\nSave As"
-    ID_FILE_NEW_BCF         "Create a new BCF project\nNew BCF"
-    ID_FILE_OPEN_BCF        "Open a BCF project\nOpen BCF"
-    ID_FILE_SAVE_BCF        "Save the active BCF project\nSave BCF"
-    ID_FILE_CLOSE_BCF       "Close the active BCF project\nClose BCF"
     ID_FILE_PAGE_SETUP      "Change the printing options\nPage Setup"
     ID_FILE_PRINT_SETUP     "Change the printer and printing options\nPrint Setup"
     ID_FILE_PRINT           "Print the active document\nPrint"
     ID_FILE_PRINT_DIRECT    "Print the active document using current options\nQuick Print"
     ID_FILE_PRINT_PREVIEW   "Display full pages\nPrint Preview"
+END
+
+STRINGTABLE
+BEGIN
+    ID_FILE_NEW_BCF         "Create a new BCF project\nNew BCF"
+    ID_FILE_OPEN_BCF        "Open a BCF project\nOpen BCF"
+    ID_FILE_CLOSE_BCF       "Close the active BCF project\nClose BCF"
+    ID_FILE_SAVE_BCF        "Save the active BCF project\nSave BCF"
 END
 
 STRINGTABLE
@@ -1137,3 +1142,4 @@ LANGUAGE 9, 1
 
 /////////////////////////////////////////////////////////////////////////////
 #endif    // not APSTUDIO_INVOKED
+
