@@ -829,8 +829,17 @@ void CMySTEPViewerView::GetBCFView(BCFCamera& camera, BCFPoint& viewPoint, BCFPo
 	auto pRenderer = m_pOpenGLView != nullptr ? dynamic_cast<_oglRenderer*>(m_pOpenGLView) : nullptr;
 	if (pRenderer != nullptr)
 	{
-		double dLengthConversionFactor = getProjectUnitConversionFactor(
-			_ptr<_ap_model>(getController()->getModel())->getSdaiModel(), "LENGTHUNIT", nullptr, nullptr, nullptr);
+		double dLengthConversionFactor = -1;
+		for (auto model : getController()->getModels()) {
+			auto ap_model = _ptr<_ap_model>(getController()->getModel());
+			if (ap_model) {
+				dLengthConversionFactor = getProjectUnitConversionFactor(ap_model->getSdaiModel(), "LENGTHUNIT", nullptr, nullptr, nullptr);
+				break;
+			}
+		}
+		if (dLengthConversionFactor < FLT_MIN) {
+			dLengthConversionFactor = 1.0;
+		}
 
 		bool bPerspective = false;
 		pRenderer->_getCameraSettings(
