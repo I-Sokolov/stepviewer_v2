@@ -244,7 +244,8 @@ public: // Methods
 
 	void setModel(_model* pModel);
 	void setModels(const vector<_model*>& vecModels);
-	void enableModelsAddIfNeeded(const vector<_model*>& vecModels);
+	void addAndEnableModels(const vector<_model*>& addModels, const std::vector<std::wstring>& enableModelsByPath);
+	void removeModels(const std::set<const _model*>& models, bool enableRemaining);
 
 	virtual void loadDecorationModels() {}
 	void addDecorationModel(_model* pModel);
@@ -310,13 +311,14 @@ protected: // Methods
 
 	void showDecoration(const wchar_t* szName, bool bShow);
 
-	virtual void clean();
+    virtual void clean();
 	virtual void cleanSelection();
 
 public: // Properties
 
 	_log_hub* getLogHub() const { return m_pLogHub; }
 	_model* getModel() const; // kept for backward compatibility
+	_model* getModel(const wchar_t* pathName);
 	const vector<_model*>& getModels() const { return m_vecModels; }
 	const vector<_model*>& getDecorationModels() const { return m_vecDecorationModels; }
 	_settings_storage* getSettingsStorage() const { return m_pSettingsStorage; }

@@ -747,21 +747,14 @@ void _controller::setModels(const vector<_model*>& vecModels)
 	m_bUpdatingModel = false;
 }
 
-void _controller::enableModelsAddIfNeeded(const vector<_model*>& vecModels)
+void _controller::addAndEnableModels(const vector<_model*>& addModels, const std::vector<std::wstring>& enableModelsByPath)
 {
     //check if there is something to change
-    bool needToChange = false;
-
-	//need to change if required model is not loaded
-	for (auto pModel : vecModels) {
-		if (find(m_vecModels.begin(), m_vecModels.end(), pModel) == m_vecModels.end()) {
-			needToChange = true;
-		}
-	}
+    bool needToChange = !addModels.empty();
 
 	//need to change if not enabled
 	for (auto pModel : m_vecModels) {
-        bool needEnable = (find(vecModels.begin(), vecModels.end(), pModel) != vecModels.end());
+        bool needEnable = find(enableModelsByPath.begin(), enableModelsByPath.end(), pModel->getPath()) != enableModelsByPath.end();
 		if (pModel->getEnable() != needEnable) {
 			needToChange = true;
         }
@@ -786,15 +779,59 @@ void _controller::enableModelsAddIfNeeded(const vector<_model*>& vecModels)
 		pModel->setEnable(false);
 	}
 
-	// Add if needed and Enable
-	for (auto pModel : vecModels) {
-		if (find(m_vecModels.begin(), m_vecModels.end(), pModel) == m_vecModels.end()) {
-			m_vecModels.push_back(pModel);
-		}
-
-		pModel->setEnable(true);
+	// Add and Enable
+	for (auto pModel : addModels) {
+		assert(find(m_vecModels.begin(), m_vecModels.end(), pModel) == m_vecModels.end());
+		m_vecModels.push_back(pModel);
 	}
 
+	for (auto& path : enableModelsByPath) {
+		auto model = getModel(path.c_str());
+		assert(model);
+		if (model)
+			model->setEnable(true);
+	}
+
+	//
+	itView = m_setViews.begin();
+	for (; itView != m_setViews.end(); itView++) {
+		(*itView)->onModelLoaded();
+	}
+
+	itView = m_setViews.begin();
+	for (; itView != m_setViews.end(); itView++) {
+		(*itView)->postModelLoaded();
+	}
+
+	m_bUpdatingModel = false;
+}
+
+void _controller::removeModels(const std::set<const _model*>& models, bool enableRemaining)
+{
+	m_bUpdatingModel = true;
+
+	auto itView = m_setViews.begin();
+	for (; itView != m_setViews.end(); itView++) {
+		(*itView)->preModelLoaded();
+	}
+
+	//remove listed
+	for (size_t i = 0; i < m_vecModels.size(); i++) {
+		auto pModel = m_vecModels[i];
+		if (models.find(pModel) != models.end()) {
+			delete pModel;
+			m_vecModels.erase(m_vecModels.begin() + i);
+			i--;
+		}
+		else if (enableRemaining) {
+			pModel->setEnable(true);
+		}
+	}
+
+	cleanSelection();
+	s_iInstanceID = 1;
+
+	//
 	itView = m_setViews.begin();
 	for (; itView != m_setViews.end(); itView++) {
 		(*itView)->onModelLoaded();
@@ -850,6 +887,15 @@ _instance* _controller::loadInstance(int64_t iInstance)
 	return pInstance;
 }
 
+static void EnsureDimensionValid(float& fmin, float& fmax)
+{
+	if (fmin > fmax){
+		fmin = -1;
+		fmax = 1;
+	}
+}
+
+
 void _controller::getWorldDimensions(float& fWorldXmin, float& fWorldXmax, float& fWorldYmin, float& fWorldYmax, float& fWorldZmin, float& fWorldZmax) const
 {
 	fWorldXmin = FLT_MAX;
@@ -880,14 +926,10 @@ void _controller::getWorldDimensions(float& fWorldXmin, float& fWorldXmax, float
 			fWorldZmax = (float)fmax(fWorldZmax, fZmax);
 		}
 	} // if (!getModels().empty())
-	else {
-		fWorldXmin = -1.f;
-		fWorldXmax = 1.f;
-		fWorldYmin = -1.f;
-		fWorldYmax = 1.f;
-		fWorldZmin = -1.f;
-		fWorldZmax = 1.f;
-	}
+
+	EnsureDimensionValid(fWorldXmin, fWorldXmax);
+	EnsureDimensionValid(fWorldYmin, fWorldYmax);
+	EnsureDimensionValid(fWorldZmin, fWorldZmax);
 }
 
 float _controller::getWorldBoundingSphereDiameter() const
@@ -1278,6 +1320,17 @@ _model* _controller::getModel() const
 
 	return nullptr;
 }
+
+_model* _controller::getModel(const wchar_t* pathName)
+{
+	for (auto pModel : m_vecModels) {
+		if (wcscmp(pModel->getPath(), pathName) == 0) {
+			return pModel;
+		}
+    }
+	return nullptr;
+}
+
 
 // ************************************************************************************************
 _decoration::_decoration()

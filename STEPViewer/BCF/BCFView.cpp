@@ -180,11 +180,22 @@ void CBCFView::NewProject()
 		}
 	}
 
-	ShowLog(!filesAdded);
+	if (topic) {
+		if (auto doc = GetDocument()) {
+			if (auto comment = topic->AddComment()) {
+				comment->SetText("My view");
+				const bool ok = CBCFViewPointMgr(*doc)
+					.SaveCurrentViewToComent(*comment);
+			}
+		}
+	}
+
 	m_projectForm->Load(topic);
 	ShowTopic(topic);
 	Activate();
 	m_topicForm->FocusInitialControl(true);
+
+	ShowLog(!filesAdded || !topic);
 }
 
 bool CBCFView::OpenProject(LPCTSTR filePath)
@@ -310,13 +321,7 @@ void CBCFView::OnCloseMainDocument()
 
 void CBCFView::ReleaseProject()
 {
-	for (auto& pair : m_bimModels) {
-		if (pair.second) {
-			
-		}
-	}
-	m_bimModels.clear();
-
+	//close project
 	if (m_project) {
 		ShowLog(false);
 		m_project->Delete();
@@ -324,6 +329,23 @@ void CBCFView::ReleaseProject()
 	}
 	m_filePath.Empty();
 
+	//cleanup models
+	if (m_stepViewerDoc) {
+		std::set<const _model*> removeModels;
+		for (auto& pair : m_bimModels) {
+			if (pair.second) {
+				if (auto model = m_stepViewerDoc->getModel(pair.second)) {
+					removeModels.insert(model);
+				}
+			}
+		}
+		if (!removeModels.empty()) {
+			m_stepViewerDoc->removeModels(removeModels, true);
+        }
+	}
+	m_bimModels.clear();
+
+    //load empty project info
 	LoadProjectInfo();
 	UpdateCaption();
 	m_topicForm->Load(nullptr);
@@ -489,16 +511,6 @@ BCFTopic* CBCFView::CreateTopic()
 	BCFTopic* topic = m_project->AddTopic(
 		topicType, "<< Enter topic title >>", topicStatus);
 	
-	if (topic) {
-		if (auto doc = GetDocument()) {
-			if (auto comment = topic->AddComment()) {
-				comment->SetText("My view");
-				const bool ok = CBCFViewPointMgr(*doc)
-					.SaveCurrentViewToComent(*comment);
-			}
-		}
-	}
-
 	ShowLog(!topic);
 	return topic;
 }
@@ -603,15 +615,8 @@ CString CBCFView::GetBimModel(BCFBimFile& file, _model** ppLoadedModel)
 	m_bimModels[&file] = path;
 
     //check if the model is already loaded in the Viewer
-    bool loaded = false;
-	for (_model* candidate : m_stepViewerDoc->getModels()) {
-		if (candidate->getPath() == path) {
-			loaded = true;
-			break;
-		}
-	}
+    if (!m_stepViewerDoc->getModel(path)) {
 
-	if (!loaded) {
 		ASSERT(ppLoadedModel); //this is expected only we can load new model
 		if (ppLoadedModel) {
 
@@ -631,16 +636,18 @@ void CBCFView::LoadBimFiles(BCFTopic& topic)
 		return;
 	}
 
-	std::vector<_model*> activeModels;
+	std::vector<std::wstring> activeModels;
+	std::vector<_model*> newModels;
 	for (uint16_t i = 0; BCFBimFile* file = topic.GetBimFile(i); ++i) {
-		_model* model = NULL; 
-		GetBimModel(*file, &model);
-		if (model) {
-			activeModels.push_back(model);
+		_model* newModel = NULL; 
+		std::wstring modelPath = GetBimModel(*file, &newModel);
+        activeModels.push_back(modelPath);
+		if (newModel) {
+			newModels.push_back(newModel);
 		}
 	}
 
-	m_stepViewerDoc->enableModelsAddIfNeeded(activeModels);
+	m_stepViewerDoc->addAndEnableModels(newModels, activeModels);
 }
 
 void CBCFView::OnUpdateProjectSettings(CCmdUI* commandUI)
