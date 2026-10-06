@@ -148,8 +148,6 @@ void CMySTEPViewerDoc::OpenModels(const vector<CString>& vecPaths)
 		strTitle += vecPaths[0];
 		AfxGetMainWnd()->SetWindowTextW(strTitle);
 
-		// MRU
-		AfxGetApp()->AddToRecentFileList(vecPaths[0]);
 		return;
 	}
 
@@ -417,9 +415,7 @@ void CMySTEPViewerDoc::OnFileOpen()
 				MB_OK | MB_ICONINFORMATION);
 			return;
 		}
-		if (OpenBCFFile(*bcf)) {
-			AfxGetApp()->AddToRecentFileList(*bcf);
-		}
+		OpenBCFFile(*bcf);
 		return;
 	}
 
@@ -443,9 +439,7 @@ void CMySTEPViewerDoc::OnFileNewBCF()
 
 void CMySTEPViewerDoc::OnFileOpenBCF()
 {
-	if (auto frame = dynamic_cast<CMainFrame*>(AfxGetMainWnd())) {
-		frame->GetBCFView().OpenProject();
-	}
+	OpenBCFFile(NULL);
 }
 
 void CMySTEPViewerDoc::OnFileSaveBCF()

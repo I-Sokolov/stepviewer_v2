@@ -20,8 +20,7 @@ public:
 	void SetDocument(CMySTEPViewerDoc* document) { m_stepViewerDoc = document; }
 	void Activate();
 	void NewProject();
-	void OpenProject();
-	bool OpenProject(LPCTSTR filePath);
+	bool OpenProject(LPCTSTR filePath= NULL);
 	bool SaveProject();
 	void AddTopic();
 	void DeleteTopic();

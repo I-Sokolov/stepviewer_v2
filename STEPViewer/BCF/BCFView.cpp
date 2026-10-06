@@ -187,31 +187,27 @@ void CBCFView::NewProject()
 	m_topicForm->FocusInitialControl(true);
 }
 
-void CBCFView::OpenProject()
-{
-	if (!CloseActiveProjectForOperation(L"open another BCF project")) {
-		return;
-	}
-	CFileDialog dialog(TRUE, nullptr, L"", OFN_FILEMUSTEXIST | OFN_HIDEREADONLY, BCF_PACKAGES_FILTER);
-	if (dialog.DoModal() != IDOK) {
-		return;
-	}
-	OpenProject(dialog.GetPathName());
-}
-
 bool CBCFView::OpenProject(LPCTSTR filePath)
 {
-	if (!filePath || !*filePath ||
-		!CloseActiveProjectForOperation(L"open another BCF project")) {
+	if (!CloseActiveProjectForOperation(L"open another BCF project")) {
 		return false;
 	}
+
+	CString filePathDlg;
+	if (!filePath || !*filePath) {
+		CFileDialog dialog(TRUE, nullptr, L"", OFN_FILEMUSTEXIST | OFN_HIDEREADONLY, BCF_PACKAGES_FILTER);
+		if (dialog.DoModal() != IDOK) {
+			return false;
+		}
+		filePathDlg = dialog.GetPathName();
+		filePath = filePathDlg;
+    }
+
 	m_project = BCFProject::Create();
 	if (!m_project) {
 		AfxMessageBox(L"Failed to initialize BCF project.", MB_OK | MB_ICONERROR);
 		return false;
 	}
-	m_email = AfxGetApp()->GetProfileString(L"BCF", L"User");
-	m_project->SetOptions(ToUTF8(m_email).c_str(), true, true);
 
 	m_filePath = filePath;
 	if (!m_project->ReadFile(ToUTF8(m_filePath).c_str(), true)) {
@@ -219,6 +215,12 @@ bool CBCFView::OpenProject(LPCTSTR filePath)
 		ReleaseProject();
 		return false;
 	}
+
+	m_email = AfxGetApp()->GetProfileString(L"BCF", L"User");
+	m_project->SetOptions(ToUTF8(m_email).c_str(), true, true);
+
+	AfxGetApp()->AddToRecentFileList(m_filePath);
+
 	LoadProjectInfo();
 	UpdateCaption();
 	ShowProject();
@@ -308,13 +310,20 @@ void CBCFView::OnCloseMainDocument()
 
 void CBCFView::ReleaseProject()
 {
+	for (auto& pair : m_bimModels) {
+		if (pair.second) {
+			
+		}
+	}
+	m_bimModels.clear();
+
 	if (m_project) {
 		ShowLog(false);
 		m_project->Delete();
 		m_project = nullptr;
 	}
 	m_filePath.Empty();
-	m_bimModels.clear();
+
 	LoadProjectInfo();
 	UpdateCaption();
 	m_topicForm->Load(nullptr);
