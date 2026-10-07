@@ -3,10 +3,7 @@
 #include "bcfAPI.h"
 #include "BCFViewControls.h"
 
-#include <map>
-
 class CBCFView;
-class _model;
 
 class CBCFTopicForm : public CWnd
 {
@@ -32,7 +29,8 @@ protected:
 	afx_msg void OnSelectSnippetFile();
 	afx_msg void OnSelectTopicLabels();
 	afx_msg void OnAddBimFiles();
-	afx_msg void OnCheckBimFiles();
+	afx_msg void OnRemoveBimFile();
+	afx_msg void OnBimFileChanged();
 	afx_msg void OnAddDocument();
 	afx_msg void OnRemoveDocument();
 	afx_msg void OnDocumentChanged();
@@ -53,6 +51,7 @@ private:
 	void UpdateLabels();
 	void UpdateCommentButtons();
 	void ReloadBimFilesList();
+	BCFBimFile* GetSelectedBimFile() const;
 	bool AddBimFile(const CString& path, bool external);
 	void ReloadDocuments(BCFDocumentReference* selectDocument = nullptr);
 	BCFDocumentReference* GetSelectedDocument() const;
@@ -87,10 +86,10 @@ private:
 	CBCFEdit m_index;
 	CBCFEdit m_serverId;
 	CButton m_bimFilesGroup;
-	CCheckListBox m_bimFiles;
+	CListBox m_bimFiles;
 	CButton m_addBimFiles;
+	CButton m_removeBimFile;
 	CButton m_snippetGroup;
-    std::map<CString, BCFBimFile*> m_usedBimModels; //maps loaded file path to BCFBimFile, we can not keep _model* if may be deleted by controller
 	CBCFCommentsListBox m_comments;
 	CButton m_newComment;
 	CButton m_showCommentDetails;

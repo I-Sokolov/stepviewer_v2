@@ -35,7 +35,7 @@ public:
 	BCFProject* GetProject() const { return m_project; }
 	CMySTEPViewerDoc* GetDocument() const { return m_stepViewerDoc; }
 	CString GetBimModel(BCFBimFile& file, _model** ppLoadedModel = NULL);
-	void LoadBimFilesToView(BCFTopic& topic);
+	void SetBimFilesToView(BCFTopic& topic);
 	void ShowLog(bool knownError);
 	void LoadProjectInfo();
 	bool CommitProjectInfo();

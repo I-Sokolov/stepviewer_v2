@@ -9,7 +9,6 @@
 #include "BCFViewPointMgr.h"
 #include "STEPViewerDoc.h"
 #include "Resource.h"
-#include "_ap_model_factory.h"
 
 #include <experimental/filesystem>
 
@@ -98,7 +97,8 @@ BEGIN_MESSAGE_MAP(CBCFTopicForm, CWnd)
 	ON_BN_CLICKED(IDC_PANE_SELECT_SNIPPET_FILE, &CBCFTopicForm::OnSelectSnippetFile)
 	ON_BN_CLICKED(IDC_PANE_SELECT_TOPIC_LABELS, &CBCFTopicForm::OnSelectTopicLabels)
 	ON_BN_CLICKED(IDC_PANE_ADD_BIM_FILES, &CBCFTopicForm::OnAddBimFiles)
-	ON_CONTROL(CLBN_CHKCHANGE, IDC_PANE_BIM_FILES, &CBCFTopicForm::OnCheckBimFiles)
+	ON_BN_CLICKED(IDC_PANE_REMOVE_BIM_FILE, &CBCFTopicForm::OnRemoveBimFile)
+	ON_CONTROL(LBN_SELCHANGE, IDC_PANE_BIM_FILES, &CBCFTopicForm::OnBimFileChanged)
 	ON_NOTIFY(TCN_SELCHANGE, IDC_PANE_TABS, &CBCFTopicForm::OnTabChanged)
 	ON_CONTROL(LBN_SELCHANGE, IDC_PANE_COMMENTS, &CBCFTopicForm::OnCommentChanged)
 	ON_CONTROL(LBN_DBLCLK, IDC_PANE_COMMENTS, &CBCFTopicForm::OnCommentDoubleClick)
@@ -196,13 +196,15 @@ BOOL CBCFTopicForm::Create(CBCFView* pane)
 		SetBCFControlFont(*edit, this);
 	}
 	m_bimFiles.Create(WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VSCROLL | WS_HSCROLL |
-		LBS_OWNERDRAWFIXED | LBS_HASSTRINGS | LBS_NOINTEGRALHEIGHT,
+		LBS_NOTIFY | LBS_NOINTEGRALHEIGHT,
 		CRect(), this, IDC_PANE_BIM_FILES);
-	m_bimFiles.SetCheckStyle(BS_AUTOCHECKBOX);
 	SetBCFControlFont(m_bimFiles, this);
 	m_addBimFiles.Create(L"Add...", WS_CHILD | WS_TABSTOP | BS_PUSHBUTTON,
 		CRect(), this, IDC_PANE_ADD_BIM_FILES);
 	SetBCFControlFont(m_addBimFiles, this);
+	m_removeBimFile.Create(L"Remove...", WS_CHILD | WS_TABSTOP | BS_PUSHBUTTON,
+		CRect(), this, IDC_PANE_REMOVE_BIM_FILE);
+	SetBCFControlFont(m_removeBimFile, this);
 	m_comments.Create(WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VSCROLL | LBS_NOTIFY | LBS_OWNERDRAWVARIABLE |
 		LBS_HASSTRINGS | LBS_NOINTEGRALHEIGHT, CRect(), this, IDC_PANE_COMMENTS);
 	SetBCFControlFont(m_comments, this);
@@ -352,7 +354,7 @@ void CBCFTopicForm::Load(BCFTopic* topic)
 	ReloadDocuments();
 	ReloadLinks();
 	ReloadRelatedTopics();
-	m_pane->LoadBimFilesToView(*topic);
+	m_pane->SetBimFilesToView(*topic);
 	ReloadBimFilesList();
 	m_tabs.SetCurSel(0);
 	ShowTab(0);
@@ -585,42 +587,41 @@ void CBCFTopicForm::OnSelectTopicLabels()
 
 void CBCFTopicForm::ReloadBimFilesList()
 {
-	m_usedBimModels.clear();
-	if (m_topic) {
-		for (uint16_t i = 0; BCFBimFile* file = m_topic->GetBimFile(i); ++i) {
-			CString model = m_pane->GetBimModel(*file);
-			if (!model.IsEmpty()) {
-				m_usedBimModels[model] = file;
-			}
-		}
-	}
-
+	BCFBimFile* selectedFile = GetSelectedBimFile();
 	m_bimFiles.SetRedraw(FALSE);
-	const int selection = m_bimFiles.GetCurSel();
 	const int topIndex = m_bimFiles.GetTopIndex();
 	m_bimFiles.ResetContent();
-	if (m_pane->GetDocument()) {
-		for (_model* model : m_pane->GetDocument()->getModels()) {
-			if (model) {
-				auto used = m_usedBimModels.find(model->getPath());
-				const CString text = used == m_usedBimModels.end()
-					? model->getPath()
-					: GetBimFileText(*used->second);
-				const int item = m_bimFiles.AddString(text);
-				m_bimFiles.SetItemDataPtr(item, model);
-				m_bimFiles.SetCheck(item, used != m_usedBimModels.end() ? BST_CHECKED : BST_UNCHECKED);
+	int selectedItem = LB_ERR;
+	if (m_topic) {
+		for (uint16_t i = 0; BCFBimFile* file = m_topic->GetBimFile(i); ++i) {
+			const int item = m_bimFiles.AddString(GetBimFileText(*file));
+			if (item != LB_ERR && item != LB_ERRSPACE) {
+				m_bimFiles.SetItemDataPtr(item, file);
+				if (file == selectedFile) {
+					selectedItem = item;
+				}
 			}
 		}
 	}
-	if (selection != LB_ERR && selection < m_bimFiles.GetCount()) {
-		m_bimFiles.SetCurSel(selection);
+	if (selectedItem == LB_ERR && m_bimFiles.GetCount() > 0) {
+		selectedItem = 0;
 	}
+	m_bimFiles.SetCurSel(selectedItem);
 	if (topIndex != LB_ERR && topIndex < m_bimFiles.GetCount()) {
 		m_bimFiles.SetTopIndex(topIndex);
 	}
-	UpdateHorizontalExtent(m_bimFiles, ::GetSystemMetrics(SM_CXMENUCHECK) + 4);
+	UpdateHorizontalExtent(m_bimFiles);
 	m_bimFiles.SetRedraw(TRUE);
 	m_bimFiles.Invalidate();
+	OnBimFileChanged();
+}
+
+BCFBimFile* CBCFTopicForm::GetSelectedBimFile() const
+{
+	const int selection = m_bimFiles.GetCurSel();
+	return selection == LB_ERR
+		? nullptr
+		: static_cast<BCFBimFile*>(m_bimFiles.GetItemDataPtr(selection));
 }
 
 bool CBCFTopicForm::AddBimFile(const CString& path, bool external)
@@ -649,32 +650,38 @@ void CBCFTopicForm::OnAddBimFiles()
 		ok = AddBimFile(path, dialog.IsExternal()) && ok;
 		AfxGetApp()->AddToRecentFileList(path);
 	}
-	m_pane->LoadBimFilesToView(*m_topic);
+
+	m_pane->SetBimFilesToView(*m_topic);
 	ReloadBimFilesList();
+
 	m_pane->ShowLog(!ok);
 }
 
-void CBCFTopicForm::OnCheckBimFiles()
+void CBCFTopicForm::OnRemoveBimFile()
 {
-	if (!m_topic) {
+	BCFBimFile* file = GetSelectedBimFile();
+	if (!m_topic || !file) {
 		return;
 	}
-	for (int i = 0; i < m_bimFiles.GetCount(); ++i) {
-		_model* model = static_cast<_model*>(m_bimFiles.GetItemDataPtr(i));
-		auto found = m_usedBimModels.find(model->getPath());
-		if (m_bimFiles.GetCheck(i) == BST_CHECKED && found == m_usedBimModels.end()) {
-			AddBimFile(model->getPath(), false);
-			ReloadBimFilesList();
-			return;
-		}
-		if (m_bimFiles.GetCheck(i) == BST_UNCHECKED && found != m_usedBimModels.end()) {
-			if (!found->second->Remove()) {
-				m_pane->ShowLog(true);
-			}
-			ReloadBimFilesList();
-			return;
-		}
+
+	CString question;
+	question.Format(L"Do you want to remove BIM file '%s'?",
+		GetBimFileText(*file).GetString());
+	if (AfxMessageBox(question, MB_YESNO | MB_ICONQUESTION) != IDYES) {
+		return;
 	}
+
+	m_bimFiles.SetCurSel(-1);
+	const bool ok = file->Remove();
+	m_pane->ShowLog(!ok);
+
+	ReloadBimFilesList();
+	m_pane->SetBimFilesToView(*m_topic);
+}
+
+void CBCFTopicForm::OnBimFileChanged()
+{
+	m_removeBimFile.EnableWindow(GetSelectedBimFile() != nullptr);
 }
 
 BCFDocumentReference* CBCFTopicForm::GetSelectedDocument() const
@@ -908,6 +915,7 @@ void CBCFTopicForm::ShowTab(int tab)
 	m_bimFilesGroup.ShowWindow(tab == 1 ? SW_SHOW : SW_HIDE);
 	m_bimFiles.ShowWindow(tab == 1 ? SW_SHOW : SW_HIDE);
 	m_addBimFiles.ShowWindow(tab == 1 ? SW_SHOW : SW_HIDE);
+	m_removeBimFile.ShowWindow(tab == 1 ? SW_SHOW : SW_HIDE);
 	m_documents.ShowWindow(tab == 2 ? SW_SHOW : SW_HIDE);
 	m_documentsLabel.ShowWindow(tab == 2 ? SW_SHOW : SW_HIDE);
 	m_addDocument.ShowWindow(tab == 2 ? SW_SHOW : SW_HIDE);
@@ -1142,11 +1150,16 @@ void CBCFTopicForm::AdjustLayout()
 			rightColumn, page.top, rightColumnWidth, page.Height());
 		const int addButtonWidth = max(
 			rowHeight, static_cast<int>(dc.GetTextExtent(L"Add...").cx) + 2 * margin);
+		const int removeButtonWidth = max(
+			rowHeight, static_cast<int>(dc.GetTextExtent(L"Remove...").cx) + 2 * margin);
 		const int bimFilesContentLeft = rightColumn + margin;
 		const int bimFilesContentTop = page.top + rowHeight;
 		m_addBimFiles.MoveWindow(
 			bimFilesContentLeft, page.bottom - rowHeight - margin,
 			addButtonWidth, rowHeight);
+		m_removeBimFile.MoveWindow(
+			bimFilesContentLeft + addButtonWidth + rowSpacing,
+			page.bottom - rowHeight - margin, removeButtonWidth, rowHeight);
 		m_bimFiles.MoveWindow(
 			bimFilesContentLeft, bimFilesContentTop,
 			max(rowHeight, rightColumnWidth - 2 * margin),

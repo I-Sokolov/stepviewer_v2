@@ -630,7 +630,7 @@ CString CBCFView::GetBimModel(BCFBimFile& file, _model** ppLoadedModel)
 	return path;
 }
 
-void CBCFView::LoadBimFilesToView(BCFTopic& topic)
+void CBCFView::SetBimFilesToView(BCFTopic& topic)
 {
 	if (!m_stepViewerDoc) {
 		return;
