@@ -1237,8 +1237,6 @@ void _oglRenderer::_setCameraSettings(
 	double dAspectRatio,
 	double dLengthConversionFactor)
 {
-	_reset();
-
 	auto pWorld = _getController()->getModel();
 	_vector3d vecVertexBufferOffset;
 	GetVertexBufferOffset(pWorld->getOwlModel(), (double*)&vecVertexBufferOffset);
@@ -1656,16 +1654,22 @@ void _oglRenderer::_prepare(
 	// aspect   - Aspect ratio of the viewport
 	// zNear    - The near clipping distance
 	// zFar     - The far clipping distance
-	GLdouble fovY = m_dFieldOfView;
-	if (!m_bCameraSettings) {
-		m_dAspectRatio = (GLdouble)iViewportWidth / (GLdouble)iViewportHeight;
+	const bool useCameraSettings = m_bCameraSettings && bTranslate;
+	const GLdouble fovY = useCameraSettings ? m_dFieldOfView : 45.;
+	GLdouble aspect = (GLdouble)iViewportWidth / (GLdouble)iViewportHeight;
+	if (useCameraSettings) {
+		aspect = m_dAspectRatio;
 	}
-	GLdouble aspect = m_dAspectRatio;
+	else if (!m_bCameraSettings) {
+		m_dAspectRatio = aspect;
+	}
 
 	// Znear and Zfar
 	GLdouble dCenterZ = (fZmin + fZmax) / 2.0;
-	GLdouble dCameraDistance = abs(m_fZTranslation + dCenterZ);
-	if (m_bCameraSettings) {
+	GLdouble dCameraDistance = abs(
+		(m_bCameraSettings && !bTranslate ? DEFAULT_TRANSLATION : m_fZTranslation) +
+		dCenterZ);
+	if (useCameraSettings) {
 		const GLdouble dCenterX = (fXmin + fXmax) / 2.0;
 		const GLdouble dCenterY = (fYmin + fYmax) / 2.0;
 		const GLdouble dX = m_vecViewPoint.x - dCenterX;
@@ -1699,7 +1703,7 @@ void _oglRenderer::_prepare(
 	}
 
 	// Model-View Matrix
-	if (m_bCameraSettings) {
+	if (useCameraSettings) {
 		const glm::vec3 eye(
 			m_vecViewPoint.x, m_vecViewPoint.y, m_vecViewPoint.z);
 		const glm::vec3 direction(
@@ -1713,32 +1717,77 @@ void _oglRenderer::_prepare(
 		glm::mat4 interaction = glm::translate(
 			glm::identity<glm::mat4>(),
 			glm::vec3(m_fXTranslation, m_fYTranslation, m_fZTranslation));
+		glm::mat4 rotation = glm::identity<glm::mat4>();
 		if (m_enRotationMode == enumRotationMode::XY) {
-			interaction = glm::rotate(
-				interaction, glm::radians(m_fXAngle), glm::vec3(1.f, 0.f, 0.f));
-			interaction = glm::rotate(
-				interaction, glm::radians(m_fYAngle), glm::vec3(0.f, 1.f, 0.f));
-			interaction = glm::rotate(
-				interaction, glm::radians(m_fZAngle), glm::vec3(0.f, 0.f, 1.f));
+			rotation = glm::rotate(
+				rotation, glm::radians(m_fXAngle), glm::vec3(1.f, 0.f, 0.f));
+			rotation = glm::rotate(
+				rotation, glm::radians(m_fYAngle), glm::vec3(0.f, 1.f, 0.f));
+			rotation = glm::rotate(
+				rotation, glm::radians(m_fZAngle), glm::vec3(0.f, 0.f, 1.f));
 		}
 		else if (m_enRotationMode == enumRotationMode::XYZ) {
-			_quaterniond rotation = _quaterniond::toQuaternion(
+			_quaterniond quaternion = _quaterniond::toQuaternion(
 				glm::radians(m_fZAngle),
 				glm::radians(m_fYAngle),
 				glm::radians(m_fXAngle));
-			m_rotation.cross(rotation);
+			m_rotation.cross(quaternion);
 			m_fXAngle = m_fYAngle = m_fZAngle = 0.f;
 
 			const double* pRotationMatrix = m_rotation.toMatrix();
-			const glm::mat4 rotationMatrix =
-				glm::make_mat4((GLdouble*)pRotationMatrix);
+			rotation = glm::make_mat4((GLdouble*)pRotationMatrix);
 			delete[] pRotationMatrix;
-			interaction *= rotationMatrix;
 		}
 		else {
 			assert(false);
 		}
-		m_matModelView = interaction * m_matModelView;
+
+		const glm::vec3 modelCenter(
+			(fXmin + fXmax) / 2.f,
+			(fYmin + fYmax) / 2.f,
+			(fZmin + fZmax) / 2.f);
+		glm::mat4 modelRotation = glm::translate(
+			glm::identity<glm::mat4>(), modelCenter);
+		modelRotation *= rotation;
+		modelRotation = glm::translate(modelRotation, -modelCenter);
+
+		m_matModelView = interaction * m_matModelView * modelRotation;
+		ASSERT_MATRIX_VALID(m_matModelView);
+	}
+	else if (m_bCameraSettings) {
+		const glm::vec3 modelCenter(
+			(fXmin + fXmax) / 2.f,
+			(fYmin + fYmax) / 2.f,
+			(fZmin + fZmax) / 2.f);
+		const glm::mat4 cameraOrientation = glm::lookAt(
+			glm::vec3(0.f),
+			glm::vec3(m_vecDirection.x, m_vecDirection.y, m_vecDirection.z),
+			glm::vec3(m_vecUpVector.x, m_vecUpVector.y, m_vecUpVector.z));
+
+		glm::mat4 rotation = glm::identity<glm::mat4>();
+		if (m_enRotationMode == enumRotationMode::XY) {
+			rotation = glm::rotate(
+				rotation, glm::radians(m_fXAngle), glm::vec3(1.f, 0.f, 0.f));
+			rotation = glm::rotate(
+				rotation, glm::radians(m_fYAngle), glm::vec3(0.f, 1.f, 0.f));
+			rotation = glm::rotate(
+				rotation, glm::radians(m_fZAngle), glm::vec3(0.f, 0.f, 1.f));
+		}
+		else if (m_enRotationMode == enumRotationMode::XYZ) {
+			const double* pRotationMatrix = m_rotation.toMatrix();
+			rotation = glm::make_mat4((GLdouble*)pRotationMatrix);
+			delete[] pRotationMatrix;
+		}
+		else {
+			assert(false);
+		}
+
+		m_matModelView = glm::translate(
+			glm::identity<glm::mat4>(),
+			glm::vec3(0.f, 0.f, DEFAULT_TRANSLATION));
+		m_matModelView = glm::translate(m_matModelView, modelCenter);
+		m_matModelView *= cameraOrientation * rotation;
+		m_matModelView = glm::translate(m_matModelView, -modelCenter);
 		ASSERT_MATRIX_VALID(m_matModelView);
 	}
 	else {
