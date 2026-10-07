@@ -161,6 +161,9 @@ void CBCFProjectForm::OnSize(UINT type, int cx, int cy)
 void CBCFProjectForm::OnTopicChanged(NMHDR*, LRESULT* result)
 {
 	UpdateButtons();
+	if (BCFTopic* topic = GetSelectedTopic()) {
+        m_pane->SetBimFilesToView(*topic);
+    }
 	*result = 0;
 }
 
