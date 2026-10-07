@@ -352,8 +352,8 @@ void CBCFTopicForm::Load(BCFTopic* topic)
 	ReloadDocuments();
 	ReloadLinks();
 	ReloadRelatedTopics();
-	m_pane->LoadBimFiles(*topic);
-	ReloadBimFiles();
+	m_pane->LoadBimFilesToView(*topic);
+	ReloadBimFilesList();
 	m_tabs.SetCurSel(0);
 	ShowTab(0);
 	ReloadComments();
@@ -583,7 +583,7 @@ void CBCFTopicForm::OnSelectTopicLabels()
 	}
 }
 
-void CBCFTopicForm::ReloadBimFiles()
+void CBCFTopicForm::ReloadBimFilesList()
 {
 	m_usedBimModels.clear();
 	if (m_topic) {
@@ -649,8 +649,8 @@ void CBCFTopicForm::OnAddBimFiles()
 		ok = AddBimFile(path, dialog.IsExternal()) && ok;
 		AfxGetApp()->AddToRecentFileList(path);
 	}
-	m_pane->LoadBimFiles(*m_topic);
-	ReloadBimFiles();
+	m_pane->LoadBimFilesToView(*m_topic);
+	ReloadBimFilesList();
 	m_pane->ShowLog(!ok);
 }
 
@@ -664,14 +664,14 @@ void CBCFTopicForm::OnCheckBimFiles()
 		auto found = m_usedBimModels.find(model->getPath());
 		if (m_bimFiles.GetCheck(i) == BST_CHECKED && found == m_usedBimModels.end()) {
 			AddBimFile(model->getPath(), false);
-			ReloadBimFiles();
+			ReloadBimFilesList();
 			return;
 		}
 		if (m_bimFiles.GetCheck(i) == BST_UNCHECKED && found != m_usedBimModels.end()) {
 			if (!found->second->Remove()) {
 				m_pane->ShowLog(true);
 			}
-			ReloadBimFiles();
+			ReloadBimFilesList();
 			return;
 		}
 	}

@@ -52,7 +52,7 @@ private:
 	void FormatTopicInfo();
 	void UpdateLabels();
 	void UpdateCommentButtons();
-	void ReloadBimFiles();
+	void ReloadBimFilesList();
 	bool AddBimFile(const CString& path, bool external);
 	void ReloadDocuments(BCFDocumentReference* selectDocument = nullptr);
 	BCFDocumentReference* GetSelectedDocument() const;
