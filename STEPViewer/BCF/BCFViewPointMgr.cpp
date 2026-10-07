@@ -70,42 +70,43 @@ void CBCFViewPointMgr::SetViewFromComment(BCFComment& comment)
 
 bool CBCFViewPointMgr::SaveCurrentViewToComent(BCFComment&comment)
 {
-	bool ok = true;
+	auto view = GetViewerView();
+	if (!view) {
+		return false;
+	}
+
+	//save camera
+	BCFCamera camera = BCFCameraOrthogonal;
+	BCFPoint viewPoint;
+	BCFPoint direction;
+	BCFPoint upVector;
+	double viewToWorldScale = 1;
+	double fieldOfView = 90;
+	double aspectRatio = 1;
+
+	if (!view->GetBCFView(camera, viewPoint, direction, upVector, viewToWorldScale, fieldOfView, aspectRatio)) {
+		return false;
+	}
 
 	auto vp = comment.GetViewPoint();
 	if (!vp) {
 		vp = comment.GetTopic().AddViewPoint();
 		if (vp) {
-			ok = comment.SetViewPoint(vp) && ok;
-		}
-		else {
-			ok = false;
+			if (!comment.SetViewPoint(vp)) {
+				return false;
+			}
 		}
 	}
 
+	bool ok = true;
 	if (vp) {
-
-		if (auto view = GetViewerView()) {
-
-			//save camera
-			BCFCamera camera = BCFCameraOrthogonal;
-			BCFPoint viewPoint;
-			BCFPoint direction;
-			BCFPoint upVector;
-			double viewToWorldScale = 1;
-			double fieldOfView = 90;
-			double aspectRatio = 1;
-
-			view->GetBCFView(camera, viewPoint, direction, upVector, viewToWorldScale, fieldOfView, aspectRatio);
-
-			ok = vp->SetCameraType(camera) && ok;
-			ok = vp->SetCameraViewPoint(&viewPoint) && ok;
-			ok = vp->SetCameraDirection(&direction) && ok;
-			ok = vp->SetCameraUpVector(&upVector) && ok;
-			ok = vp->SetViewToWorldScale(viewToWorldScale) && ok;
-			ok = vp->SetFieldOfView(fieldOfView) && ok;
-			ok = vp->SetAspectRatio(aspectRatio) && ok;
-		}
+		ok = vp->SetCameraType(camera) && ok;
+		ok = vp->SetCameraViewPoint(&viewPoint) && ok;
+		ok = vp->SetCameraDirection(&direction) && ok;
+		ok = vp->SetCameraUpVector(&upVector) && ok;
+		ok = vp->SetViewToWorldScale(viewToWorldScale) && ok;
+		ok = vp->SetFieldOfView(fieldOfView) && ok;
+		ok = vp->SetAspectRatio(aspectRatio) && ok;
 
 		ok = SaveSelection(*vp) && ok;
 		ok = SaveColoring(*vp) && ok;

@@ -824,7 +824,7 @@ void CMySTEPViewerView::ResetBCFView()
 	}
 }
 
-void CMySTEPViewerView::GetBCFView(BCFCamera& camera, BCFPoint& viewPoint, BCFPoint& direction, BCFPoint& upVector, double& viewToWorldScale, double& fieldOfView, double& aspectRatio)
+bool CMySTEPViewerView::GetBCFView(BCFCamera& camera, BCFPoint& viewPoint, BCFPoint& direction, BCFPoint& upVector, double& viewToWorldScale, double& fieldOfView, double& aspectRatio)
 {
 	auto pRenderer = m_pOpenGLView != nullptr ? dynamic_cast<_oglRenderer*>(m_pOpenGLView) : nullptr;
 	if (pRenderer != nullptr)
@@ -842,7 +842,7 @@ void CMySTEPViewerView::GetBCFView(BCFCamera& camera, BCFPoint& viewPoint, BCFPo
 		}
 
 		bool bPerspective = false;
-		pRenderer->_getCameraSettings(
+		if (pRenderer->_getCameraSettings(
 			bPerspective,
 			viewPoint.xyz,
 			direction.xyz,
@@ -850,8 +850,12 @@ void CMySTEPViewerView::GetBCFView(BCFCamera& camera, BCFPoint& viewPoint, BCFPo
 			viewToWorldScale,
 			fieldOfView,
 			aspectRatio,
-			dLengthConversionFactor);
+			dLengthConversionFactor)) {
 
 		camera = bPerspective ? BCFCamera::BCFCameraPerspective : BCFCamera::BCFCameraOrthogonal;
+
+			return true;
+		}
 	}
+	return false;
 }

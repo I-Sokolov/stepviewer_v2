@@ -2467,7 +2467,7 @@ public: // Methods
 		double dAspectRatio,
 		double dLengthConversionFactor);
 
-	void _getCameraSettings(
+	bool _getCameraSettings(
 		bool& bPerspective,
 		double arViewPoint[3],
 		double arDirection[3],
