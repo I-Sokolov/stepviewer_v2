@@ -747,20 +747,28 @@ void _controller::setModels(const vector<_model*>& vecModels)
 	m_bUpdatingModel = false;
 }
 
-void _controller::addAndEnableModels(const vector<_model*>& addModels, const std::vector<std::wstring>& enableModelsByPath)
+void _controller::enableModels(const std::vector<std::wstring>* enableModelsByPath)
 {
     //check if there is something to change
-    bool needToChange = !addModels.empty();
+    bool changed = false;
 
 	//need to change if not enabled
 	for (auto pModel : m_vecModels) {
-        bool needEnable = find(enableModelsByPath.begin(), enableModelsByPath.end(), pModel->getPath()) != enableModelsByPath.end();
+
+		bool needEnable = true;
+		if (enableModelsByPath) {
+			if (find(enableModelsByPath->begin(), enableModelsByPath->end(), pModel->getPath()) == enableModelsByPath->end()) {
+				needEnable = false;
+			}
+		}
+
 		if (pModel->getEnable() != needEnable) {
-			needToChange = true;
+			changed = true;
+			break;
         }
 	}
 
-	if (!needToChange) {
+	if (!changed) {
 		return;
 	}
 
@@ -774,22 +782,19 @@ void _controller::addAndEnableModels(const vector<_model*>& addModels, const std
 
 	cleanSelection();
 
-	// Disable all
+    // Disable all if list is provided, otherwise enable all
 	for (auto pModel : m_vecModels) {
-		pModel->setEnable(false);
+		pModel->setEnable(enableModelsByPath == nullptr);
 	}
 
-	// Add and Enable
-	for (auto pModel : addModels) {
-		assert(find(m_vecModels.begin(), m_vecModels.end(), pModel) == m_vecModels.end());
-		m_vecModels.push_back(pModel);
-	}
-
-	for (auto& path : enableModelsByPath) {
-		auto model = getModel(path.c_str());
-		assert(model);
-		if (model)
-			model->setEnable(true);
+	// Enable by list
+	if (enableModelsByPath) {
+		for (auto& path : *enableModelsByPath) {
+			auto model = getModel(path.c_str());
+			assert(model);
+			if (model)
+				model->setEnable(true);
+		}
 	}
 
 	//

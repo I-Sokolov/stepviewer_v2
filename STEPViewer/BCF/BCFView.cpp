@@ -329,10 +329,10 @@ void CBCFView::ReleaseProject()
 	}
 	m_filePath.Empty();
 
-	//cleanup models
+	//cleanup models loaded from topics
 	if (m_stepViewerDoc) {
 		std::set<const _model*> removeModels;
-		for (auto& pair : m_bimModels) {
+		for (auto& pair : m_bimRef2Path) {
 			if (pair.second) {
 				if (auto model = m_stepViewerDoc->getModel(pair.second)) {
 					removeModels.insert(model);
@@ -343,7 +343,7 @@ void CBCFView::ReleaseProject()
 			m_stepViewerDoc->removeModels(removeModels, true);
         }
 	}
-	m_bimModels.clear();
+	m_bimRef2Path.clear();
 
     //load empty project info
 	LoadProjectInfo();
@@ -548,58 +548,53 @@ void CBCFView::ShowLog(bool knownError)
 	}
 }
 
-CString CBCFView::GetBimModel(BCFBimFile& file, _model** ppLoadedModel)
+CString CBCFView::GetBimFilePath(BCFBimFile& file)
 {
-	if (ppLoadedModel) {
-		*ppLoadedModel = nullptr;
-    }
-
 	if (!m_stepViewerDoc) {
 		return L"";
 	}
 
-	auto found = m_bimModels.find(&file);
-	if (found != m_bimModels.end()) {
+	//
+	//get local path to the BIM file, include resolving URI or ask user to locate it
+	//
+	auto refPath8 = file.GetReference();
+	if (!refPath8 || !*refPath8) {
+		refPath8 = file.GetFilename();
+	}
+
+	CString refPath = FromUTF8(refPath8);
+
+	auto found = m_bimRef2Path.find(refPath);
+	if (found != m_bimRef2Path.end()) {
 
 		if (found->second.IsEmpty()) {
 			//assume user already asked No to "Do you want to locate the file manually?"
 			return L"";
 		}
 
-		//check if the model is still in the Viewer
-		const auto& models = m_stepViewerDoc->getModels();
-		for (_model* model : models) {
-			if (model->getPath() == found->second) {
-				return found->second;
-			}
-        }
-
-		m_bimModels.erase(found); //something not sync, below will re-load it to viewer
-	}
-
-	//
-    //get local path to the BIM file, include resolving URI or ask user to locate it
-	//
-	auto path8 = file.GetReference();
-	if (!path8 || !*path8) {
-        path8 = file.GetFilename();
-	}
-
-	CString path = FromUTF8(path8);
-							
-	if (CUriDownloader::IsUri(path)) {
-		path = CUriDownloader(this).GetLocalPath(path);
-		if (path.IsEmpty()) {
-			m_bimModels[&file] = L"";
-			return L"";
+		//check if the model is in the Viewer
+		if (m_stepViewerDoc->getModel(found->second)) {
+			return found->second;
 		}
+
+		//something is not sync, below will re-load it to viewer
+		m_bimRef2Path.erase(found); 
 	}
 
-	if (!fs::exists(ToUTF8(path))) {
+	//
+	// locate and load
+	CString filePath = refPath;
+
+	if (CUriDownloader::IsUri(filePath)) {
+		filePath = CUriDownloader(this).GetLocalPath(refPath);
+	}
+
+	if (filePath.IsEmpty() || !fs::exists(ToUTF8(filePath))) {
 		CString message;
-		message.Format(L"Can not locate BIM file assigned to the topic: '%s'\n\nDo you want to locate the file manually?", path.GetString());
+		message.Format(L"Can not locate BIM file assigned to the topic: '%s'\n\nDo you want to locate the file manually?", refPath.GetString());
+
 		if (AfxMessageBox(message, MB_YESNO | MB_ICONEXCLAMATION) != IDYES) {
-			m_bimModels[&file] = L""; //avoid repeated asking
+			m_bimRef2Path[refPath] = L""; //avoid repeated asking
 			return L"";
 		}
 
@@ -609,25 +604,28 @@ CString CBCFView::GetBimModel(BCFBimFile& file, _model** ppLoadedModel)
 			return L"";
 		}
 
-		path = dialog.GetPathName();
+		filePath = dialog.GetPathName();
 	}
 
-	m_bimModels[&file] = path;
+	//
+	//
+	m_bimRef2Path[refPath] = filePath;
 
     //check if the model is already loaded in the Viewer
-    if (!m_stepViewerDoc->getModel(path)) {
+	if (!m_stepViewerDoc->getModel(filePath)) {
 
-		ASSERT(ppLoadedModel); //this is expected only we can load new model
-		if (ppLoadedModel) {
+		auto model = _ap_model_factory::load(
+			m_stepViewerDoc, filePath, false,
+			m_stepViewerDoc->getModels().empty() ? nullptr : m_stepViewerDoc->getModels()[0],
+			false);
 
-			*ppLoadedModel = _ap_model_factory::load(
-				m_stepViewerDoc, path, false,
-				m_stepViewerDoc->getModels().empty() ? nullptr : m_stepViewerDoc->getModels()[0],
-				false);
+		if (model) {
+			m_stepViewerDoc->addModel(model);
 		}
+
 	}
 
-	return path;
+	return filePath;
 }
 
 void CBCFView::SetBimFilesToView(BCFTopic& topic)
@@ -638,16 +636,12 @@ void CBCFView::SetBimFilesToView(BCFTopic& topic)
 
 	std::vector<std::wstring> activeModels;
 	std::vector<_model*> newModels;
-	for (uint16_t i = 0; BCFBimFile* file = topic.GetBimFile(i); ++i) {
-		_model* newModel = NULL; 
-		std::wstring modelPath = GetBimModel(*file, &newModel);
-        activeModels.push_back(modelPath);
-		if (newModel) {
-			newModels.push_back(newModel);
-		}
+	for (uint16_t i = 0; BCFBimFile * file = topic.GetBimFile(i); ++i) {
+		std::wstring modelPath = GetBimFilePath(*file);
+		activeModels.push_back(modelPath);
 	}
 
-	m_stepViewerDoc->addAndEnableModels(newModels, activeModels);
+	m_stepViewerDoc->enableModels(&activeModels);
 }
 
 void CBCFView::OnUpdateProjectSettings(CCmdUI* commandUI)
