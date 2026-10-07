@@ -102,6 +102,8 @@ void CBCFProjectForm::Load(BCFTopic* selectTopic)
 	if (selectedItem >= 0) {
 		m_topics.SetItemState(selectedItem, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
 	}
+
+	OnTopicChanged(NULL, NULL);
 	UpdateButtons();
 }
 
@@ -164,7 +166,9 @@ void CBCFProjectForm::OnTopicChanged(NMHDR*, LRESULT* result)
 	if (BCFTopic* topic = GetSelectedTopic()) {
         m_pane->SetBimFilesToView(*topic);
     }
-	*result = 0;
+	if (result) {
+		*result = 0;
+	}
 }
 
 void CBCFProjectForm::OnTopicDoubleClick(NMHDR*, LRESULT* result)

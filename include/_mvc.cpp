@@ -747,6 +747,14 @@ void _controller::setModels(const vector<_model*>& vecModels)
 	m_bUpdatingModel = false;
 }
 
+void _controller::addModel(_model* model)
+{
+	if (model) {
+		model->setEnable(false);
+		m_vecModels.push_back(model);
+	}
+}
+
 void _controller::enableModels(const std::vector<std::wstring>* enableModelsByPath)
 {
     //check if there is something to change

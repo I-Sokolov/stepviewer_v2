@@ -236,6 +236,15 @@ bool CBCFView::OpenProject(LPCTSTR filePath)
 	UpdateCaption();
 	ShowProject();
 	Activate();
+
+    //show topic if only one topic exists in project
+	if (auto topic1 = m_project->GetTopic(0)) {
+		if (!m_project->GetTopic(1)) {
+			m_projectForm->Load(topic1);
+			ShowTopic(topic1);
+		}
+	}
+
 	return true;
 }
 

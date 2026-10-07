@@ -244,7 +244,7 @@ public: // Methods
 
 	void setModel(_model* pModel);
 	void setModels(const vector<_model*>& vecModels);
-	void addModel(_model* model) { m_vecModels.push_back(model); } //will not update views, use enableModels() after adding all models
+	void addModel(_model* model);//it will not update views, use enableModels() after adding all models
 	void removeModels(const std::set<const _model*>& models, bool enableRemaining);
 
 	void enableModels (const std::vector<std::wstring>* enableModelsByPath = nullptr); //enable all if NULL
